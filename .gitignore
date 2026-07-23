@@ -1,9 +1,24 @@
+# Local worktrees and installed packages
 .worktrees/
 node_modules/
+
+# Build and test output
 .output/
 .wxt/
 coverage/
 playwright-report/
 test-results/
 blob-report/
+
+# Benchmark reports are reproducible output. Fixtures and generated corpora are committed.
 benchmark/results/
+!benchmark/fixtures/
+!benchmark/fixtures/**
+!benchmark/corpus/
+!benchmark/corpus/**
+
+# Runtime assets are deliberately pinned and committed.
+!public/models/
+!public/models/**
+!public/ort/
+!public/ort/**
