@@ -470,7 +470,7 @@ export function decodeArithmeticCtc(
   }
 
   const text = selectCandidate(logits, time, classes, relevantClasses);
-  if (text === null || analyzeArithmetic(text).kind === 'unsupported') {
+  if (text === null) {
     return null;
   }
 

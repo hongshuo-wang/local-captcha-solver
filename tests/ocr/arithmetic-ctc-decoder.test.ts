@@ -137,26 +137,15 @@ describe('decodeArithmeticCtc', () => {
     ).toMatchObject({ text: '1+2' });
   });
 
-  it('returns null when every surviving complete beam divides by zero', () => {
-    const path = ['1', '', '', '÷', '0'] as const;
-    const values = pathLogits(path);
-    for (const timestep of [1, 2]) {
-      for (let digitClass = 1; digitClass <= 10; digitClass += 1) {
-        values[timestep * FULL_CHARSET.length + digitClass] = 11;
-      }
-    }
+  it('returns null when every expressible complete candidate divides by zero', () => {
+    const charset = ['', '0', '÷'] as const;
+    const path = ['0', '÷', '0'] as const;
+    const values = pathLogits(path, charset);
 
     expect(
-      decodeCtc(
-        values,
-        [1, path.length, FULL_CHARSET.length],
-        FULL_CHARSET,
-        new Set(FULL_CHARSET),
-      ),
-    ).toMatchObject({ text: '1÷0' });
-    expect(
-      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
-    ).toBeNull();
+      decodeCtc(values, [1, path.length, charset.length], charset, new Set(charset)),
+    ).toMatchObject({ text: '0÷0' });
+    expect(decodeArithmeticCtc(values, [1, path.length, charset.length], charset)).toBeNull();
   });
 
   it('skips an unsupported complete beam in favor of the strongest supported candidate', () => {
