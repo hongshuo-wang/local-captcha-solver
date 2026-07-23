@@ -102,10 +102,20 @@ describe('decodeArithmeticCtc', () => {
   });
 
   it('returns null for a double operator', () => {
-    const charset = ['', '+', '-'] as const;
-    const values = pathLogits(['+', '-'], charset);
+    const path = ['1', '+', '', '+', '2'] as const;
+    const values = pathLogits(path);
 
-    expect(decodeArithmeticCtc(values, [1, 2, charset.length], charset)).toBeNull();
+    expect(
+      decodeCtc(
+        values,
+        [1, path.length, FULL_CHARSET.length],
+        FULL_CHARSET,
+        new Set(FULL_CHARSET),
+      ),
+    ).toMatchObject({ text: '1++2' });
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toBeNull();
   });
 
   it('rejects division by zero after selecting the strongest complete expression', () => {

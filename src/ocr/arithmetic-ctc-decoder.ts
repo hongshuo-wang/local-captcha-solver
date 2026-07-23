@@ -156,11 +156,51 @@ function arithmeticShape(text: string): { prefix: boolean; complete: boolean } {
   if (index === text.length) {
     return { prefix: true, complete: index > rightStart };
   }
-  if (index === rightStart || !SUFFIXES.has(text[index]) || index + 1 !== text.length) {
+  if (!SUFFIXES.has(text[index]) || index + 1 !== text.length) {
     return { prefix: false, complete: false };
   }
 
-  return { prefix: true, complete: true };
+  return { prefix: true, complete: index > rightStart };
+}
+
+function greedyRelevantText(
+  logits: Float32Array,
+  time: number,
+  classes: number,
+  relevantClasses: readonly RelevantClass[],
+): string {
+  const candidates = [{ character: '', classIndex: 0 }, ...relevantClasses];
+  const emitted: string[] = [];
+  let previousClass = 0;
+
+  for (let timestep = 0; timestep < time; timestep += 1) {
+    const offset = timestep * classes;
+    let selected = candidates[0];
+    for (let candidateIndex = 1; candidateIndex < candidates.length; candidateIndex += 1) {
+      const candidate = candidates[candidateIndex];
+      if (logits[offset + candidate.classIndex] > logits[offset + selected.classIndex]) {
+        selected = candidate;
+      }
+    }
+
+    if (selected.classIndex === 0) {
+      previousClass = 0;
+    } else if (selected.classIndex !== previousClass) {
+      emitted.push(selected.character);
+      previousClass = selected.classIndex;
+    }
+  }
+
+  return emitted.join('');
+}
+
+function hasAdjacentOperators(text: string): boolean {
+  for (let index = 1; index < text.length; index += 1) {
+    if (OPERATORS.has(text[index - 1]) && OPERATORS.has(text[index])) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function addBeamScore(
@@ -411,6 +451,10 @@ export function decodeArithmeticCtc(
   const relevantClasses = [...classByCharacter.entries()].map(
     ([character, classIndex]): RelevantClass => ({ character, classIndex }),
   );
+
+  if (hasAdjacentOperators(greedyRelevantText(logits, time, classes, relevantClasses))) {
+    return null;
+  }
 
   const text = selectCandidate(logits, time, classes, relevantClasses);
   if (text === null || analyzeArithmetic(text).kind === 'unsupported') {
