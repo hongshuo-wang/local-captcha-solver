@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseArithmetic } from '../../src/core/arithmetic';
+import {
+  analyzeArithmetic,
+  MAX_OCR_TEXT_LENGTH,
+  parseArithmetic,
+} from '../../src/core/arithmetic';
 
 describe('parseArithmetic', () => {
   it.each([
@@ -44,4 +48,44 @@ describe('parseArithmetic', () => {
   ])('rejects %j', (source) => {
     expect(parseArithmetic(source)).toBeNull();
   });
+
+  it('keeps the compatibility API bounded to the exported OCR text limit', () => {
+    const atLimit = `${'1'.repeat(MAX_OCR_TEXT_LENGTH - 2)}+1`;
+    const overLimit = `${'1'.repeat(MAX_OCR_TEXT_LENGTH - 1)}+1`;
+
+    expect(atLimit).toHaveLength(64);
+    expect(parseArithmetic(atLimit)).toEqual({
+      expression: atLimit,
+      value: `${'1'.repeat(MAX_OCR_TEXT_LENGTH - 3)}2`,
+    });
+    expect(overLimit).toHaveLength(65);
+    expect(parseArithmetic(overLimit)).toBeNull();
+  });
+});
+
+describe('analyzeArithmetic', () => {
+  it('returns a valid normalized expression and exact value', () => {
+    expect(analyzeArithmetic(' 09007199254740993 × 0007 ? ')).toEqual({
+      kind: 'valid',
+      expression: '09007199254740993*0007',
+      value: '63050394783186951',
+    });
+  });
+
+  it.each([
+    ['7/2', '7/2'],
+    [' 07 ÷ 02 = ', '07/02'],
+  ])('preserves normalized non-integer division details for %j', (source, expression) => {
+    expect(analyzeArithmetic(source)).toEqual({
+      kind: 'non_integer_division',
+      expression,
+    });
+  });
+
+  it.each(['1/0', '1+2+3', 'abc', `${'1'.repeat(63)}+1`])(
+    'classifies %j as unsupported',
+    (source) => {
+      expect(analyzeArithmetic(source)).toEqual({ kind: 'unsupported' });
+    },
+  );
 });

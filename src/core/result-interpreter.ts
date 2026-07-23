@@ -1,4 +1,4 @@
-import { parseArithmetic } from './arithmetic';
+import { analyzeArithmetic, MAX_OCR_TEXT_LENGTH } from './arithmetic';
 import type {
   InterpretedResult,
   OcrResult,
@@ -12,42 +12,49 @@ const PLAIN_PATTERNS: Record<Exclude<RecognitionMode, 'arithmetic'>, RegExp> = {
   alphanumeric: /^[A-Za-z0-9]+$/,
 };
 
-const DIVISION_PATTERN = /^\s*([0-9]+)\s*[\/÷]\s*([0-9]+)\s*(?:[=?]\s*)?$/;
-
-function isNonIntegerDivision(source: string): boolean {
-  const match = DIVISION_PATTERN.exec(source);
-  if (!match) {
-    return false;
+export function interpretResult(result: OcrResult): InterpretedResult {
+  if (
+    typeof result.text !== 'string' ||
+    result.text.length > MAX_OCR_TEXT_LENGTH ||
+    !Number.isFinite(result.confidence) ||
+    result.confidence < 0 ||
+    result.confidence > 1
+  ) {
+    return { kind: 'invalid', reason: 'unsupported' };
   }
 
-  const dividend = BigInt(match[1]);
-  const divisor = BigInt(match[2]);
-  return divisor !== 0n && dividend % divisor !== 0n;
-}
-
-export function interpretResult(result: OcrResult): InterpretedResult {
   if (result.text.trim() === '') {
     return { kind: 'invalid', reason: 'empty' };
   }
 
   if (result.mode === 'arithmetic') {
-    const arithmetic = parseArithmetic(result.text);
-    if (arithmetic) {
+    const analysis = analyzeArithmetic(result.text);
+    if (analysis.kind === 'valid') {
       return {
         kind: 'arithmetic',
-        displayText: `${arithmetic.expression} = ${arithmetic.value}`,
-        fillValue: arithmetic.value,
+        displayText: `${analysis.expression} = ${analysis.value}`,
+        fillValue: analysis.value,
+        confidence: result.confidence,
+      };
+    }
+
+    if (analysis.kind === 'non_integer_division') {
+      return {
+        kind: 'invalid',
+        reason: 'non_integer_division',
+        displayText: analysis.expression,
         confidence: result.confidence,
       };
     }
 
     return {
       kind: 'invalid',
-      reason: isNonIntegerDivision(result.text) ? 'non_integer_division' : 'unsupported',
+      reason: 'unsupported',
     };
   }
 
-  if (!PLAIN_PATTERNS[result.mode].test(result.text)) {
+  const pattern = PLAIN_PATTERNS[result.mode];
+  if (!pattern || !pattern.test(result.text)) {
     return { kind: 'invalid', reason: 'unsupported' };
   }
 

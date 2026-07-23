@@ -32,26 +32,55 @@ export interface OcrEngine {
 export type InterpretedResult =
   | { kind: 'plain'; displayText: string; fillValue: string; confidence: number }
   | { kind: 'arithmetic'; displayText: string; fillValue: string; confidence: number }
-  | { kind: 'invalid'; reason: 'empty' | 'unsupported' | 'non_integer_division' };
+  | { kind: 'invalid'; reason: 'empty' | 'unsupported' }
+  | {
+      kind: 'invalid';
+      reason: 'non_integer_division';
+      displayText: string;
+      confidence: number;
+    };
 
 export interface ResultInterpreter {
-  interpret(results: readonly OcrResult[]): InterpretedResult[];
+  interpret(results: readonly OcrResult[]): readonly InterpretedResult[];
 }
 
 export interface ScoreResult {
   score: number;
-  reasons: string[];
+  reasons: readonly string[];
 }
 
 export interface CaptchaCandidateScorer<TCandidate> {
   score(candidate: TCandidate): ScoreResult;
 }
 
-export interface FieldMatch<TField> {
-  state: 'unique' | 'ambiguous' | 'none';
-  winner?: TField;
-  candidates: Array<{ field: TField; score: number; reasons: string[] }>;
-}
+export type FieldMatch<TField> =
+  | {
+      state: 'unique';
+      winner: TField;
+      candidates: readonly {
+        field: TField;
+        score: number;
+        reasons: readonly string[];
+      }[];
+    }
+  | {
+      state: 'ambiguous';
+      winner?: never;
+      candidates: readonly {
+        field: TField;
+        score: number;
+        reasons: readonly string[];
+      }[];
+    }
+  | {
+      state: 'none';
+      winner?: never;
+      candidates: readonly {
+        field: TField;
+        score: number;
+        reasons: readonly string[];
+      }[];
+    };
 
 export interface FieldMatcher<TImage, TField> {
   match(image: TImage, fields: readonly TField[], allowReplacement: boolean): FieldMatch<TField>;
@@ -59,7 +88,13 @@ export interface FieldMatcher<TImage, TField> {
 
 export type WorkflowResult =
   | { state: 'filled'; candidateId: string; fieldId: string; displayText: string; fillValue: string }
-  | { state: 'needs_confirmation'; candidateId: string; displayText: string; fillValue?: string; fieldIds: string[] }
+  | {
+      state: 'needs_confirmation';
+      candidateId: string;
+      displayText: string;
+      fillValue?: string;
+      fieldIds: readonly string[];
+    }
   | { state: 'no_candidate' }
   | { state: 'no_field'; candidateId: string; displayText: string; fillValue: string }
   | { state: 'image_unavailable'; candidateId: string }

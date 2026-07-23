@@ -3,12 +3,23 @@ export interface ArithmeticResult {
   value: string;
 }
 
+export type ArithmeticAnalysis =
+  | ({ kind: 'valid' } & ArithmeticResult)
+  | { kind: 'non_integer_division'; expression: string }
+  | { kind: 'unsupported' };
+
+export const MAX_OCR_TEXT_LENGTH = 64;
+
 const ARITHMETIC_PATTERN = /^\s*([0-9]+)\s*([+\-*/xX×÷])\s*([0-9]+)\s*(?:[=?]\s*)?$/;
 
-export function parseArithmetic(source: string): ArithmeticResult | null {
+export function analyzeArithmetic(source: string): ArithmeticAnalysis {
+  if (typeof source !== 'string' || source.length > MAX_OCR_TEXT_LENGTH) {
+    return { kind: 'unsupported' };
+  }
+
   const match = ARITHMETIC_PATTERN.exec(source);
   if (!match) {
-    return null;
+    return { kind: 'unsupported' };
   }
 
   const [, leftDigits, sourceOperator, rightDigits] = match;
@@ -35,18 +46,37 @@ export function parseArithmetic(source: string): ArithmeticResult | null {
       break;
     case '/':
     case '÷':
-      if (right === 0n || left % right !== 0n) {
-        return null;
-      }
       operator = '/';
+      if (right === 0n) {
+        return { kind: 'unsupported' };
+      }
+      if (left % right !== 0n) {
+        return {
+          kind: 'non_integer_division',
+          expression: `${leftDigits}${operator}${rightDigits}`,
+        };
+      }
       value = left / right;
       break;
     default:
-      return null;
+      return { kind: 'unsupported' };
   }
 
   return {
+    kind: 'valid',
     expression: `${leftDigits}${operator}${rightDigits}`,
     value: value.toString(),
+  };
+}
+
+export function parseArithmetic(source: string): ArithmeticResult | null {
+  const analysis = analyzeArithmetic(source);
+  if (analysis.kind !== 'valid') {
+    return null;
+  }
+
+  return {
+    expression: analysis.expression,
+    value: analysis.value,
   };
 }
