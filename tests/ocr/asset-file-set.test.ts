@@ -36,7 +36,10 @@ async function createFixture() {
 async function expectFiles(root: string, first: string, second: string) {
   await expect(nodeFs.readFile(join(root, 'first.bin'), 'utf8')).resolves.toBe(first);
   await expect(nodeFs.readFile(join(root, 'second.bin'), 'utf8')).resolves.toBe(second);
-  await expect(nodeFs.readdir(root)).resolves.toEqual(['first.bin', 'second.bin']);
+  await expect(nodeFs.readdir(root).then((entries) => entries.sort())).resolves.toEqual([
+    'first.bin',
+    'second.bin',
+  ]);
 }
 
 afterEach(async () => {

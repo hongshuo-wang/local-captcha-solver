@@ -59,7 +59,7 @@ describe('pinned OCR assets', () => {
   }
 
   it('contains only the selected ONNX Runtime pair', async () => {
-    await expect(readdir(resolve('public/ort'))).resolves.toEqual([
+    await expect(readdir(resolve('public/ort')).then((entries) => entries.sort())).resolves.toEqual([
       'ort-wasm-simd-threaded.mjs',
       'ort-wasm-simd-threaded.wasm',
     ]);
