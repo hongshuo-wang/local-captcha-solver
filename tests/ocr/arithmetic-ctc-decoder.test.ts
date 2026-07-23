@@ -137,10 +137,42 @@ describe('decodeArithmeticCtc', () => {
     ).toMatchObject({ text: '1+2' });
   });
 
-  it('rejects division by zero after selecting the strongest complete expression', () => {
-    const values = pathLogits(['1', '÷', '0']);
+  it('returns null when every surviving complete beam divides by zero', () => {
+    const path = ['1', '', '', '÷', '0'] as const;
+    const values = pathLogits(path);
+    for (const timestep of [1, 2]) {
+      for (let digitClass = 1; digitClass <= 10; digitClass += 1) {
+        values[timestep * FULL_CHARSET.length + digitClass] = 11;
+      }
+    }
 
-    expect(decodeArithmeticCtc(values, [1, 3, FULL_CHARSET.length], FULL_CHARSET)).toBeNull();
+    expect(
+      decodeCtc(
+        values,
+        [1, path.length, FULL_CHARSET.length],
+        FULL_CHARSET,
+        new Set(FULL_CHARSET),
+      ),
+    ).toMatchObject({ text: '1÷0' });
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toBeNull();
+  });
+
+  it('skips an unsupported complete beam in favor of the strongest supported candidate', () => {
+    const charset = ['', '0', '1', '2', '÷'] as const;
+    const values = logits([
+      [0, -10, 12, -10, -10],
+      [0, -10, -10, -10, 12],
+      [0, 12, -10, 11, -10],
+    ]);
+
+    expect(decodeCtc(values, [1, 3, 5], charset, new Set(charset))).toMatchObject({
+      text: '1÷0',
+    });
+    expect(decodeArithmeticCtc(values, [1, 3, 5], charset)).toMatchObject({
+      text: '1÷2',
+    });
   });
 
   it('keeps non-integer division text for the interpreter to classify later', () => {

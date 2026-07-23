@@ -281,7 +281,10 @@ function selectCandidate(
   }
 
   const complete = [...beams.entries()]
-    .filter(([prefix]) => arithmeticShape(prefix).complete)
+    .filter(
+      ([prefix]) =>
+        arithmeticShape(prefix).complete && analyzeArithmetic(prefix).kind !== 'unsupported',
+    )
     .sort(comparePrefixes);
   return complete[0]?.[0] ?? null;
 }
