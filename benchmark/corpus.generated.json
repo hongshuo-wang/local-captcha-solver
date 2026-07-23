@@ -1,0 +1,2856 @@
+{
+  "schemaVersion": 1,
+  "seed": 1279480653,
+  "samples": [
+    {
+      "id": "digits-001",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-001.png",
+      "answer": "7928",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 42,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.5
+      }
+    },
+    {
+      "id": "digits-002",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-002.png",
+      "answer": "5969",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "digits-003",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-003.png",
+      "answer": "8965",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "digits-004",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-004.png",
+      "answer": "4926",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 39,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "digits-005",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-005.png",
+      "answer": "5555",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 37,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "digits-006",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-006.png",
+      "answer": "38385",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 34,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
+      }
+    },
+    {
+      "id": "digits-007",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-007.png",
+      "answer": "5878",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.4
+      }
+    },
+    {
+      "id": "digits-008",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-008.png",
+      "answer": "76575",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 35,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "digits-009",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-009.png",
+      "answer": "47286",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 39,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
+      }
+    },
+    {
+      "id": "digits-010",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-010.png",
+      "answer": "84729",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "digits-011",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-011.png",
+      "answer": "73949",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 40,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "digits-012",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-012.png",
+      "answer": "67472",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "digits-013",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-013.png",
+      "answer": "75726",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "digits-014",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-014.png",
+      "answer": "8583",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 35,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.3
+      }
+    },
+    {
+      "id": "digits-015",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-015.png",
+      "answer": "44425",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "digits-016",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-016.png",
+      "answer": "4974",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "digits-017",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-017.png",
+      "answer": "66682",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "digits-018",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-018.png",
+      "answer": "5876",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 36,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "digits-019",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-019.png",
+      "answer": "77277",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "digits-020",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-020.png",
+      "answer": "82668",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 42,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "digits-021",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-021.png",
+      "answer": "84289",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "digits-022",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-022.png",
+      "answer": "8876",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "digits-023",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-023.png",
+      "answer": "8926",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 42,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
+      }
+    },
+    {
+      "id": "digits-024",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-024.png",
+      "answer": "3728",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.5
+      }
+    },
+    {
+      "id": "digits-025",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-025.png",
+      "answer": "32972",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -2
+      }
+    },
+    {
+      "id": "digits-026",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-026.png",
+      "answer": "26763",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "digits-027",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-027.png",
+      "answer": "6672",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 37,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "digits-028",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-028.png",
+      "answer": "52392",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "digits-029",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-029.png",
+      "answer": "5228",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 40,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "digits-030",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-030.png",
+      "answer": "8989",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "digits-031",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-031.png",
+      "answer": "3889",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "digits-032",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-032.png",
+      "answer": "25274",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "digits-033",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-033.png",
+      "answer": "93533",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 36,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1
+      }
+    },
+    {
+      "id": "digits-034",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-034.png",
+      "answer": "69456",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1
+      }
+    },
+    {
+      "id": "digits-035",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-035.png",
+      "answer": "8253",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "digits-036",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-036.png",
+      "answer": "5824",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "digits-037",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-037.png",
+      "answer": "66937",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "digits-038",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-038.png",
+      "answer": "73743",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "digits-039",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-039.png",
+      "answer": "92682",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "digits-040",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-040.png",
+      "answer": "9536",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "digits-041",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-041.png",
+      "answer": "67426",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.1
+      }
+    },
+    {
+      "id": "digits-042",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-042.png",
+      "answer": "6629",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "digits-043",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-043.png",
+      "answer": "6782",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
+      }
+    },
+    {
+      "id": "digits-044",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-044.png",
+      "answer": "7787",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 36,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "digits-045",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-045.png",
+      "answer": "7477",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 37,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "digits-046",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-046.png",
+      "answer": "5936",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
+      }
+    },
+    {
+      "id": "digits-047",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-047.png",
+      "answer": "87829",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.4
+      }
+    },
+    {
+      "id": "digits-048",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-048.png",
+      "answer": "63575",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.1
+      }
+    },
+    {
+      "id": "digits-049",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-049.png",
+      "answer": "58329",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -2
+      }
+    },
+    {
+      "id": "digits-050",
+      "category": "digits",
+      "image": "benchmark/fixtures/generated/digits-050.png",
+      "answer": "3746",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 40,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "letters-001",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-001.png",
+      "answer": "JVYx",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.3
+      }
+    },
+    {
+      "id": "letters-002",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-002.png",
+      "answer": "egrs",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "letters-003",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-003.png",
+      "answer": "ZHGq",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "letters-004",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-004.png",
+      "answer": "xsBc",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "letters-005",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-005.png",
+      "answer": "JDgX",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "letters-006",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-006.png",
+      "answer": "UNXn",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 36,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "letters-007",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-007.png",
+      "answer": "YDEZ",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "letters-008",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-008.png",
+      "answer": "bLQx",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 41,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.4
+      }
+    },
+    {
+      "id": "letters-009",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-009.png",
+      "answer": "zJan",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "letters-010",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-010.png",
+      "answer": "EwTt",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 36,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.4
+      }
+    },
+    {
+      "id": "letters-011",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-011.png",
+      "answer": "bgEB",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "letters-012",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-012.png",
+      "answer": "tMJy",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 34,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "letters-013",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-013.png",
+      "answer": "jMZW",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "letters-014",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-014.png",
+      "answer": "pgEU",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.1
+      }
+    },
+    {
+      "id": "letters-015",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-015.png",
+      "answer": "qaEV",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 34,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "letters-016",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-016.png",
+      "answer": "tkhg",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "letters-017",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-017.png",
+      "answer": "BrVF",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "letters-018",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-018.png",
+      "answer": "nFmu",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "letters-019",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-019.png",
+      "answer": "zxgw",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
+      }
+    },
+    {
+      "id": "letters-020",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-020.png",
+      "answer": "WPwQ",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "letters-021",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-021.png",
+      "answer": "JHet",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.1
+      }
+    },
+    {
+      "id": "letters-022",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-022.png",
+      "answer": "xjvY",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 34,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 2
+      }
+    },
+    {
+      "id": "letters-023",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-023.png",
+      "answer": "fLqa",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 35,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.5
+      }
+    },
+    {
+      "id": "letters-024",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-024.png",
+      "answer": "Xrww",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "letters-025",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-025.png",
+      "answer": "TZvd",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.8
+      }
+    },
+    {
+      "id": "letters-026",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-026.png",
+      "answer": "jqwz",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "letters-027",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-027.png",
+      "answer": "CTFZ",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "letters-028",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-028.png",
+      "answer": "RvQS",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "letters-029",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-029.png",
+      "answer": "Nufd",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 36,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.5
+      }
+    },
+    {
+      "id": "letters-030",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-030.png",
+      "answer": "rqKK",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 36,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "letters-031",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-031.png",
+      "answer": "QTEM",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.3
+      }
+    },
+    {
+      "id": "letters-032",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-032.png",
+      "answer": "gQDD",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "letters-033",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-033.png",
+      "answer": "VESN",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.4
+      }
+    },
+    {
+      "id": "letters-034",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-034.png",
+      "answer": "SCMh",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "letters-035",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-035.png",
+      "answer": "cKDh",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 40,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "letters-036",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-036.png",
+      "answer": "aCxD",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 40,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "letters-037",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-037.png",
+      "answer": "hkEu",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "letters-038",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-038.png",
+      "answer": "YWcT",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 40,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.7
+      }
+    },
+    {
+      "id": "letters-039",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-039.png",
+      "answer": "QDty",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "letters-040",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-040.png",
+      "answer": "FwrT",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 34,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "letters-041",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-041.png",
+      "answer": "ZGax",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
+      }
+    },
+    {
+      "id": "letters-042",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-042.png",
+      "answer": "cWTC",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "letters-043",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-043.png",
+      "answer": "Nzba",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 42,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "letters-044",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-044.png",
+      "answer": "WdYb",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 42,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "letters-045",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-045.png",
+      "answer": "XDQu",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "letters-046",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-046.png",
+      "answer": "Aatd",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "letters-047",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-047.png",
+      "answer": "gYpt",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 36,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "letters-048",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-048.png",
+      "answer": "XQgS",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.1
+      }
+    },
+    {
+      "id": "letters-049",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-049.png",
+      "answer": "Hwch",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "letters-050",
+      "category": "letters",
+      "image": "benchmark/fixtures/generated/letters-050.png",
+      "answer": "vfjp",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "alphanumeric-001",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-001.png",
+      "answer": "JhUq",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.7
+      }
+    },
+    {
+      "id": "alphanumeric-002",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-002.png",
+      "answer": "sXwK",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 41,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "alphanumeric-003",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-003.png",
+      "answer": "VeYH",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.1
+      }
+    },
+    {
+      "id": "alphanumeric-004",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-004.png",
+      "answer": "QZQu",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 42,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "alphanumeric-005",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-005.png",
+      "answer": "eVs6",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.3
+      }
+    },
+    {
+      "id": "alphanumeric-006",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-006.png",
+      "answer": "aBW4",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "alphanumeric-007",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-007.png",
+      "answer": "apb8",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 40,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "alphanumeric-008",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-008.png",
+      "answer": "GuBT",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 40,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.4
+      }
+    },
+    {
+      "id": "alphanumeric-009",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-009.png",
+      "answer": "kbME",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
+      }
+    },
+    {
+      "id": "alphanumeric-010",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-010.png",
+      "answer": "rgkm",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 35,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
+      }
+    },
+    {
+      "id": "alphanumeric-011",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-011.png",
+      "answer": "D4Gy",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.4
+      }
+    },
+    {
+      "id": "alphanumeric-012",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-012.png",
+      "answer": "mS6K",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "alphanumeric-013",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-013.png",
+      "answer": "DLAG",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "alphanumeric-014",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-014.png",
+      "answer": "4j3B",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "alphanumeric-015",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-015.png",
+      "answer": "8j8P",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 36,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "alphanumeric-016",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-016.png",
+      "answer": "yBTw",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 37,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "alphanumeric-017",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-017.png",
+      "answer": "5jeq",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "alphanumeric-018",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-018.png",
+      "answer": "nJmS",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.1
+      }
+    },
+    {
+      "id": "alphanumeric-019",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-019.png",
+      "answer": "D3ek",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "alphanumeric-020",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-020.png",
+      "answer": "u5Zh",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -2
+      }
+    },
+    {
+      "id": "alphanumeric-021",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-021.png",
+      "answer": "5FqK",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 40,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "alphanumeric-022",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-022.png",
+      "answer": "ukjU",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "alphanumeric-023",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-023.png",
+      "answer": "7gRA",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
+      }
+    },
+    {
+      "id": "alphanumeric-024",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-024.png",
+      "answer": "9FWu",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
+      }
+    },
+    {
+      "id": "alphanumeric-025",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-025.png",
+      "answer": "h2XR",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.1
+      }
+    },
+    {
+      "id": "alphanumeric-026",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-026.png",
+      "answer": "WZsh",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 34,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.3
+      }
+    },
+    {
+      "id": "alphanumeric-027",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-027.png",
+      "answer": "bA5d",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "alphanumeric-028",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-028.png",
+      "answer": "9gvM",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 35,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "alphanumeric-029",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-029.png",
+      "answer": "d4eX",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "alphanumeric-030",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-030.png",
+      "answer": "NurH",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "alphanumeric-031",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-031.png",
+      "answer": "Ny8a",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.5
+      }
+    },
+    {
+      "id": "alphanumeric-032",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-032.png",
+      "answer": "ws4b",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.1
+      }
+    },
+    {
+      "id": "alphanumeric-033",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-033.png",
+      "answer": "utdH",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 34,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "alphanumeric-034",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-034.png",
+      "answer": "qNKL",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 37,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.9
+      }
+    },
+    {
+      "id": "alphanumeric-035",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-035.png",
+      "answer": "PHWj",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 34,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "alphanumeric-036",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-036.png",
+      "answer": "wCB9",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1
+      }
+    },
+    {
+      "id": "alphanumeric-037",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-037.png",
+      "answer": "8Mh5",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "alphanumeric-038",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-038.png",
+      "answer": "Gz2S",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "alphanumeric-039",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-039.png",
+      "answer": "4PD4",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 36,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "alphanumeric-040",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-040.png",
+      "answer": "8jS2",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 40,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
+      }
+    },
+    {
+      "id": "alphanumeric-041",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-041.png",
+      "answer": "XTjv",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.9
+      }
+    },
+    {
+      "id": "alphanumeric-042",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-042.png",
+      "answer": "BsPt",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "alphanumeric-043",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-043.png",
+      "answer": "buWa",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "alphanumeric-044",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-044.png",
+      "answer": "nukk",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1
+      }
+    },
+    {
+      "id": "alphanumeric-045",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-045.png",
+      "answer": "UN6V",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "alphanumeric-046",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-046.png",
+      "answer": "eF95",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "alphanumeric-047",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-047.png",
+      "answer": "49Kw",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "alphanumeric-048",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-048.png",
+      "answer": "VkQZ",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.5
+      }
+    },
+    {
+      "id": "alphanumeric-049",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-049.png",
+      "answer": "RjRF",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 41,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "alphanumeric-050",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/generated/alphanumeric-050.png",
+      "answer": "HQns",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "arithmetic-001",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-001.png",
+      "answer": "39+20",
+      "fill": "59",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.4
+      }
+    },
+    {
+      "id": "arithmetic-002",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-002.png",
+      "answer": "11-6",
+      "fill": "5",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
+      }
+    },
+    {
+      "id": "arithmetic-003",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-003.png",
+      "answer": "45x29",
+      "fill": "1305",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.5
+      }
+    },
+    {
+      "id": "arithmetic-004",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-004.png",
+      "answer": "35÷5",
+      "fill": "7",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
+      }
+    },
+    {
+      "id": "arithmetic-005",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-005.png",
+      "answer": "35+9",
+      "fill": "44",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 37,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "arithmetic-006",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-006.png",
+      "answer": "20-9",
+      "fill": "11",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.6
+      }
+    },
+    {
+      "id": "arithmetic-007",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-007.png",
+      "answer": "47x10",
+      "fill": "470",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 41,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.5
+      }
+    },
+    {
+      "id": "arithmetic-008",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-008.png",
+      "answer": "21÷3",
+      "fill": "7",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 37,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "arithmetic-009",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-009.png",
+      "answer": "9+5",
+      "fill": "14",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "arithmetic-010",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-010.png",
+      "answer": "15-9",
+      "fill": "6",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 36,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.9
+      }
+    },
+    {
+      "id": "arithmetic-011",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-011.png",
+      "answer": "32x9",
+      "fill": "288",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 38,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "arithmetic-012",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-012.png",
+      "answer": "108÷9",
+      "fill": "12",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.7
+      }
+    },
+    {
+      "id": "arithmetic-013",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-013.png",
+      "answer": "7+13",
+      "fill": "20",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 39,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "arithmetic-014",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-014.png",
+      "answer": "47-3",
+      "fill": "44",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 38,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "arithmetic-015",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-015.png",
+      "answer": "3x23",
+      "fill": "69",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 40,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.1
+      }
+    },
+    {
+      "id": "arithmetic-016",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-016.png",
+      "answer": "63÷7",
+      "fill": "9",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.3
+      }
+    },
+    {
+      "id": "arithmetic-017",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-017.png",
+      "answer": "2+25",
+      "fill": "27",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 41,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
+      }
+    },
+    {
+      "id": "arithmetic-018",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-018.png",
+      "answer": "25-10",
+      "fill": "15",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 36,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.5
+      }
+    },
+    {
+      "id": "arithmetic-019",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-019.png",
+      "answer": "25x19",
+      "fill": "475",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.7
+      }
+    },
+    {
+      "id": "arithmetic-020",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-020.png",
+      "answer": "21÷3",
+      "fill": "7",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 36,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "arithmetic-021",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-021.png",
+      "answer": "7+20",
+      "fill": "27",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.5
+      }
+    },
+    {
+      "id": "arithmetic-022",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-022.png",
+      "answer": "27-9",
+      "fill": "18",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "arithmetic-023",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-023.png",
+      "answer": "41x15",
+      "fill": "615",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 37,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.3
+      }
+    },
+    {
+      "id": "arithmetic-024",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-024.png",
+      "answer": "32÷8",
+      "fill": "4",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "arithmetic-025",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-025.png",
+      "answer": "40+20",
+      "fill": "60",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 34,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "arithmetic-026",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-026.png",
+      "answer": "30-29",
+      "fill": "1",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 36,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
+      }
+    },
+    {
+      "id": "arithmetic-027",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-027.png",
+      "answer": "21x7",
+      "fill": "147",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.1
+      }
+    },
+    {
+      "id": "arithmetic-028",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-028.png",
+      "answer": "60÷5",
+      "fill": "12",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "arithmetic-029",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-029.png",
+      "answer": "12+24",
+      "fill": "36",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 42,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.3
+      }
+    },
+    {
+      "id": "arithmetic-030",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-030.png",
+      "answer": "18-9",
+      "fill": "9",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 34,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.1
+      }
+    },
+    {
+      "id": "arithmetic-031",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-031.png",
+      "answer": "48x24",
+      "fill": "1152",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.4
+      }
+    },
+    {
+      "id": "arithmetic-032",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-032.png",
+      "answer": "20÷5",
+      "fill": "4",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 39,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.3
+      }
+    },
+    {
+      "id": "arithmetic-033",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-033.png",
+      "answer": "40+14",
+      "fill": "54",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 41,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.5
+      }
+    },
+    {
+      "id": "arithmetic-034",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-034.png",
+      "answer": "25-12",
+      "fill": "13",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 34,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.7
+      }
+    },
+    {
+      "id": "arithmetic-035",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-035.png",
+      "answer": "42x13",
+      "fill": "546",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 38,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
+      }
+    },
+    {
+      "id": "arithmetic-036",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-036.png",
+      "answer": "88÷8",
+      "fill": "11",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 38,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "arithmetic-037",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-037.png",
+      "answer": "31+5",
+      "fill": "36",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 40,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.5
+      }
+    },
+    {
+      "id": "arithmetic-038",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-038.png",
+      "answer": "33-24",
+      "fill": "9",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.9
+      }
+    },
+    {
+      "id": "arithmetic-039",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-039.png",
+      "answer": "10x12",
+      "fill": "120",
+      "generation": {
+        "fontFamily": "Arial",
+        "fontSizePx": 39,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
+      }
+    },
+    {
+      "id": "arithmetic-040",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-040.png",
+      "answer": "36÷9",
+      "fill": "4",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 42,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
+      }
+    },
+    {
+      "id": "arithmetic-041",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-041.png",
+      "answer": "16+27",
+      "fill": "43",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 41,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.4
+      }
+    },
+    {
+      "id": "arithmetic-042",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-042.png",
+      "answer": "15-9",
+      "fill": "6",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 34,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.4
+      }
+    },
+    {
+      "id": "arithmetic-043",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-043.png",
+      "answer": "15x24",
+      "fill": "360",
+      "generation": {
+        "fontFamily": "Courier New",
+        "fontSizePx": 42,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "arithmetic-044",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-044.png",
+      "answer": "6÷3",
+      "fill": "2",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 37,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.7
+      }
+    },
+    {
+      "id": "arithmetic-045",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-045.png",
+      "answer": "27+19",
+      "fill": "46",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 39,
+        "foreground": "#111827",
+        "background": "#ffffff",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "arithmetic-046",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-046.png",
+      "answer": "29-20",
+      "fill": "9",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 35,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.7
+      }
+    },
+    {
+      "id": "arithmetic-047",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-047.png",
+      "answer": "6x12",
+      "fill": "72",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 36,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 1,
+        "rotationDegrees": 0
+      }
+    },
+    {
+      "id": "arithmetic-048",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-048.png",
+      "answer": "32÷8",
+      "fill": "4",
+      "generation": {
+        "fontFamily": "Georgia",
+        "fontSizePx": 35,
+        "foreground": "#3f1d0b",
+        "background": "#fff7ed",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "arithmetic-049",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-049.png",
+      "answer": "29+21",
+      "fill": "50",
+      "generation": {
+        "fontFamily": "Helvetica",
+        "fontSizePx": 37,
+        "foreground": "#14261b",
+        "background": "#f0fdf4",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "arithmetic-050",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-050.png",
+      "answer": "23-8",
+      "fill": "15",
+      "generation": {
+        "fontFamily": "Verdana",
+        "fontSizePx": 35,
+        "foreground": "#172554",
+        "background": "#f8fafc",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.8
+      }
+    }
+  ]
+}
