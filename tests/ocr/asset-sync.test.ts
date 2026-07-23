@@ -16,3 +16,17 @@ it('validates a model-sized base64 blob without overflowing the stack', () => {
 
   expect(result.stderr).toContain('computed Git blob SHA-1');
 });
+
+it('rejects base64 with non-canonical pad bits', () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      resolve('tests/ocr/fixtures/noncanonical-base64-fetch.mjs'),
+      resolve('scripts/sync-third-party-assets.mjs'),
+    ],
+    { encoding: 'utf8', timeout: 30_000 },
+  );
+
+  expect(result.stderr).toContain('malformed base64 blob content');
+});

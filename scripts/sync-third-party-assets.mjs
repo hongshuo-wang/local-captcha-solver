@@ -19,6 +19,14 @@ const upstreamAssets = [
     size: 90_091,
     output: 'public/models/common_old.json',
   },
+  {
+    repo: 'microsoft/onnxruntime',
+    commit: 'a83fc4d58cb48eb68890dd689f94f28288cf2278',
+    path: 'ThirdPartyNotices.txt',
+    blob: '7b2bbdd2094d14e40338c7645b25a78ae8cd5364',
+    size: 326_866,
+    output: 'third_party/onnxruntime-ThirdPartyNotices.txt',
+  },
 ];
 
 const ortAssets = [
@@ -141,7 +149,12 @@ function decodeBase64(content, description) {
     }
   }
 
-  return Buffer.from(normalized, 'base64');
+  const bytes = Buffer.from(normalized, 'base64');
+  if (bytes.toString('base64') !== normalized) {
+    throw new Error(`${description}: malformed base64 blob content`);
+  }
+
+  return bytes;
 }
 
 function gitBlobSha(bytes) {

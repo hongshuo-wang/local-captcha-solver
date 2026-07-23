@@ -23,6 +23,11 @@ const assets = [
     path: 'public/ort/ort-wasm-simd-threaded.mjs',
     size: 20_321,
   },
+  {
+    path: 'third_party/onnxruntime-ThirdPartyNotices.txt',
+    size: 326_866,
+    gitBlobSha: '7b2bbdd2094d14e40338c7645b25a78ae8cd5364',
+  },
 ] as const;
 
 describe('pinned OCR assets', () => {
