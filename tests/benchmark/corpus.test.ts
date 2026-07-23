@@ -30,7 +30,7 @@ function generatedSample(category: BenchmarkCategory, index: number) {
 
 function generatedManifest() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     seed: 123,
     samples: (['digits', 'letters', 'alphanumeric', 'arithmetic'] as const).flatMap(
       (category) => Array.from({ length: 50 }, (_, index) => generatedSample(category, index)),
@@ -62,7 +62,7 @@ describe('parseGeneratedManifest', () => {
   });
 
   it.each([
-    ['schema version', (value: ReturnType<typeof generatedManifest>) => { value.schemaVersion = 2; }],
+    ['legacy schema version', (value: ReturnType<typeof generatedManifest>) => { value.schemaVersion = 1; }],
     ['sample count', (value: ReturnType<typeof generatedManifest>) => { value.samples.pop(); }],
     ['category distribution', (value: ReturnType<typeof generatedManifest>) => { value.samples[0] = generatedSample('letters', 0); }],
     ['image path', (value: ReturnType<typeof generatedManifest>) => { value.samples[0].image = '../escape.png'; }],

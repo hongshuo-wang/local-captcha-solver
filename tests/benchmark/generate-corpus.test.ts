@@ -59,11 +59,11 @@ describe('generateCorpus', () => {
     expect((await readdir(path.join(root, 'benchmark'))).some((name) => /stage|backup/.test(name))).toBe(false);
   });
 
-  it('generates exact categories, complete alphabets, contrast bands, and integral division', async () => {
+  it('generates a version 2 manifest with exact categories, complete alphabets, contrast bands, and integral division', async () => {
     const root = await temporaryRoot();
     const manifest = await generateCorpus(root);
 
-    expect(manifest.schemaVersion).toBe(1);
+    expect(manifest.schemaVersion).toBe(2);
     expect(manifest.samples).toHaveLength(200);
     for (const category of ['digits', 'letters', 'alphanumeric', 'arithmetic'] as const) {
       expect(manifest.samples.filter((sample) => sample.category === category)).toHaveLength(50);
@@ -98,5 +98,16 @@ describe('generateCorpus', () => {
       const [left, right] = sample.answer.split('÷').map(Number);
       return Number.isInteger(left / right) && String(left / right) === sample.fill;
     })).toBe(true);
+
+    const arithmetic = manifest.samples.filter((sample) => sample.category === 'arithmetic');
+    for (const operator of ['+', '-', 'x', '÷']) {
+      const operatorSamples = arithmetic.filter((sample) => sample.answer.includes(operator));
+      expect(operatorSamples.length).toBeGreaterThanOrEqual(12);
+      expect(new Set(operatorSamples.map((sample) => sample.generation.fontFamily)).size).toBeGreaterThanOrEqual(3);
+      expect(new Set(operatorSamples.map((sample) => sample.generation.contrastBand))).toEqual(
+        new Set(['4.5:1', '7:1', '12:1', '18:1']),
+      );
+      expect(new Set(operatorSamples.map((sample) => sample.generation.interferenceLines))).toEqual(new Set([1, 2]));
+    }
   });
 });

@@ -27,7 +27,7 @@ export interface CorpusSample {
 }
 
 export interface GeneratedCorpusManifest {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly seed: number;
   readonly samples: readonly CorpusSample[];
 }
@@ -54,6 +54,37 @@ const PALETTES = [
   { band: '12:1', background: '#ffffff', foreground: '#333333', line: '#707070' },
   { band: '18:1', background: '#ffffff', foreground: '#111111', line: '#737373' },
 ] as const;
+const FONT_SIZES = [34, 35, 36, 37, 38, 39, 40, 41, 42] as const;
+const ROTATIONS = Array.from(
+  { length: 21 },
+  (_, index) => Math.round((-2 + index / 5) * 10) / 10,
+);
+const ARITHMETIC_OPERATORS = ['+', '-', 'x', '÷'] as const;
+const CATEGORY_SEED_SALTS = {
+  digits: 0x44544753,
+  letters: 0x4c545253,
+  alphanumeric: 0x414c5048,
+  arithmetic: 0x41524954,
+} as const;
+const ASSIGNMENT_SEED_SALTS = {
+  operator: 0x4f504552,
+  font: 0x464f4e54,
+  fontSize: 0x53495a45,
+  palette: 0x50414c45,
+  interferenceLines: 0x4c494e45,
+  rotation: 0x524f5441,
+} as const;
+const MAX_ARITHMETIC_STYLE_ATTEMPTS = 1000;
+
+type ArithmeticOperator = typeof ARITHMETIC_OPERATORS[number];
+
+interface StyleAssignments {
+  readonly fonts: readonly (typeof FONTS)[number][];
+  readonly fontSizes: readonly number[];
+  readonly palettes: readonly (typeof PALETTES)[number][];
+  readonly interferenceLines: readonly (1 | 2)[];
+  readonly rotations: readonly number[];
+}
 
 function mulberry32(seed: number): () => number {
   let value = seed >>> 0;
@@ -79,6 +110,73 @@ function shuffle<T>(random: () => number, values: readonly T[]): T[] {
   return shuffled;
 }
 
+function derivedSeed(...values: readonly number[]): number {
+  let seed = SEED;
+  for (const value of values) {
+    seed = Math.imul(seed ^ value, 0x45d9f3b) >>> 0;
+    seed ^= seed >>> 16;
+  }
+  return seed >>> 0;
+}
+
+function balancedSequence<T>(values: readonly T[], seed: number): T[] {
+  const random = mulberry32(seed);
+  const balanced: T[] = [];
+  while (balanced.length < SAMPLE_COUNT) {
+    balanced.push(...shuffle(random, values));
+  }
+  return shuffle(random, balanced.slice(0, SAMPLE_COUNT));
+}
+
+function styleAssignments(category: BenchmarkCategory, attempt: number): StyleAssignments {
+  const categorySalt = CATEGORY_SEED_SALTS[category];
+  return {
+    fonts: balancedSequence(
+      FONTS,
+      derivedSeed(categorySalt, ASSIGNMENT_SEED_SALTS.font, attempt),
+    ),
+    fontSizes: balancedSequence(
+      FONT_SIZES,
+      derivedSeed(categorySalt, ASSIGNMENT_SEED_SALTS.fontSize, attempt),
+    ),
+    palettes: balancedSequence(
+      PALETTES,
+      derivedSeed(categorySalt, ASSIGNMENT_SEED_SALTS.palette, attempt),
+    ),
+    interferenceLines: balancedSequence(
+      [1, 2] as const,
+      derivedSeed(categorySalt, ASSIGNMENT_SEED_SALTS.interferenceLines, attempt),
+    ),
+    rotations: balancedSequence(
+      ROTATIONS,
+      derivedSeed(categorySalt, ASSIGNMENT_SEED_SALTS.rotation, attempt),
+    ),
+  };
+}
+
+function coversArithmeticStyles(
+  operators: readonly ArithmeticOperator[],
+  styles: StyleAssignments,
+): boolean {
+  return ARITHMETIC_OPERATORS.every((operator) => {
+    const indices = operators.flatMap((assignedOperator, index) => (
+      assignedOperator === operator ? [index] : []
+    ));
+    return indices.length >= 12
+      && new Set(indices.map((index) => styles.fonts[index].family)).size >= 3
+      && new Set(indices.map((index) => styles.palettes[index].band)).size === PALETTES.length
+      && new Set(indices.map((index) => styles.interferenceLines[index])).size === 2;
+  });
+}
+
+function arithmeticStyleAssignments(operators: readonly ArithmeticOperator[]): StyleAssignments {
+  for (let attempt = 0; attempt < MAX_ARITHMETIC_STYLE_ATTEMPTS; attempt += 1) {
+    const styles = styleAssignments('arithmetic', attempt);
+    if (coversArithmeticStyles(operators, styles)) return styles;
+  }
+  throw new Error(`Could not satisfy arithmetic style coverage after ${MAX_ARITHMETIC_STYLE_ATTEMPTS} attempts`);
+}
+
 function coveredAnswers(random: () => number, alphabet: string): readonly string[] {
   const lengths = Array.from({ length: SAMPLE_COUNT }, (_, index) => 4 + index % 3);
   const required = lengths.reduce((sum, length) => sum + length, 0);
@@ -94,8 +192,7 @@ function coveredAnswers(random: () => number, alphabet: string): readonly string
   });
 }
 
-function arithmetic(random: () => number, index: number): { answer: string; fill: string } {
-  const operator = ['+', '-', 'x', '÷'][index % 4];
+function arithmetic(random: () => number, operator: ArithmeticOperator): { answer: string; fill: string } {
   if (operator === '÷') {
     const divisor = integer(random, 2, 9);
     const quotient = integer(random, 2, 12);
@@ -136,18 +233,29 @@ export async function generateCorpus(root: string): Promise<GeneratedCorpusManif
     letters: coveredAnswers(random, TARGET_ALPHABETS.letters),
     alphanumeric: coveredAnswers(random, TARGET_ALPHABETS.alphanumeric),
   };
+  const arithmeticOperators = balancedSequence(
+    ARITHMETIC_OPERATORS,
+    derivedSeed(CATEGORY_SEED_SALTS.arithmetic, ASSIGNMENT_SEED_SALTS.operator),
+  );
+  const stylesByCategory = {
+    digits: styleAssignments('digits', 0),
+    letters: styleAssignments('letters', 0),
+    alphanumeric: styleAssignments('alphanumeric', 0),
+    arithmetic: arithmeticStyleAssignments(arithmeticOperators),
+  } as const;
   const samples: CorpusSample[] = [];
   for (const category of ['digits', 'letters', 'alphanumeric', 'arithmetic'] as const) {
+    const styles = stylesByCategory[category];
     for (let index = 0; index < SAMPLE_COUNT; index += 1) {
       const id = `${category}-${String(index + 1).padStart(3, '0')}`;
       const answerData = category === 'arithmetic'
-        ? arithmetic(random, index)
+        ? arithmetic(random, arithmeticOperators[index])
         : { answer: plainAnswers[category][index] };
-      const font = FONTS[index % FONTS.length];
-      const fontSizePx = 34 + index % 9;
-      const palette = PALETTES[index % PALETTES.length];
-      const interferenceLines = (1 + index % 2) as 1 | 2;
-      const rotationDegrees = Math.round((-2 + (index % 21) / 5) * 10) / 10;
+      const font = styles.fonts[index];
+      const fontSizePx = styles.fontSizes[index];
+      const palette = styles.palettes[index];
+      const interferenceLines = styles.interferenceLines[index];
+      const rotationDegrees = styles.rotations[index];
       const canvas = createCanvas(180, 64);
       const context = canvas.getContext('2d');
 
@@ -194,7 +302,7 @@ export async function generateCorpus(root: string): Promise<GeneratedCorpusManif
     }
   }
 
-  const manifest: GeneratedCorpusManifest = { schemaVersion: 1, seed: SEED, samples };
+  const manifest: GeneratedCorpusManifest = { schemaVersion: 2, seed: SEED, samples };
   await writeFile(stagedManifest, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
   await mkdir(path.dirname(outputDirectory), { recursive: true });
   await replaceAtomically([

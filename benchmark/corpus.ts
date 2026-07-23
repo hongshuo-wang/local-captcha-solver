@@ -25,7 +25,7 @@ export interface CorpusSample {
 }
 
 export interface GeneratedCorpusManifest {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly seed: number;
   readonly samples: readonly (CorpusSample & { readonly generation: GenerationMetadata })[];
 }
@@ -140,7 +140,7 @@ function parseGeneratedSample(value: unknown): CorpusSample & { readonly generat
 export function parseGeneratedManifest(value: unknown): GeneratedCorpusManifest {
   const manifest = record(value, 'generated manifest');
   exactKeys(manifest, ['schemaVersion', 'seed', 'samples'], [], 'generated manifest');
-  if (manifest.schemaVersion !== 1) throw new TypeError('Generated schemaVersion must be 1');
+  if (manifest.schemaVersion !== 2) throw new TypeError('Generated schemaVersion must be 2');
   if (!Number.isSafeInteger(manifest.seed) || (manifest.seed as number) < 0) throw new TypeError('Generated seed must be a nonnegative integer');
   if (!Array.isArray(manifest.samples) || manifest.samples.length !== 200) {
     throw new RangeError('Generated manifest must contain exactly 200 samples');
@@ -154,7 +154,7 @@ export function parseGeneratedManifest(value: unknown): GeneratedCorpusManifest 
   if (new Set(samples.map((sample) => sample.id)).size !== samples.length) {
     throw new TypeError('Generated sample ids must be unique');
   }
-  return { schemaVersion: 1, seed: manifest.seed as number, samples };
+  return { schemaVersion: 2, seed: manifest.seed as number, samples };
 }
 
 function parseRealSample(value: unknown): RealCorpusManifest['samples'][number] {

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "seed": 1279480653,
   "samples": [
     {
@@ -8,14 +8,14 @@
       "image": "benchmark/fixtures/generated/digits-001.png",
       "answer": "8263",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": -2
+        "rotationDegrees": -1
       }
     },
     {
@@ -24,14 +24,14 @@
       "image": "benchmark/fixtures/generated/digits-002.png",
       "answer": "14975",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -46,8 +46,8 @@
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "interferenceLines": 2,
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -56,14 +56,14 @@
       "image": "benchmark/fixtures/generated/digits-004.png",
       "answer": "9150",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1
       }
     },
     {
@@ -74,12 +74,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
-        "foreground": "#767676",
+        "fontSizePx": 40,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -90,12 +90,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
-        "foreground": "#595959",
+        "fontSizePx": 36,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -104,14 +104,14 @@
       "image": "benchmark/fixtures/generated/digits-007.png",
       "answer": "7953",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
@@ -120,14 +120,14 @@
       "image": "benchmark/fixtures/generated/digits-008.png",
       "answer": "06842",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -136,14 +136,14 @@
       "image": "benchmark/fixtures/generated/digits-009.png",
       "answer": "121806",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -159,7 +159,7 @@
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -168,13 +168,13 @@
       "image": "benchmark/fixtures/generated/digits-011.png",
       "answer": "47025",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
         "rotationDegrees": 0
       }
     },
@@ -184,14 +184,14 @@
       "image": "benchmark/fixtures/generated/digits-012.png",
       "answer": "146398",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -202,12 +202,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
-        "foreground": "#767676",
+        "fontSizePx": 36,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -218,12 +218,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
-        "foreground": "#595959",
+        "fontSizePx": 39,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.6
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -232,14 +232,14 @@
       "image": "benchmark/fixtures/generated/digits-015.png",
       "answer": "527341",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 39,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -248,14 +248,14 @@
       "image": "benchmark/fixtures/generated/digits-016.png",
       "answer": "0586",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 40,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1
+        "rotationDegrees": 0
       }
     },
     {
@@ -264,14 +264,14 @@
       "image": "benchmark/fixtures/generated/digits-017.png",
       "answer": "99067",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 41,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -282,12 +282,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 42,
-        "foreground": "#595959",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -296,14 +296,14 @@
       "image": "benchmark/fixtures/generated/digits-019.png",
       "answer": "6375",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 34,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -312,14 +312,14 @@
       "image": "benchmark/fixtures/generated/digits-020.png",
       "answer": "40189",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 35,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.8
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -328,14 +328,14 @@
       "image": "benchmark/fixtures/generated/digits-021.png",
       "answer": "262513",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 36,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 2
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -344,14 +344,14 @@
       "image": "benchmark/fixtures/generated/digits-022.png",
       "answer": "7094",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 37,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": -2
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -360,14 +360,14 @@
       "image": "benchmark/fixtures/generated/digits-023.png",
       "answer": "88231",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.8
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -378,12 +378,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 39,
-        "foreground": "#111111",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.6
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -392,14 +392,14 @@
       "image": "benchmark/fixtures/generated/digits-025.png",
       "answer": "9125",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 40,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.4
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -408,14 +408,14 @@
       "image": "benchmark/fixtures/generated/digits-026.png",
       "answer": "84037",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 41,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "interferenceLines": 1,
+        "rotationDegrees": -2
       }
     },
     {
@@ -424,14 +424,14 @@
       "image": "benchmark/fixtures/generated/digits-027.png",
       "answer": "659376",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 42,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -440,14 +440,14 @@
       "image": "benchmark/fixtures/generated/digits-028.png",
       "answer": "8120",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 37,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -456,14 +456,14 @@
       "image": "benchmark/fixtures/generated/digits-029.png",
       "answer": "48702",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 35,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -2
       }
     },
     {
@@ -472,14 +472,14 @@
       "image": "benchmark/fixtures/generated/digits-030.png",
       "answer": "619354",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 36,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.4
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -488,13 +488,13 @@
       "image": "benchmark/fixtures/generated/digits-031.png",
       "answer": "5026",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 37,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
         "rotationDegrees": -0.2
       }
     },
@@ -504,14 +504,14 @@
       "image": "benchmark/fixtures/generated/digits-032.png",
       "answer": "13978",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 38,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -520,14 +520,14 @@
       "image": "benchmark/fixtures/generated/digits-033.png",
       "answer": "495083",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 39,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -536,14 +536,14 @@
       "image": "benchmark/fixtures/generated/digits-034.png",
       "answer": "2461",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 40,
-        "foreground": "#595959",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.4
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -554,12 +554,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 41,
+        "fontSizePx": 37,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "interferenceLines": 2,
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -571,11 +571,11 @@
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 42,
-        "foreground": "#111111",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 1
       }
     },
     {
@@ -584,14 +584,14 @@
       "image": "benchmark/fixtures/generated/digits-037.png",
       "answer": "2103",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -600,14 +600,14 @@
       "image": "benchmark/fixtures/generated/digits-038.png",
       "answer": "45679",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 35,
-        "foreground": "#595959",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.2
+        "rotationDegrees": 1
       }
     },
     {
@@ -616,14 +616,14 @@
       "image": "benchmark/fixtures/generated/digits-039.png",
       "answer": "831974",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.4
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -632,14 +632,14 @@
       "image": "benchmark/fixtures/generated/digits-040.png",
       "answer": "8652",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "interferenceLines": 1,
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -648,9 +648,9 @@
       "image": "benchmark/fixtures/generated/digits-041.png",
       "answer": "01904",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
@@ -664,14 +664,14 @@
       "image": "benchmark/fixtures/generated/digits-042.png",
       "answer": "725683",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": 2
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -680,14 +680,14 @@
       "image": "benchmark/fixtures/generated/digits-043.png",
       "answer": "6502",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -2
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -696,14 +696,14 @@
       "image": "benchmark/fixtures/generated/digits-044.png",
       "answer": "19843",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -712,14 +712,14 @@
       "image": "benchmark/fixtures/generated/digits-045.png",
       "answer": "786230",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 42,
-        "foreground": "#767676",
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "rotationDegrees": 2
       }
     },
     {
@@ -728,14 +728,14 @@
       "image": "benchmark/fixtures/generated/digits-046.png",
       "answer": "4719",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -744,14 +744,14 @@
       "image": "benchmark/fixtures/generated/digits-047.png",
       "answer": "51896",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "rotationDegrees": 2
       }
     },
     {
@@ -760,14 +760,14 @@
       "image": "benchmark/fixtures/generated/digits-048.png",
       "answer": "230547",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -776,13 +776,13 @@
       "image": "benchmark/fixtures/generated/digits-049.png",
       "answer": "7243",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
+        "interferenceLines": 2,
         "rotationDegrees": -0.8
       }
     },
@@ -792,14 +792,14 @@
       "image": "benchmark/fixtures/generated/digits-050.png",
       "answer": "16059",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 38,
-        "foreground": "#595959",
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -808,14 +808,14 @@
       "image": "benchmark/fixtures/generated/letters-001.png",
       "answer": "lJXa",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -2
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
@@ -824,14 +824,14 @@
       "image": "benchmark/fixtures/generated/letters-002.png",
       "answer": "ZjgAH",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -842,12 +842,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
-        "foreground": "#333333",
+        "fontSizePx": 42,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -856,13 +856,13 @@
       "image": "benchmark/fixtures/generated/letters-004.png",
       "answer": "bTmF",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
         "rotationDegrees": -1.4
       }
     },
@@ -872,14 +872,14 @@
       "image": "benchmark/fixtures/generated/letters-005.png",
       "answer": "ohuwP",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
@@ -888,14 +888,14 @@
       "image": "benchmark/fixtures/generated/letters-006.png",
       "answer": "WIcMpY",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -904,14 +904,14 @@
       "image": "benchmark/fixtures/generated/letters-007.png",
       "answer": "QBqN",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 40,
-        "foreground": "#333333",
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "rotationDegrees": 0
       }
     },
     {
@@ -920,14 +920,14 @@
       "image": "benchmark/fixtures/generated/letters-008.png",
       "answer": "sDRtK",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -938,12 +938,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
+        "fontSizePx": 36,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -952,14 +952,14 @@
       "image": "benchmark/fixtures/generated/letters-010.png",
       "answer": "rUOx",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "interferenceLines": 1,
+        "rotationDegrees": 1
       }
     },
     {
@@ -970,12 +970,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontSizePx": 34,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -986,12 +986,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
-        "foreground": "#111111",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -1002,12 +1002,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
+        "fontSizePx": 35,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
@@ -1016,14 +1016,14 @@
       "image": "benchmark/fixtures/generated/letters-014.png",
       "answer": "NDgiE",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.6
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -1032,14 +1032,14 @@
       "image": "benchmark/fixtures/generated/letters-015.png",
       "answer": "sAbqvI",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 39,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "interferenceLines": 2,
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -1048,14 +1048,14 @@
       "image": "benchmark/fixtures/generated/letters-016.png",
       "answer": "LPed",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 40,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1
       }
     },
     {
@@ -1064,14 +1064,14 @@
       "image": "benchmark/fixtures/generated/letters-017.png",
       "answer": "pnTRo",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 41,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -1080,14 +1080,14 @@
       "image": "benchmark/fixtures/generated/letters-018.png",
       "answer": "QjWxmB",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 42,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -1096,14 +1096,14 @@
       "image": "benchmark/fixtures/generated/letters-019.png",
       "answer": "CVtu",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "rotationDegrees": 1
       }
     },
     {
@@ -1112,14 +1112,14 @@
       "image": "benchmark/fixtures/generated/letters-020.png",
       "answer": "KXafl",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 35,
-        "foreground": "#111111",
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.8
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -1135,7 +1135,7 @@
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 2
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -1144,14 +1144,14 @@
       "image": "benchmark/fixtures/generated/letters-022.png",
       "answer": "SRWz",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 37,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -1160,14 +1160,14 @@
       "image": "benchmark/fixtures/generated/letters-023.png",
       "answer": "bMuIH",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.8
+        "interferenceLines": 2,
+        "rotationDegrees": 0
       }
     },
     {
@@ -1176,14 +1176,14 @@
       "image": "benchmark/fixtures/generated/letters-024.png",
       "answer": "epZtYC",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 39,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.6
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -1192,14 +1192,14 @@
       "image": "benchmark/fixtures/generated/letters-025.png",
       "answer": "EmUh",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 40,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.4
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -1208,14 +1208,14 @@
       "image": "benchmark/fixtures/generated/letters-026.png",
       "answer": "TLvwO",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 41,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -1224,14 +1224,14 @@
       "image": "benchmark/fixtures/generated/letters-027.png",
       "answer": "QXVsok",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 42,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1
+        "rotationDegrees": 0
       }
     },
     {
@@ -1240,9 +1240,9 @@
       "image": "benchmark/fixtures/generated/letters-028.png",
       "answer": "yfFG",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
@@ -1259,11 +1259,11 @@
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 35,
-        "foreground": "#767676",
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.6
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -1272,8 +1272,8 @@
       "image": "benchmark/fixtures/generated/letters-030.png",
       "answer": "BPglnq",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 36,
         "foreground": "#595959",
         "background": "#ffffff",
@@ -1288,14 +1288,14 @@
       "image": "benchmark/fixtures/generated/letters-031.png",
       "answer": "xJDr",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 37,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -1304,14 +1304,14 @@
       "image": "benchmark/fixtures/generated/letters-032.png",
       "answer": "AcsuR",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 38,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -1320,14 +1320,14 @@
       "image": "benchmark/fixtures/generated/letters-033.png",
       "answer": "KFDOkj",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 39,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -1338,12 +1338,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 40,
-        "foreground": "#595959",
+        "fontSizePx": 37,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.4
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -1352,14 +1352,14 @@
       "image": "benchmark/fixtures/generated/letters-035.png",
       "answer": "TJoeX",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 41,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "rotationDegrees": -2
       }
     },
     {
@@ -1368,14 +1368,14 @@
       "image": "benchmark/fixtures/generated/letters-036.png",
       "answer": "LbfpUx",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 42,
-        "foreground": "#111111",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -1384,14 +1384,14 @@
       "image": "benchmark/fixtures/generated/letters-037.png",
       "answer": "BSdA",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -1400,14 +1400,14 @@
       "image": "benchmark/fixtures/generated/letters-038.png",
       "answer": "rmnHv",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.2
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -1416,14 +1416,14 @@
       "image": "benchmark/fixtures/generated/letters-039.png",
       "answer": "cENhqw",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.4
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -1432,14 +1432,14 @@
       "image": "benchmark/fixtures/generated/letters-040.png",
       "answer": "tyzP",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 37,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "rotationDegrees": -2
       }
     },
     {
@@ -1448,14 +1448,14 @@
       "image": "benchmark/fixtures/generated/letters-041.png",
       "answer": "iCgIV",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.8
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
@@ -1464,14 +1464,14 @@
       "image": "benchmark/fixtures/generated/letters-042.png",
       "answer": "YlZaie",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": 2
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -1482,12 +1482,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
-        "foreground": "#333333",
+        "fontSizePx": 41,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -2
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -1498,12 +1498,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
+        "fontSizePx": 38,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -1512,14 +1512,14 @@
       "image": "benchmark/fixtures/generated/letters-045.png",
       "answer": "QfdHku",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -1528,14 +1528,14 @@
       "image": "benchmark/fixtures/generated/letters-046.png",
       "answer": "xtWF",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 34,
-        "foreground": "#595959",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -1546,12 +1546,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontSizePx": 42,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -1560,14 +1560,14 @@
       "image": "benchmark/fixtures/generated/letters-048.png",
       "answer": "jCrvqy",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -1576,14 +1576,14 @@
       "image": "benchmark/fixtures/generated/letters-049.png",
       "answer": "gEXR",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -1592,14 +1592,14 @@
       "image": "benchmark/fixtures/generated/letters-050.png",
       "answer": "zpGLO",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -1615,7 +1615,7 @@
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -2
+        "rotationDegrees": 0
       }
     },
     {
@@ -1624,14 +1624,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-002.png",
       "answer": "4A9nY",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -1640,14 +1640,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-003.png",
       "answer": "tHPfgZ",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 36,
-        "foreground": "#333333",
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -1656,14 +1656,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-004.png",
       "answer": "TyIm",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -1674,12 +1674,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
-        "foreground": "#767676",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "rotationDegrees": 1
       }
     },
     {
@@ -1688,14 +1688,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-006.png",
       "answer": "SDXVEz",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -1704,14 +1704,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-007.png",
       "answer": "lwRj",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -1720,14 +1720,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-008.png",
       "answer": "bcvik",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -2
       }
     },
     {
@@ -1736,14 +1736,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-009.png",
       "answer": "seFLNo",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -2
       }
     },
     {
@@ -1754,12 +1754,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
-        "foreground": "#595959",
+        "fontSizePx": 40,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -1770,12 +1770,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontSizePx": 41,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
@@ -1786,12 +1786,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
-        "foreground": "#111111",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -1802,12 +1802,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
-        "foreground": "#767676",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -1816,14 +1816,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-014.png",
       "answer": "EegMO",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.6
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 2
       }
     },
     {
@@ -1832,14 +1832,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-015.png",
       "answer": "dhu7SL",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 39,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -1848,14 +1848,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-016.png",
       "answer": "la5Z",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 40,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -1864,14 +1864,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-017.png",
       "answer": "K468p",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 41,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.8
       }
     },
     {
@@ -1880,14 +1880,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-018.png",
       "answer": "FTwQPq",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 42,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -1896,14 +1896,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-019.png",
       "answer": "iNrb",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 34,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -1912,14 +1912,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-020.png",
       "answer": "JBGAX",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 35,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.8
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -1930,12 +1930,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 36,
+        "fontSizePx": 37,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 2
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -1946,12 +1946,12 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 37,
+        "fontSizePx": 38,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -2
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -1962,12 +1962,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 38,
-        "foreground": "#333333",
+        "fontSizePx": 41,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.8
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -1976,14 +1976,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-024.png",
       "answer": "fUm3jH",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 39,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.6
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -1994,12 +1994,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 40,
-        "foreground": "#767676",
+        "fontSizePx": 39,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.4
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -2008,12 +2008,12 @@
       "image": "benchmark/fixtures/generated/alphanumeric-026.png",
       "answer": "JPu8G",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 41,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
         "rotationDegrees": -1.2
       }
@@ -2024,14 +2024,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-027.png",
       "answer": "LO6rCE",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 42,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
@@ -2042,12 +2042,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 34,
+        "fontSizePx": 39,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "interferenceLines": 1,
+        "rotationDegrees": 1
       }
     },
     {
@@ -2056,14 +2056,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-029.png",
       "answer": "lgWqS",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 35,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.6
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -2072,14 +2072,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-030.png",
       "answer": "VRBAFc",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 36,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.4
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
       }
     },
     {
@@ -2090,12 +2090,12 @@
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 37,
-        "foreground": "#333333",
+        "fontSizePx": 41,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
@@ -2104,14 +2104,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-032.png",
       "answer": "TQay1",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 38,
-        "foreground": "#111111",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -2120,14 +2120,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-033.png",
       "answer": "YHbtw0",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 39,
-        "foreground": "#767676",
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
       }
     },
     {
@@ -2136,14 +2136,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-034.png",
       "answer": "ovf3",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 40,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 35,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.4
+        "rotationDegrees": -1.4
       }
     },
     {
@@ -2152,14 +2152,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-035.png",
       "answer": "eI7sh",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 41,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -2168,14 +2168,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-036.png",
       "answer": "kj9M2i",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 42,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 0
       }
     },
     {
@@ -2186,12 +2186,12 @@
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
+        "fontSizePx": 38,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1
+        "rotationDegrees": -0.2
       }
     },
     {
@@ -2200,14 +2200,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-038.png",
       "answer": "DmOMN",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
       }
     },
     {
@@ -2216,14 +2216,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-039.png",
       "answer": "UmP3Y6",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.4
+        "rotationDegrees": -1.8
       }
     },
     {
@@ -2234,12 +2234,12 @@
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
-        "foreground": "#111111",
+        "fontSizePx": 35,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -2248,14 +2248,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-041.png",
       "answer": "siLzp",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.8
+        "rotationDegrees": 1.6
       }
     },
     {
@@ -2264,14 +2264,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-042.png",
       "answer": "dlWfCw",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 2
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -2280,14 +2280,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-043.png",
       "answer": "THVZ",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 40,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -2
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
@@ -2296,14 +2296,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-044.png",
       "answer": "hxRSn",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
@@ -2312,14 +2312,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-045.png",
       "answer": "oqAFt1",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.8
       }
     },
     {
@@ -2328,14 +2328,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-046.png",
       "answer": "Bu8k",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "rotationDegrees": 1.2
       }
     },
     {
@@ -2344,14 +2344,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-047.png",
       "answer": "brI42",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -2360,14 +2360,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-048.png",
       "answer": "Qja0vG",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 36,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -2376,14 +2376,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-049.png",
       "answer": "E5yD",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.4
       }
     },
     {
@@ -2392,14 +2392,14 @@
       "image": "benchmark/fixtures/generated/alphanumeric-050.png",
       "answer": "9J7gk",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": 0.6
       }
     },
     {
@@ -2409,65 +2409,65 @@
       "answer": "12+4",
       "fill": "16",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "7:1",
         "interferenceLines": 1,
-        "rotationDegrees": -2
+        "rotationDegrees": -1
       }
     },
     {
       "id": "arithmetic-002",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-002.png",
-      "answer": "33-15",
-      "fill": "18",
+      "answer": "33x15",
+      "fill": "495",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "arithmetic-003",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-003.png",
-      "answer": "7x25",
-      "fill": "175",
+      "answer": "25-7",
+      "fill": "18",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "arithmetic-004",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-004.png",
-      "answer": "54÷6",
-      "fill": "9",
+      "answer": "14x6",
+      "fill": "84",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 37,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "interferenceLines": 1,
+        "rotationDegrees": -2
       }
     },
     {
@@ -2477,14 +2477,14 @@
       "answer": "15+23",
       "fill": "38",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "rotationDegrees": 1.4
       }
     },
     {
@@ -2496,105 +2496,122 @@
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
-        "foreground": "#595959",
+        "fontSizePx": 34,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "arithmetic-007",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-007.png",
-      "answer": "12x22",
-      "fill": "264",
+      "answer": "22-12",
+      "fill": "10",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "arithmetic-008",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-008.png",
-      "answer": "8÷2",
-      "fill": "4",
+      "answer": "16x17",
+      "fill": "272",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "12:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -2
       }
     },
     {
       "id": "arithmetic-009",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-009.png",
-      "answer": "45+16",
-      "fill": "61",
+      "answer": "19-8",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
       }
     },
     {
       "id": "arithmetic-010",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-010.png",
-      "answer": "45-27",
-      "fill": "18",
+      "answer": "27-8",
+      "fill": "19",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "arithmetic-011",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-011.png",
-      "answer": "42x5",
-      "fill": "210",
+      "answer": "3x26",
+      "fill": "78",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "arithmetic-012",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-012.png",
-      "answer": "80÷8",
-      "fill": "10",
+      "answer": "22÷2",
+      "fill": "11",
+      "generation": {
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "arithmetic-013",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-013.png",
+      "answer": "45-25",
+      "fill": "20",
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
@@ -2602,121 +2619,138 @@
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.2
-      }
-    },
-    {
-      "id": "arithmetic-013",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-013.png",
-      "answer": "23+10",
-      "fill": "33",
-      "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
-        "foreground": "#767676",
-        "background": "#ffffff",
-        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "arithmetic-014",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-014.png",
-      "answer": "29-12",
-      "fill": "17",
+      "answer": "20+11",
+      "fill": "31",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.6
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "arithmetic-015",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-015.png",
-      "answer": "36x27",
-      "fill": "972",
+      "answer": "50÷5",
+      "fill": "10",
       "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 39,
-        "foreground": "#333333",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1
       }
     },
     {
       "id": "arithmetic-016",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-016.png",
-      "answer": "10÷5",
-      "fill": "2",
+      "answer": "14+13",
+      "fill": "27",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 40,
-        "foreground": "#111111",
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "arithmetic-017",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-017.png",
-      "answer": "31+4",
-      "fill": "35",
+      "answer": "77÷7",
+      "fill": "11",
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 41,
-        "foreground": "#767676",
+        "fontSizePx": 42,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "arithmetic-018",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-018.png",
-      "answer": "20-15",
-      "fill": "5",
+      "answer": "2-2",
+      "fill": "0",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 42,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 2
       }
     },
     {
       "id": "arithmetic-019",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-019.png",
-      "answer": "20x26",
-      "fill": "520",
+      "answer": "72÷6",
+      "fill": "12",
+      "generation": {
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
+      }
+    },
+    {
+      "id": "arithmetic-020",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-020.png",
+      "answer": "38x27",
+      "fill": "1026",
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "arithmetic-021",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-021.png",
+      "answer": "72÷6",
+      "fill": "12",
+      "generation": {
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 34,
         "foreground": "#333333",
         "background": "#ffffff",
@@ -2726,45 +2760,45 @@
       }
     },
     {
-      "id": "arithmetic-020",
+      "id": "arithmetic-022",
       "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-020.png",
-      "answer": "4÷2",
-      "fill": "2",
+      "image": "benchmark/fixtures/generated/arithmetic-022.png",
+      "answer": "9+8",
+      "fill": "17",
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 35,
-        "foreground": "#111111",
-        "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.8
-      }
-    },
-    {
-      "id": "arithmetic-021",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-021.png",
-      "answer": "10+13",
-      "fill": "23",
-      "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 36,
+        "fontSizePx": 41,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 2
+        "rotationDegrees": 1.8
       }
     },
     {
-      "id": "arithmetic-022",
+      "id": "arithmetic-023",
       "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-022.png",
-      "answer": "38-27",
-      "fill": "11",
+      "image": "benchmark/fixtures/generated/arithmetic-023.png",
+      "answer": "11+13",
+      "fill": "24",
+      "generation": {
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "arithmetic-024",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-024.png",
+      "answer": "20+22",
+      "fill": "42",
       "generation": {
         "fontFamily": "Benchmark Serif",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
@@ -2772,58 +2806,24 @@
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -2
-      }
-    },
-    {
-      "id": "arithmetic-023",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-023.png",
-      "answer": "34x2",
-      "fill": "68",
-      "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 38,
-        "foreground": "#333333",
-        "background": "#ffffff",
-        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.8
-      }
-    },
-    {
-      "id": "arithmetic-024",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-024.png",
-      "answer": "22÷2",
-      "fill": "11",
-      "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 39,
-        "foreground": "#111111",
-        "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.6
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "arithmetic-025",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-025.png",
-      "answer": "8+5",
-      "fill": "13",
+      "answer": "10÷5",
+      "fill": "2",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 40,
-        "foreground": "#767676",
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
         "rotationDegrees": -1.4
       }
     },
@@ -2831,67 +2831,67 @@
       "id": "arithmetic-026",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-026.png",
-      "answer": "23-3",
-      "fill": "20",
+      "answer": "56÷8",
+      "fill": "7",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 41,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "arithmetic-027",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-027.png",
-      "answer": "26x9",
-      "fill": "234",
+      "answer": "48x17",
+      "fill": "816",
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 42,
-        "foreground": "#333333",
+        "fontSizePx": 35,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "18:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "arithmetic-028",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-028.png",
-      "answer": "48÷6",
-      "fill": "8",
+      "answer": "34-8",
+      "fill": "26",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 34,
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "arithmetic-029",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-029.png",
-      "answer": "48+7",
-      "fill": "55",
+      "answer": "37-21",
+      "fill": "16",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 35,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
         "rotationDegrees": -0.6
       }
     },
@@ -2899,49 +2899,49 @@
       "id": "arithmetic-030",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-030.png",
-      "answer": "12-6",
-      "fill": "6",
+      "answer": "33+22",
+      "fill": "55",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 36,
-        "foreground": "#595959",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "7:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.4
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "arithmetic-031",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-031.png",
-      "answer": "8x28",
-      "fill": "224",
+      "answer": "35-15",
+      "fill": "20",
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 37,
-        "foreground": "#333333",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "contrastBand": "12:1",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "arithmetic-032",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-032.png",
-      "answer": "66÷6",
-      "fill": "11",
+      "answer": "7x12",
+      "fill": "84",
       "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 38,
-        "foreground": "#111111",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "contrastBand": "18:1",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
         "rotationDegrees": 0
       }
@@ -2950,233 +2950,29 @@
       "id": "arithmetic-033",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-033.png",
-      "answer": "49+16",
-      "fill": "65",
+      "answer": "47+5",
+      "fill": "52",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 39,
-        "foreground": "#767676",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "contrastBand": "4.5:1",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "rotationDegrees": 1
       }
     },
     {
       "id": "arithmetic-034",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-034.png",
-      "answer": "29-10",
-      "fill": "19",
-      "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 40,
-        "foreground": "#595959",
-        "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.4
-      }
-    },
-    {
-      "id": "arithmetic-035",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-035.png",
-      "answer": "24x2",
-      "fill": "48",
-      "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 41,
-        "foreground": "#333333",
-        "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.6
-      }
-    },
-    {
-      "id": "arithmetic-036",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-036.png",
-      "answer": "12÷2",
-      "fill": "6",
-      "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 42,
-        "foreground": "#111111",
-        "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.8
-      }
-    },
-    {
-      "id": "arithmetic-037",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-037.png",
-      "answer": "11+21",
-      "fill": "32",
-      "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 34,
-        "foreground": "#767676",
-        "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1
-      }
-    },
-    {
-      "id": "arithmetic-038",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-038.png",
-      "answer": "26-13",
-      "fill": "13",
-      "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 35,
-        "foreground": "#595959",
-        "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.2
-      }
-    },
-    {
-      "id": "arithmetic-039",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-039.png",
-      "answer": "31x17",
-      "fill": "527",
-      "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 36,
-        "foreground": "#333333",
-        "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.4
-      }
-    },
-    {
-      "id": "arithmetic-040",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-040.png",
-      "answer": "22÷2",
-      "fill": "11",
-      "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 37,
-        "foreground": "#111111",
-        "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.6
-      }
-    },
-    {
-      "id": "arithmetic-041",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-041.png",
-      "answer": "9+10",
-      "fill": "19",
+      "answer": "45x16",
+      "fill": "720",
       "generation": {
         "fontFamily": "Benchmark Sans",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 38,
-        "foreground": "#767676",
-        "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.8
-      }
-    },
-    {
-      "id": "arithmetic-042",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-042.png",
-      "answer": "19-14",
-      "fill": "5",
-      "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 39,
-        "foreground": "#595959",
-        "background": "#ffffff",
-        "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": 2
-      }
-    },
-    {
-      "id": "arithmetic-043",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-043.png",
-      "answer": "43x26",
-      "fill": "1118",
-      "generation": {
-        "fontFamily": "Benchmark Mono",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 40,
-        "foreground": "#333333",
-        "background": "#ffffff",
-        "contrastBand": "12:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -2
-      }
-    },
-    {
-      "id": "arithmetic-044",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-044.png",
-      "answer": "77÷7",
-      "fill": "11",
-      "generation": {
-        "fontFamily": "Benchmark Condensed",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
-        "fontSizePx": 41,
-        "foreground": "#111111",
-        "background": "#ffffff",
-        "contrastBand": "18:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.8
-      }
-    },
-    {
-      "id": "arithmetic-045",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-045.png",
-      "answer": "48+5",
-      "fill": "53",
-      "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 42,
-        "foreground": "#767676",
-        "background": "#ffffff",
-        "contrastBand": "4.5:1",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
-      }
-    },
-    {
-      "id": "arithmetic-046",
-      "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-046.png",
-      "answer": "49-4",
-      "fill": "45",
-      "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 34,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
@@ -3185,28 +2981,62 @@
       }
     },
     {
-      "id": "arithmetic-047",
+      "id": "arithmetic-035",
       "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-047.png",
-      "answer": "11x21",
-      "fill": "231",
+      "image": "benchmark/fixtures/generated/arithmetic-035.png",
+      "answer": "24x29",
+      "fill": "696",
+      "generation": {
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
+      }
+    },
+    {
+      "id": "arithmetic-036",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-036.png",
+      "answer": "33÷3",
+      "fill": "11",
       "generation": {
         "fontFamily": "Benchmark Mono",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
-        "fontSizePx": 35,
+        "fontSizePx": 37,
         "foreground": "#333333",
         "background": "#ffffff",
         "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "rotationDegrees": 0.6
       }
     },
     {
-      "id": "arithmetic-048",
+      "id": "arithmetic-037",
       "category": "arithmetic",
-      "image": "benchmark/fixtures/generated/arithmetic-048.png",
-      "answer": "9÷3",
-      "fill": "3",
+      "image": "benchmark/fixtures/generated/arithmetic-037.png",
+      "answer": "27-12",
+      "fill": "15",
+      "generation": {
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 2
+      }
+    },
+    {
+      "id": "arithmetic-038",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-038.png",
+      "answer": "44÷4",
+      "fill": "11",
       "generation": {
         "fontFamily": "Benchmark Condensed",
         "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
@@ -3214,8 +3044,178 @@
         "foreground": "#111111",
         "background": "#ffffff",
         "contrastBand": "18:1",
-        "interferenceLines": 2,
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
+      }
+    },
+    {
+      "id": "arithmetic-039",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-039.png",
+      "answer": "90÷9",
+      "fill": "10",
+      "generation": {
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "arithmetic-040",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-040.png",
+      "answer": "8x21",
+      "fill": "168",
+      "generation": {
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
         "rotationDegrees": -1
+      }
+    },
+    {
+      "id": "arithmetic-041",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-041.png",
+      "answer": "36-19",
+      "fill": "17",
+      "generation": {
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.4
+      }
+    },
+    {
+      "id": "arithmetic-042",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-042.png",
+      "answer": "48+14",
+      "fill": "62",
+      "generation": {
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.8
+      }
+    },
+    {
+      "id": "arithmetic-043",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-043.png",
+      "answer": "17+24",
+      "fill": "41",
+      "generation": {
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
+      }
+    },
+    {
+      "id": "arithmetic-044",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-044.png",
+      "answer": "44x21",
+      "fill": "924",
+      "generation": {
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
+      }
+    },
+    {
+      "id": "arithmetic-045",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-045.png",
+      "answer": "25x5",
+      "fill": "125",
+      "generation": {
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
+      }
+    },
+    {
+      "id": "arithmetic-046",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-046.png",
+      "answer": "64÷8",
+      "fill": "8",
+      "generation": {
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
+      }
+    },
+    {
+      "id": "arithmetic-047",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-047.png",
+      "answer": "27÷3",
+      "fill": "9",
+      "generation": {
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
+      }
+    },
+    {
+      "id": "arithmetic-048",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/generated/arithmetic-048.png",
+      "answer": "10x5",
+      "fill": "50",
+      "generation": {
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
@@ -3225,13 +3225,13 @@
       "answer": "48+6",
       "fill": "54",
       "generation": {
-        "fontFamily": "Benchmark Sans",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
-        "fontSizePx": 37,
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
         "foreground": "#767676",
         "background": "#ffffff",
         "contrastBand": "4.5:1",
-        "interferenceLines": 1,
+        "interferenceLines": 2,
         "rotationDegrees": -0.8
       }
     },
@@ -3239,17 +3239,17 @@
       "id": "arithmetic-050",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-050.png",
-      "answer": "19-18",
-      "fill": "1",
+      "answer": "45÷9",
+      "fill": "5",
       "generation": {
-        "fontFamily": "Benchmark Serif",
-        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
-        "fontSizePx": 38,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
         "foreground": "#595959",
         "background": "#ffffff",
         "contrastBand": "7:1",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "interferenceLines": 1,
+        "rotationDegrees": 1
       }
     }
   ]
