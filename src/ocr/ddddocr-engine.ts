@@ -126,12 +126,14 @@ export class DdddOcrEngine implements OcrEngine {
       return this.sessionPromise;
     }
 
-    const sessionPromise = this.sessionFactory.create(this.modelUrl).catch((cause: unknown) => {
-      if (this.sessionPromise === sessionPromise) {
-        this.sessionPromise = undefined;
-      }
-      throw new OcrEngineError('model_unavailable', 'OCR model creation failed', cause);
-    });
+    const sessionPromise = Promise.resolve()
+      .then(() => this.sessionFactory.create(this.modelUrl))
+      .catch((cause: unknown) => {
+        if (this.sessionPromise === sessionPromise) {
+          this.sessionPromise = undefined;
+        }
+        throw new OcrEngineError('model_unavailable', 'OCR model creation failed', cause);
+      });
     this.sessionPromise = sessionPromise;
     return sessionPromise;
   }

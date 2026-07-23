@@ -215,6 +215,23 @@ describe('DdddOcrEngine', () => {
     expect(harness.factory.create).toHaveBeenCalledTimes(2);
   });
 
+  it('wraps synchronous session creation errors with their cause and retries later', async () => {
+    const cause = new Error('factory initialization failed');
+    const harness = createHarness(logitsFor('1'));
+    vi.mocked(harness.factory.create).mockImplementationOnce(() => {
+      throw cause;
+    });
+
+    const firstError = await capturedError(harness.engine.recognize(IMAGE, ['digits']));
+
+    expect(firstError).toBeInstanceOf(OcrEngineError);
+    expect(firstError).toMatchObject({ code: 'model_unavailable', cause });
+    await expect(harness.engine.recognize(IMAGE, ['digits'])).resolves.toMatchObject([
+      { mode: 'digits', text: '1' },
+    ]);
+    expect(harness.factory.create).toHaveBeenCalledTimes(2);
+  });
+
   it('wraps session run rejection as model_unavailable with its cause', async () => {
     const cause = new Error('wasm crashed');
     const harness = createHarness();
