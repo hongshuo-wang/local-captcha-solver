@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -18,10 +18,12 @@ const assets = [
   {
     path: 'public/ort/ort-wasm-simd-threaded.wasm',
     size: 11_905_541,
+    sha256: '45eaee27761ad883742a8d4b8fce1538d60ce43b51adf1726fafccc59b8c1a15',
   },
   {
     path: 'public/ort/ort-wasm-simd-threaded.mjs',
     size: 20_321,
+    sha256: '90a557d15c02bac4504d95b67f431d8594635ed2a0a62a7f2cd83d090ff91d3e',
   },
   {
     path: 'third_party/onnxruntime-ThirdPartyNotices.txt',
@@ -48,6 +50,18 @@ describe('pinned OCR assets', () => {
 
         expect(hash).toBe(asset.gitBlobSha);
       }
+
+      if ('sha256' in asset) {
+        const bytes = await readFile(absolutePath);
+        expect(createHash('sha256').update(bytes).digest('hex')).toBe(asset.sha256);
+      }
     });
   }
+
+  it('contains only the selected ONNX Runtime pair', async () => {
+    await expect(readdir(resolve('public/ort'))).resolves.toEqual([
+      'ort-wasm-simd-threaded.mjs',
+      'ort-wasm-simd-threaded.wasm',
+    ]);
+  });
 });

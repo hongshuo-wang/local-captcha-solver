@@ -1,6 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, dirname, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readFile, stat } from 'node:fs/promises';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { replaceAssetSet } from './asset-file-set.mjs';
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const upstreamAssets = [
   {
@@ -33,11 +38,13 @@ const ortAssets = [
   {
     source: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
     size: 11_905_541,
+    sha256: '45eaee27761ad883742a8d4b8fce1538d60ce43b51adf1726fafccc59b8c1a15',
     output: 'public/ort/ort-wasm-simd-threaded.wasm',
   },
   {
     source: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',
     size: 20_321,
+    sha256: '90a557d15c02bac4504d95b67f431d8594635ed2a0a62a7f2cd83d090ff91d3e',
     output: 'public/ort/ort-wasm-simd-threaded.mjs',
   },
 ];
@@ -112,6 +119,19 @@ function requireExact(actual, expected, field, description) {
       `${description}: expected ${field} ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`,
     );
   }
+}
+
+function resolveRepoPath(path, description) {
+  if (typeof path !== 'string' || path.length === 0 || isAbsolute(path)) {
+    throw new Error(`${description}: expected a non-empty repository-relative path`);
+  }
+
+  const absolutePath = resolve(repoRoot, path);
+  const relativePath = relative(repoRoot, absolutePath);
+  if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
+    throw new Error(`${description}: path escapes repository root: ${JSON.stringify(path)}`);
+  }
+  return absolutePath;
 }
 
 function decodeBase64(content, description) {
@@ -193,11 +213,11 @@ async function downloadUpstreamAsset(asset) {
   requireExact(bytes.byteLength, asset.size, 'decoded byte length', description);
   requireExact(gitBlobSha(bytes), asset.blob, 'computed Git blob SHA-1', description);
 
-  return { output: asset.output, bytes };
+  return { output: asset.output, outputPath: resolveRepoPath(asset.output, description), bytes };
 }
 
 async function readOrtAsset(asset) {
-  const sourcePath = resolve(asset.source);
+  const sourcePath = resolveRepoPath(asset.source, asset.source);
   let sourceStat;
   try {
     sourceStat = await stat(sourcePath);
@@ -212,25 +232,17 @@ async function readOrtAsset(asset) {
 
   const bytes = await readFile(sourcePath);
   requireExact(bytes.byteLength, asset.size, 'read byte length', asset.source);
-  return { output: asset.output, bytes };
-}
-
-async function atomicWrite(relativePath, bytes) {
-  const outputPath = resolve(relativePath);
-  const outputDirectory = dirname(outputPath);
-  await mkdir(outputDirectory, { recursive: true });
-
-  const temporaryPath = resolve(
-    outputDirectory,
-    `.${basename(outputPath)}.${process.pid}.${randomUUID()}.tmp`,
+  requireExact(
+    createHash('sha256').update(bytes).digest('hex'),
+    asset.sha256,
+    'source SHA-256',
+    asset.source,
   );
-
-  try {
-    await writeFile(temporaryPath, bytes, { flag: 'wx' });
-    await rename(temporaryPath, outputPath);
-  } finally {
-    await rm(temporaryPath, { force: true });
-  }
+  return {
+    output: asset.output,
+    outputPath: resolveRepoPath(asset.output, asset.source),
+    bytes,
+  };
 }
 
 async function main() {
@@ -239,8 +251,8 @@ async function main() {
     ...ortAssets.map(readOrtAsset),
   ]);
 
+  await replaceAssetSet(outputs);
   for (const output of outputs) {
-    await atomicWrite(output.output, output.bytes);
     console.log(`synced ${output.output} (${output.bytes.byteLength} bytes)`);
   }
 }
