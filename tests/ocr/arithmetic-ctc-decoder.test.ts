@@ -118,6 +118,25 @@ describe('decodeArithmeticCtc', () => {
     ).toBeNull();
   });
 
+  it('ignores adjacent operator noise before the left operand', () => {
+    const path = ['+', '-', '1', '+', '2'] as const;
+    const values = pathLogits(path);
+    values[0] = 6;
+    values[FULL_CHARSET.length] = 6;
+
+    expect(
+      decodeCtc(
+        values,
+        [1, path.length, FULL_CHARSET.length],
+        FULL_CHARSET,
+        new Set(FULL_CHARSET),
+      ),
+    ).toMatchObject({ text: '+-1+2' });
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toMatchObject({ text: '1+2' });
+  });
+
   it('rejects division by zero after selecting the strongest complete expression', () => {
     const values = pathLogits(['1', '÷', '0']);
 

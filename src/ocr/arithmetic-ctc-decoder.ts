@@ -194,11 +194,21 @@ function greedyRelevantText(
   return emitted.join('');
 }
 
-function hasAdjacentOperators(text: string): boolean {
-  for (let index = 1; index < text.length; index += 1) {
-    if (OPERATORS.has(text[index - 1]) && OPERATORS.has(text[index])) {
+function hasInExpressionOperatorRun(text: string): boolean {
+  for (let index = 1; index < text.length - 1; index += 1) {
+    if (!isDigit(text[index - 1]) || !OPERATORS.has(text[index])) {
+      continue;
+    }
+
+    let rightIndex = index + 1;
+    while (rightIndex < text.length && OPERATORS.has(text[rightIndex])) {
+      rightIndex += 1;
+    }
+    if (rightIndex - index >= 2 && rightIndex < text.length && isDigit(text[rightIndex])) {
       return true;
     }
+
+    index = rightIndex - 1;
   }
   return false;
 }
@@ -452,7 +462,7 @@ export function decodeArithmeticCtc(
     ([character, classIndex]): RelevantClass => ({ character, classIndex }),
   );
 
-  if (hasAdjacentOperators(greedyRelevantText(logits, time, classes, relevantClasses))) {
+  if (hasInExpressionOperatorRun(greedyRelevantText(logits, time, classes, relevantClasses))) {
     return null;
   }
 
