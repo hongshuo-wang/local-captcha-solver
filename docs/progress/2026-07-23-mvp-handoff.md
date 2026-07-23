@@ -7,7 +7,7 @@
 - 仓库：`/Users/harrison/Documents/harrison_project/local-captcha-solver`
 - 隔离工作树：`/Users/harrison/Documents/harrison_project/local-captcha-solver/.worktrees/local-captcha-solver-mvp`
 - 分支：`feature/local-captcha-solver-mvp`
-- 当前实现提交：`34ebdbae70dd00bcc03b2532bd71d2e1484789ee`
+- 当前实现提交：`ed67cafd1acfa3e3269931532a2d8d5c2e425587`
 - 设计文档：`docs/superpowers/specs/2026-07-22-local-captcha-solver-design.md`
 - 实施计划：`docs/superpowers/plans/2026-07-22-local-captcha-solver-mvp.md`
 
@@ -61,9 +61,9 @@ Tasks 1-6 已完成。Task 6 的基准工具和证据已经验收，但 ddddocr 
 - JSON 与 Markdown 报告原子配对写入 `benchmark/results/`，该目录被 Git 忽略。
 - 提交：`73f3ad2`、`34ebdba`
 
-## 最新基准结果
+## 历史基准结果（OCR accuracy v1 前）
 
-语料数：200。固定门槛：普通三类整串准确率至少 90%，算术最终填写值准确率至少 90%。
+以下保留 Task 6 当时的 pre-accuracy-v1 基准证据。语料数：200。固定门槛：普通三类整串准确率至少 90%，算术最终填写值准确率至少 90%。
 
 | 指标 | ddddocr | Tesseract |
 | --- | ---: | ---: |
@@ -86,7 +86,7 @@ ddddocr 分项整串准确率：
 
 结论：`passed: false`。`npm run benchmark` 完整处理两套引擎后会返回退出码 2，表示准确率硬门槛阻断，不是 benchmark runner 崩溃。
 
-最新本地报告位于 `benchmark/results/latest.json` 和 `benchmark/results/latest.md`，二者不会提交到 Git。
+这些历史数字对应的报告当时写入 `benchmark/results/latest.json` 和 `benchmark/results/latest.md`。该目录被 Git 忽略，因此两个 `latest` 路径现已由后续运行覆盖，当前保存的是下方 OCR accuracy v1 章节记录的结构化解码报告；同一 version 2 语料上的贪心基线另存为 `benchmark/results/baseline-v2-greedy.json` 和 `benchmark/results/baseline-v2-greedy.md`。这些报告均不会提交到 Git。
 
 ## OCR accuracy v1（2026-07-24）
 
