@@ -1,1 +1,9 @@
 .worktrees/
+node_modules/
+.output/
+.wxt/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+benchmark/results/
