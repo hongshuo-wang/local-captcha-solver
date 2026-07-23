@@ -7,7 +7,9 @@ import {
 } from '../../src/core/result-interpreter';
 import type {
   FieldMatch,
+  ImagePayload,
   InterpretedResult,
+  OcrEngine,
   OcrResult,
   ScoreResult,
   WorkflowResult,
@@ -155,6 +157,29 @@ describe('resultInterpreter', () => {
       // @ts-expect-error Interpreter outputs are readonly.
       interpreted.push({ kind: 'invalid', reason: 'unsupported' });
     }
+  });
+});
+
+describe('OcrEngine', () => {
+  it('exposes awaited recognition results as readonly', async () => {
+    const image: ImagePayload = {
+      bytes: new Uint8Array(),
+      mimeType: 'image/png',
+      revision: 'revision-1',
+    };
+    const engine: OcrEngine = {
+      async recognize() {
+        return [{ text: '1234', confidence: 0.9, mode: 'digits' }];
+      },
+    };
+
+    const results = await engine.recognize(image, ['digits']);
+    if (false) {
+      // @ts-expect-error OCR engine results are readonly outputs.
+      results.push({ text: '5678', confidence: 0.8, mode: 'digits' });
+    }
+
+    expect(results).toEqual([{ text: '1234', confidence: 0.9, mode: 'digits' }]);
   });
 });
 

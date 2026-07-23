@@ -26,7 +26,7 @@ export interface ImagePreprocessor {
 }
 
 export interface OcrEngine {
-  recognize(image: ImagePayload, modes: readonly RecognitionMode[]): Promise<OcrResult[]>;
+  recognize(image: ImagePayload, modes: readonly RecognitionMode[]): Promise<readonly OcrResult[]>;
 }
 
 export type InterpretedResult =
