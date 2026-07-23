@@ -18,7 +18,7 @@ import type {
 } from './corpus';
 import { evaluateHardGate, gateExitCode } from './gate';
 import type { HardGateResult } from './gate';
-import { buildReport } from './report';
+import { ARITHMETIC_OPERATOR_GROUPS, buildReport } from './report';
 import type {
   BenchmarkEngine,
   BenchmarkMetrics,
@@ -38,6 +38,10 @@ import { runTesseractChild } from './tesseract-lifecycle';
 interface EngineResult {
   readonly metrics: BenchmarkMetrics;
   readonly predictions: readonly BenchmarkPrediction[];
+}
+
+export interface MarkdownEngineResult {
+  readonly metrics: BenchmarkMetrics;
 }
 
 const ROOT = process.cwd();
@@ -228,10 +232,10 @@ function precision(value: number | null): string {
   return value === null ? 'n/a' : percent(value);
 }
 
-function markdown(
+export function renderMarkdown(
   sampleCount: number,
-  ddddocr: EngineResult,
-  tesseract: EngineResult,
+  ddddocr: MarkdownEngineResult,
+  tesseract: MarkdownEngineResult,
   gate: HardGateResult,
 ): string {
   const rows = ([['ddddocr', ddddocr], ['tesseract', tesseract]] as const).map(
@@ -239,7 +243,7 @@ function markdown(
       `| ${name} | ${percent(result.metrics.wholeStringAccuracy)} | ${percent(result.metrics.categories.arithmetic.fillAccuracy ?? 0)} | ${percent(result.metrics.characterAccuracy)} | ${result.metrics.coldInitMs.toFixed(2)} | ${result.metrics.medianWarmLatencyMs.toFixed(2)} | ${result.metrics.p95WarmLatencyMs.toFixed(2)} | ${result.metrics.packageSizeBytes} | ${percent(result.metrics.falseHighConfidenceRate)} |`,
   );
   const operatorRows = ([['ddddocr', ddddocr], ['tesseract', tesseract]] as const).flatMap(
-    ([name, result]) => (['addition', 'subtraction', 'multiplication', 'division'] as const).map(
+    ([name, result]) => ARITHMETIC_OPERATOR_GROUPS.map(
       (operator) => {
         const metrics = result.metrics.arithmeticByOperator[operator];
         return `| ${name} | ${operator} | ${metrics.sampleCount} | ${percent(metrics.wholeStringAccuracy)} | ${percent(metrics.fillAccuracy)} |`;
@@ -320,7 +324,7 @@ export async function main(): Promise<number> {
   await writeReportPair(
     RESULT_DIRECTORY,
     `${JSON.stringify(report, null, 2)}\n`,
-    markdown(samples.length, ddddocr, tesseract, gate),
+    renderMarkdown(samples.length, ddddocr, tesseract, gate),
   );
   console.log(
     `Hard gate: ordinary=${percent(gate.ordinaryWholeStringAccuracy)}, arithmetic-fill=${percent(gate.arithmeticFillAccuracy)} => ${gate.passed ? 'PASS' : 'BLOCKED'}`,

@@ -120,12 +120,12 @@ function categoryMetrics(predictions: readonly BenchmarkPrediction[]): CategoryM
   };
 }
 
-const ARITHMETIC_OPERATOR_GROUPS: readonly ArithmeticOperatorGroup[] = [
+export const ARITHMETIC_OPERATOR_GROUPS = [
   'addition',
   'subtraction',
   'multiplication',
   'division',
-];
+] as const satisfies readonly ArithmeticOperatorGroup[];
 
 function arithmeticOperatorGroup(expected: string): ArithmeticOperatorGroup {
   if (expected.includes('+')) return 'addition';
