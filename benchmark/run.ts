@@ -224,6 +224,10 @@ function percent(value: number): string {
   return `${(value * 100).toFixed(2)}%`;
 }
 
+function precision(value: number | null): string {
+  return value === null ? 'n/a' : percent(value);
+}
+
 function markdown(
   sampleCount: number,
   ddddocr: EngineResult,
@@ -234,7 +238,21 @@ function markdown(
     ([name, result]) =>
       `| ${name} | ${percent(result.metrics.wholeStringAccuracy)} | ${percent(result.metrics.categories.arithmetic.fillAccuracy ?? 0)} | ${percent(result.metrics.characterAccuracy)} | ${result.metrics.coldInitMs.toFixed(2)} | ${result.metrics.medianWarmLatencyMs.toFixed(2)} | ${result.metrics.p95WarmLatencyMs.toFixed(2)} | ${result.metrics.packageSizeBytes} | ${percent(result.metrics.falseHighConfidenceRate)} |`,
   );
-  return `# Local OCR Feasibility Benchmark\n\nProcessed samples: ${sampleCount}\n\nPackage-size scope: ${PACKAGE_SIZE_SCOPE}.\n\n| Engine | Whole-string | Arithmetic fill | Character | Cold init ms | Median warm ms | P95 warm ms | Package bytes | False high confidence |\n| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n${rows.join('\n')}\n\n## Hard Gate\n\n- ddddocr digits/letters/alphanumeric aggregate whole-string accuracy: ${percent(gate.ordinaryWholeStringAccuracy)}\n- ddddocr arithmetic final-answer accuracy: ${percent(gate.arithmeticFillAccuracy)}\n- Decision: **${gate.passed ? 'PASS' : 'BLOCKED'}**\n`;
+  const operatorRows = ([['ddddocr', ddddocr], ['tesseract', tesseract]] as const).flatMap(
+    ([name, result]) => (['addition', 'subtraction', 'multiplication', 'division'] as const).map(
+      (operator) => {
+        const metrics = result.metrics.arithmeticByOperator[operator];
+        return `| ${name} | ${operator} | ${metrics.sampleCount} | ${percent(metrics.wholeStringAccuracy)} | ${percent(metrics.fillAccuracy)} |`;
+      },
+    ),
+  );
+  const selectiveRows = ([['ddddocr', ddddocr], ['tesseract', tesseract]] as const).flatMap(
+    ([name, result]) => (['ordinary', 'arithmetic'] as const).map((scope) => {
+      const metrics = result.metrics.selectiveAt90[scope];
+      return `| ${name} | ${scope} | ${metrics.acceptedCount} | ${percent(metrics.coverage)} | ${precision(metrics.precision)} |`;
+    }),
+  );
+  return `# Local OCR Feasibility Benchmark\n\nProcessed samples: ${sampleCount}\n\nPackage-size scope: ${PACKAGE_SIZE_SCOPE}.\n\n| Engine | Whole-string | Arithmetic fill | Character | Cold init ms | Median warm ms | P95 warm ms | Package bytes | False high confidence |\n| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n${rows.join('\n')}\n\n## Arithmetic by Expected Operator\n\n| Engine | Operator | Samples | Whole-string | Fill |\n| --- | --- | ---: | ---: | ---: |\n${operatorRows.join('\n')}\n\n## Confidence-Selective Metrics at 0.90\n\n| Engine | Scope | Accepted | Coverage | Precision |\n| --- | --- | ---: | ---: | ---: |\n${selectiveRows.join('\n')}\n\n## Hard Gate\n\n- ddddocr digits/letters/alphanumeric aggregate whole-string accuracy: ${percent(gate.ordinaryWholeStringAccuracy)}\n- ddddocr arithmetic final-answer accuracy: ${percent(gate.arithmeticFillAccuracy)}\n- Decision: **${gate.passed ? 'PASS' : 'BLOCKED'}**\n`;
 }
 
 export async function main(): Promise<number> {

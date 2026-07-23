@@ -144,4 +144,112 @@ describe('buildReport', () => {
     expect(report.falseHighConfidenceCount).toBe(2);
     expect(report.falseHighConfidenceRate).toBe(0.5);
   });
+
+  it('groups arithmetic expected labels by normalized operator and reports fill accuracy', () => {
+    const report = buildReport(
+      [
+        prediction({ category: 'arithmetic', expected: '1+2', expectedFill: '3', actual: '1+2', actualFill: '3' }),
+        prediction({ category: 'arithmetic', expected: '8-3', expectedFill: '5', actual: '8-8', actualFill: '5' }),
+        prediction({ category: 'arithmetic', expected: '2x3', expectedFill: '6', actual: '2x3', actualFill: '6' }),
+        prediction({ category: 'arithmetic', expected: '3X2', expectedFill: '6', actual: '3X2', actualFill: '4' }),
+        prediction({ category: 'arithmetic', expected: '4×2', expectedFill: '8', actual: '4+4', actualFill: '8' }),
+        prediction({ category: 'arithmetic', expected: '9*2', expectedFill: '18', actual: '9+9', actualFill: '18' }),
+        prediction({ category: 'arithmetic', expected: '8÷2', expectedFill: '4', actual: '8÷2', actualFill: '4' }),
+        prediction({ category: 'arithmetic', expected: '8/4', expectedFill: '2', actual: '8/4', actualFill: '7' }),
+      ],
+      PACKAGE_OPTIONS,
+    );
+
+    expect(report.arithmeticByOperator.addition).toMatchObject({
+      sampleCount: 1,
+      wholeStringAccuracy: 1,
+      fillAccuracy: 1,
+    });
+    expect(report.arithmeticByOperator.subtraction).toMatchObject({
+      sampleCount: 1,
+      wholeStringAccuracy: 0,
+      fillAccuracy: 1,
+    });
+    expect(report.arithmeticByOperator.multiplication).toMatchObject({
+      sampleCount: 4,
+      wholeStringAccuracy: 0.5,
+      fillAccuracy: 0.75,
+    });
+    expect(report.arithmeticByOperator.division).toMatchObject({
+      sampleCount: 2,
+      wholeStringAccuracy: 1,
+      fillAccuracy: 0.5,
+    });
+  });
+
+  it('reports selective metrics at confidence 0.90 for ordinary and arithmetic scopes', () => {
+    const report = buildReport(
+      [
+        prediction({ category: 'digits', expected: '1', actual: '1', confidence: 0.9 }),
+        prediction({ category: 'letters', expected: 'A', actual: 'B', confidence: 0.91 }),
+        prediction({ category: 'alphanumeric', expected: 'C1', actual: 'C1', confidence: 0.89 }),
+        prediction({ category: 'arithmetic', expected: '1+2', expectedFill: '3', actual: '1+9', actualFill: '3', confidence: 0.9 }),
+        prediction({ category: 'arithmetic', expected: '6/2', expectedFill: '3', actual: '6/2', actualFill: '2', confidence: 0.91 }),
+        prediction({ category: 'arithmetic', expected: '2x2', expectedFill: '4', actual: '2x2', actualFill: '4', confidence: 0.89 }),
+      ],
+      PACKAGE_OPTIONS,
+    );
+
+    expect(report.selectiveAt90.ordinary).toEqual({
+      threshold: 0.9,
+      acceptedCount: 2,
+      coverage: 2 / 3,
+      precision: 0.5,
+    });
+    expect(report.selectiveAt90.arithmetic).toEqual({
+      threshold: 0.9,
+      acceptedCount: 2,
+      coverage: 2 / 3,
+      precision: 0.5,
+    });
+  });
+
+  it('returns zeroed operator metrics and null precision for scopes with no accepted predictions', () => {
+    const report = buildReport(
+      [
+        prediction({ category: 'digits', expected: '1', actual: '1', confidence: 0.89 }),
+        prediction({ category: 'arithmetic', expected: '1+1', expectedFill: '2', actual: '1+1', actualFill: '2', confidence: 0.89 }),
+      ],
+      PACKAGE_OPTIONS,
+    );
+
+    expect(report.arithmeticByOperator.subtraction).toEqual({
+      sampleCount: 0,
+      wholeStringAccuracy: 0,
+      fillAccuracy: 0,
+    });
+    expect(report.arithmeticByOperator.multiplication).toEqual({
+      sampleCount: 0,
+      wholeStringAccuracy: 0,
+      fillAccuracy: 0,
+    });
+    expect(report.arithmeticByOperator.division).toEqual({
+      sampleCount: 0,
+      wholeStringAccuracy: 0,
+      fillAccuracy: 0,
+    });
+    expect(report.selectiveAt90.ordinary).toEqual({
+      threshold: 0.9,
+      acceptedCount: 0,
+      coverage: 0,
+      precision: null,
+    });
+    expect(report.selectiveAt90.arithmetic).toEqual({
+      threshold: 0.9,
+      acceptedCount: 0,
+      coverage: 0,
+      precision: null,
+    });
+  });
+
+  it('rejects arithmetic expected labels without a supported operator', () => {
+    expect(() => buildReport([
+      prediction({ category: 'arithmetic', expected: '12=12', expectedFill: '12', actual: '12=12', actualFill: '12' }),
+    ], PACKAGE_OPTIONS)).toThrow(/operator/i);
+  });
 });

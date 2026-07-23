@@ -20,9 +20,31 @@ export interface CategoryMetrics {
   readonly fillAccuracy?: number;
 }
 
+export type ArithmeticOperatorGroup = 'addition' | 'subtraction' | 'multiplication' | 'division';
+
+export interface ArithmeticOperatorMetrics {
+  readonly sampleCount: number;
+  readonly wholeStringAccuracy: number;
+  readonly fillAccuracy: number;
+}
+
+export interface SelectiveMetrics {
+  readonly threshold: 0.9;
+  readonly acceptedCount: number;
+  readonly coverage: number;
+  readonly precision: number | null;
+}
+
+export interface SelectiveMetricsByScope {
+  readonly ordinary: SelectiveMetrics;
+  readonly arithmetic: SelectiveMetrics;
+}
+
 export interface BenchmarkMetrics {
   readonly sampleCount: number;
   readonly categories: Record<BenchmarkCategory, CategoryMetrics>;
+  readonly arithmeticByOperator: Record<ArithmeticOperatorGroup, ArithmeticOperatorMetrics>;
+  readonly selectiveAt90: SelectiveMetricsByScope;
   readonly wholeStringAccuracy: number;
   readonly characterAccuracy: number;
   readonly falseHighConfidenceCount: number;
@@ -98,6 +120,47 @@ function categoryMetrics(predictions: readonly BenchmarkPrediction[]): CategoryM
   };
 }
 
+const ARITHMETIC_OPERATOR_GROUPS: readonly ArithmeticOperatorGroup[] = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+];
+
+function arithmeticOperatorGroup(expected: string): ArithmeticOperatorGroup {
+  if (expected.includes('+')) return 'addition';
+  if (expected.includes('-')) return 'subtraction';
+  if (/[xX×*]/.test(expected)) return 'multiplication';
+  if (/[÷/]/.test(expected)) return 'division';
+  throw new TypeError(`Arithmetic expected label has no supported operator: ${expected}`);
+}
+
+function arithmeticOperatorMetrics(
+  predictions: readonly BenchmarkPrediction[],
+): ArithmeticOperatorMetrics {
+  const correctStrings = predictions.filter((item) => item.expected === item.actual).length;
+  const correctFills = predictions.filter((item) => item.expectedFill === item.actualFill).length;
+  return {
+    sampleCount: predictions.length,
+    wholeStringAccuracy: predictions.length === 0 ? 0 : correctStrings / predictions.length,
+    fillAccuracy: predictions.length === 0 ? 0 : correctFills / predictions.length,
+  };
+}
+
+function selectiveMetrics(
+  predictions: readonly BenchmarkPrediction[],
+  correct: (prediction: BenchmarkPrediction) => boolean,
+): SelectiveMetrics {
+  const accepted = predictions.filter((item) => item.confidence >= 0.9);
+  const correctAccepted = accepted.filter(correct).length;
+  return {
+    threshold: 0.9,
+    acceptedCount: accepted.length,
+    coverage: predictions.length === 0 ? 0 : accepted.length / predictions.length,
+    precision: accepted.length === 0 ? null : correctAccepted / accepted.length,
+  };
+}
+
 export function buildReport(
   predictions: readonly BenchmarkPrediction[],
   options: { readonly packageSizeBytes: number; readonly packageSizeScope: string },
@@ -116,6 +179,14 @@ export function buildReport(
     const matches = predictions.filter((item) => item.category === category);
     categories[category] = categoryMetrics(matches);
   }
+  const arithmeticPredictions = predictions.filter((item) => item.category === 'arithmetic');
+  const arithmeticByOperator = {} as Record<ArithmeticOperatorGroup, ArithmeticOperatorMetrics>;
+  for (const group of ARITHMETIC_OPERATOR_GROUPS) {
+    arithmeticByOperator[group] = arithmeticOperatorMetrics(
+      arithmeticPredictions.filter((item) => arithmeticOperatorGroup(item.expected) === group),
+    );
+  }
+  const ordinaryPredictions = predictions.filter((item) => item.category !== 'arithmetic');
 
   const warmLatencies = predictions.map((item) => item.warmLatencyMs).sort((a, b) => a - b);
   const correctStrings = predictions.filter((item) => item.expected === item.actual).length;
@@ -126,6 +197,14 @@ export function buildReport(
   return {
     sampleCount: predictions.length,
     categories,
+    arithmeticByOperator,
+    selectiveAt90: {
+      ordinary: selectiveMetrics(ordinaryPredictions, (item) => item.expected === item.actual),
+      arithmetic: selectiveMetrics(
+        arithmeticPredictions,
+        (item) => item.expectedFill === item.actualFill,
+      ),
+    },
     wholeStringAccuracy: predictions.length === 0 ? 0 : correctStrings / predictions.length,
     characterAccuracy: characterAccuracy(predictions),
     falseHighConfidenceCount,
