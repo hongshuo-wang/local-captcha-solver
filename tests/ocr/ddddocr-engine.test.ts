@@ -15,7 +15,23 @@ import type {
   OcrSessionFactory,
 } from '../../src/ocr/ddddocr-engine';
 
-const CHARSET = ['', 'a', 'A', 'z', 'Z', '1', '9', '+', 'x', '×', '÷', '='] as const;
+const CHARSET = [
+  '',
+  'a',
+  'A',
+  'z',
+  'Z',
+  '1',
+  '2',
+  '7',
+  '9',
+  '+',
+  '-',
+  'x',
+  '×',
+  '÷',
+  '=',
+] as const;
 const MODEL_INPUT: ModelInput = {
   data: new Float32Array([1, -1]),
   dims: [1, 1, 64, 2],
@@ -35,6 +51,23 @@ function logitsFor(...characters: readonly (typeof CHARSET)[number][]) {
   });
   return {
     data: new Float32Array(rows.flat()),
+    dims: [1, rows.length, CHARSET.length],
+  };
+}
+
+function scoredLogits(
+  ...rows: ReadonlyArray<ReadonlyArray<readonly [(typeof CHARSET)[number], number]>>
+) {
+  return {
+    data: new Float32Array(
+      rows.flatMap((scores) => {
+        const row = new Array<number>(CHARSET.length).fill(-8);
+        for (const [character, score] of scores) {
+          row[CHARSET.indexOf(character)] = score;
+        }
+        return row;
+      }),
+    ),
     dims: [1, rows.length, CHARSET.length],
   };
 }
@@ -150,6 +183,42 @@ describe('DdddOcrEngine', () => {
     expect(results).toMatchObject([
       { mode: 'arithmetic', text: '1+' },
       { mode: 'alphanumeric', text: 'aA1' },
+    ]);
+  });
+
+  it('uses structured decoding to recover an arithmetic operator hidden by blank', async () => {
+    const output = scoredLogits(
+      [
+        ['', 0],
+        ['1', 8],
+      ],
+      [
+        ['', 0],
+        ['2', 8],
+      ],
+      [
+        ['', 5],
+        ['-', 4],
+      ],
+      [
+        ['', 0],
+        ['7', 8],
+      ],
+    );
+    const { engine, preprocessor, session } = createHarness(output);
+
+    await expect(engine.recognize(IMAGE, ['arithmetic'])).resolves.toMatchObject([
+      { mode: 'arithmetic', text: '12-7' },
+    ]);
+    expect(preprocessor.prepare).toHaveBeenCalledOnce();
+    expect(session.run).toHaveBeenCalledOnce();
+  });
+
+  it('falls back to greedy arithmetic text when no complete grammar candidate exists', async () => {
+    const { engine } = createHarness(logitsFor('1', '2'));
+
+    await expect(engine.recognize(IMAGE, ['arithmetic'])).resolves.toMatchObject([
+      { mode: 'arithmetic', text: '12' },
     ]);
   });
 

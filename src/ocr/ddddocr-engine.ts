@@ -6,6 +6,7 @@ import type {
   OcrResult,
   RecognitionMode,
 } from '../core/types';
+import { decodeArithmeticCtc } from './arithmetic-ctc-decoder';
 import { decodeCtc } from './ctc-decoder';
 import { BrowserImagePreprocessor } from './image-preprocessor';
 
@@ -112,10 +113,20 @@ export class DdddOcrEngine implements OcrEngine {
       const outputs = await session.run(createDdddOcrSessionFeeds(input));
       const output = extractSingleOutput(outputs);
 
-      return uniqueModes.map((mode) => ({
-        ...decodeCtc(output.data, output.dims, this.charset, ALLOWED_BY_MODE[mode]),
-        mode,
-      }));
+      return uniqueModes.map((mode) => {
+        const greedy = decodeCtc(
+          output.data,
+          output.dims,
+          this.charset,
+          ALLOWED_BY_MODE[mode],
+        );
+        const result =
+          mode === 'arithmetic'
+            ? (decodeArithmeticCtc(output.data, output.dims, this.charset) ?? greedy)
+            : greedy;
+
+        return { ...result, mode };
+      });
     } catch (cause) {
       throw new OcrEngineError('model_unavailable', 'OCR model inference failed', cause);
     }
