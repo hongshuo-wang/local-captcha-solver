@@ -1,8 +1,11 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { createCanvas } from '@napi-rs/canvas';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 
+import { replaceAtomically } from './atomic-files';
 import type { BenchmarkCategory } from './report';
 
 export interface CorpusSample {
@@ -13,25 +16,43 @@ export interface CorpusSample {
   readonly fill?: string;
   readonly generation: {
     readonly fontFamily: string;
+    readonly fontFile: string;
     readonly fontSizePx: number;
     readonly foreground: string;
     readonly background: string;
+    readonly contrastBand: '4.5:1' | '7:1' | '12:1' | '18:1';
     readonly interferenceLines: 1 | 2;
     readonly rotationDegrees: number;
   };
 }
 
-const ROOT = process.cwd();
-const OUTPUT_DIRECTORY = path.join(ROOT, 'benchmark', 'fixtures', 'generated');
-const MANIFEST_PATH = path.join(ROOT, 'benchmark', 'corpus.generated.json');
+export interface GeneratedCorpusManifest {
+  readonly schemaVersion: 1;
+  readonly seed: number;
+  readonly samples: readonly CorpusSample[];
+}
+
+export const TARGET_ALPHABETS = {
+  digits: '0123456789',
+  letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+  alphanumeric: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+} as const;
+
 const SAMPLE_COUNT = 50;
 const SEED = 0x4c43534d;
-const FONTS = ['Arial', 'Helvetica', 'Verdana', 'Georgia', 'Courier New'] as const;
+const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const FONT_DIRECTORY = path.join(PACKAGE_ROOT, 'node_modules', 'dejavu-fonts-ttf', 'ttf');
+const FONTS = [
+  { family: 'Benchmark Sans', file: 'DejaVuSans.ttf' },
+  { family: 'Benchmark Serif', file: 'DejaVuSerif.ttf' },
+  { family: 'Benchmark Mono', file: 'DejaVuSansMono.ttf' },
+  { family: 'Benchmark Condensed', file: 'DejaVuSansCondensed.ttf' },
+] as const;
 const PALETTES = [
-  { background: '#ffffff', foreground: '#111827', line: '#64748b' },
-  { background: '#f8fafc', foreground: '#172554', line: '#475569' },
-  { background: '#fff7ed', foreground: '#3f1d0b', line: '#9a3412' },
-  { background: '#f0fdf4', foreground: '#14261b', line: '#52715d' },
+  { band: '4.5:1', background: '#ffffff', foreground: '#767676', line: '#686868' },
+  { band: '7:1', background: '#ffffff', foreground: '#595959', line: '#777777' },
+  { band: '12:1', background: '#ffffff', foreground: '#333333', line: '#707070' },
+  { band: '18:1', background: '#ffffff', foreground: '#111111', line: '#737373' },
 ] as const;
 
 function mulberry32(seed: number): () => number {
@@ -49,12 +70,28 @@ function integer(random: () => number, minimum: number, maximum: number): number
   return minimum + Math.floor(random() * (maximum - minimum + 1));
 }
 
-function pick<T>(random: () => number, values: readonly T[]): T {
-  return values[integer(random, 0, values.length - 1)];
+function shuffle<T>(random: () => number, values: readonly T[]): T[] {
+  const shuffled = [...values];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = integer(random, 0, index);
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
-function randomText(random: () => number, alphabet: string, length: number): string {
-  return Array.from({ length }, () => alphabet[integer(random, 0, alphabet.length - 1)]).join('');
+function coveredAnswers(random: () => number, alphabet: string): readonly string[] {
+  const lengths = Array.from({ length: SAMPLE_COUNT }, (_, index) => 4 + index % 3);
+  const required = lengths.reduce((sum, length) => sum + length, 0);
+  const stream: string[] = [];
+  while (stream.length < required) {
+    stream.push(...shuffle(random, [...alphabet]));
+  }
+  let offset = 0;
+  return lengths.map((length) => {
+    const answer = stream.slice(offset, offset + length).join('');
+    offset += length;
+    return answer;
+  });
 }
 
 function arithmetic(random: () => number, index: number): { answer: string; fill: string } {
@@ -64,7 +101,6 @@ function arithmetic(random: () => number, index: number): { answer: string; fill
     const quotient = integer(random, 2, 12);
     return { answer: `${divisor * quotient}÷${divisor}`, fill: String(quotient) };
   }
-
   let left = integer(random, 2, 49);
   let right = integer(random, 2, 29);
   if (operator === '-' && right > left) {
@@ -74,37 +110,44 @@ function arithmetic(random: () => number, index: number): { answer: string; fill
   return { answer: `${left}${operator}${right}`, fill: String(fill) };
 }
 
-function sampleAnswer(
-  random: () => number,
-  category: BenchmarkCategory,
-  index: number,
-): { answer: string; fill?: string } {
-  switch (category) {
-    case 'digits':
-      return { answer: randomText(random, '23456789', integer(random, 4, 5)) };
-    case 'letters':
-      return { answer: randomText(random, 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz', 4) };
-    case 'alphanumeric':
-      return { answer: randomText(random, 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789', 4) };
-    case 'arithmetic':
-      return arithmetic(random, index);
+function registerFonts(): void {
+  for (const font of FONTS) {
+    const registered = GlobalFonts.registerFromPath(path.join(FONT_DIRECTORY, font.file), font.family);
+    const available = GlobalFonts.families.some((entry) => entry.family === font.family);
+    if (!registered && !available) {
+      throw new Error(`Failed to register deterministic benchmark font: ${font.file}`);
+    }
   }
 }
 
-async function main(): Promise<void> {
-  const random = mulberry32(SEED);
-  const samples: CorpusSample[] = [];
-  await mkdir(OUTPUT_DIRECTORY, { recursive: true });
+export async function generateCorpus(root: string): Promise<GeneratedCorpusManifest> {
+  registerFonts();
+  const benchmarkDirectory = path.join(root, 'benchmark');
+  const outputDirectory = path.join(benchmarkDirectory, 'fixtures', 'generated');
+  const manifestPath = path.join(benchmarkDirectory, 'corpus.generated.json');
+  const transaction = randomUUID();
+  const stagedDirectory = path.join(benchmarkDirectory, `.generated.stage-${transaction}`);
+  const stagedManifest = path.join(benchmarkDirectory, `.corpus.generated.stage-${transaction}.json`);
+  await mkdir(stagedDirectory, { recursive: true });
 
+  const random = mulberry32(SEED);
+  const plainAnswers = {
+    digits: coveredAnswers(random, TARGET_ALPHABETS.digits),
+    letters: coveredAnswers(random, TARGET_ALPHABETS.letters),
+    alphanumeric: coveredAnswers(random, TARGET_ALPHABETS.alphanumeric),
+  };
+  const samples: CorpusSample[] = [];
   for (const category of ['digits', 'letters', 'alphanumeric', 'arithmetic'] as const) {
     for (let index = 0; index < SAMPLE_COUNT; index += 1) {
       const id = `${category}-${String(index + 1).padStart(3, '0')}`;
-      const { answer, fill } = sampleAnswer(random, category, index);
-      const fontFamily = pick(random, FONTS);
-      const fontSizePx = integer(random, 34, 42);
-      const palette = pick(random, PALETTES);
-      const interferenceLines = integer(random, 1, 2) as 1 | 2;
-      const rotationDegrees = Math.round((random() * 4 - 2) * 10) / 10;
+      const answerData = category === 'arithmetic'
+        ? arithmetic(random, index)
+        : { answer: plainAnswers[category][index] };
+      const font = FONTS[index % FONTS.length];
+      const fontSizePx = 34 + index % 9;
+      const palette = PALETTES[index % PALETTES.length];
+      const interferenceLines = (1 + index % 2) as 1 | 2;
+      const rotationDegrees = Math.round((-2 + (index % 21) / 5) * 10) / 10;
       const canvas = createCanvas(180, 64);
       const context = canvas.getContext('2d');
 
@@ -113,11 +156,11 @@ async function main(): Promise<void> {
       context.save();
       context.translate(canvas.width / 2, canvas.height / 2);
       context.rotate((rotationDegrees * Math.PI) / 180);
-      context.font = `600 ${fontSizePx}px "${fontFamily}"`;
+      context.font = `${fontSizePx}px "${font.family}"`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillStyle = palette.foreground;
-      context.fillText(answer, 0, 1);
+      context.fillText(answerData.answer, 0, 1);
       context.restore();
 
       context.strokeStyle = palette.line;
@@ -130,18 +173,20 @@ async function main(): Promise<void> {
       }
 
       const relativeImage = `benchmark/fixtures/generated/${id}.png`;
-      await writeFile(path.join(ROOT, relativeImage), canvas.toBuffer('image/png'));
+      await writeFile(path.join(stagedDirectory, `${id}.png`), canvas.toBuffer('image/png'));
       samples.push({
         id,
         category,
         image: relativeImage,
-        answer,
-        ...(fill === undefined ? {} : { fill }),
+        answer: answerData.answer,
+        ...('fill' in answerData ? { fill: answerData.fill } : {}),
         generation: {
-          fontFamily,
+          fontFamily: font.family,
+          fontFile: `node_modules/dejavu-fonts-ttf/ttf/${font.file}`,
           fontSizePx,
           foreground: palette.foreground,
           background: palette.background,
+          contrastBand: palette.band,
           interferenceLines,
           rotationDegrees,
         },
@@ -149,11 +194,24 @@ async function main(): Promise<void> {
     }
   }
 
-  await writeFile(
-    MANIFEST_PATH,
-    `${JSON.stringify({ schemaVersion: 1, seed: SEED, samples }, null, 2)}\n`,
-  );
-  console.log(`Generated ${samples.length} deterministic samples at ${path.relative(ROOT, OUTPUT_DIRECTORY)}`);
+  const manifest: GeneratedCorpusManifest = { schemaVersion: 1, seed: SEED, samples };
+  await writeFile(stagedManifest, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
+  await mkdir(path.dirname(outputDirectory), { recursive: true });
+  await replaceAtomically([
+    { stagedPath: stagedDirectory, targetPath: outputDirectory },
+    { stagedPath: stagedManifest, targetPath: manifestPath },
+  ]);
+  return manifest;
 }
 
-await main();
+async function main(): Promise<void> {
+  const root = process.cwd();
+  const manifest = await generateCorpus(root);
+  console.log(
+    `Generated ${manifest.samples.length} deterministic samples at benchmark/fixtures/generated`,
+  );
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  await main();
+}

@@ -31,6 +31,7 @@ export interface BenchmarkMetrics {
   readonly medianWarmLatencyMs: number;
   readonly p95WarmLatencyMs: number;
   readonly packageSizeBytes: number;
+  readonly packageSizeScope: string;
 }
 
 function levenshteinDistance(left: string, right: string): number {
@@ -99,8 +100,17 @@ function categoryMetrics(predictions: readonly BenchmarkPrediction[]): CategoryM
 
 export function buildReport(
   predictions: readonly BenchmarkPrediction[],
-  options: { readonly packageSizeBytes: number },
+  options: { readonly packageSizeBytes: number; readonly packageSizeScope: string },
 ): BenchmarkMetrics {
+  if (predictions.length === 0) {
+    throw new RangeError('Benchmark predictions must not be empty');
+  }
+  if (!Number.isSafeInteger(options.packageSizeBytes) || options.packageSizeBytes < 0) {
+    throw new RangeError('packageSizeBytes must be a nonnegative safe integer');
+  }
+  if (options.packageSizeScope.trim().length === 0) {
+    throw new TypeError('packageSizeScope must be nonempty');
+  }
   const categories = {} as Record<BenchmarkCategory, CategoryMetrics>;
   for (const category of ['digits', 'letters', 'alphanumeric', 'arithmetic'] as const) {
     const matches = predictions.filter((item) => item.category === category);
@@ -125,5 +135,6 @@ export function buildReport(
     medianWarmLatencyMs: median(warmLatencies),
     p95WarmLatencyMs: percentile(warmLatencies, 0.95),
     packageSizeBytes: options.packageSizeBytes,
+    packageSizeScope: options.packageSizeScope,
   };
 }

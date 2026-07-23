@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { buildReport } from '../../benchmark/report';
 import type { BenchmarkPrediction } from '../../benchmark/report';
 
+const PACKAGE_OPTIONS = {
+  packageSizeBytes: 1,
+  packageSizeScope: 'install-footprint',
+} as const;
+
 function prediction(
   overrides: Partial<BenchmarkPrediction> &
     Pick<BenchmarkPrediction, 'category' | 'expected' | 'actual'>,
@@ -17,6 +22,13 @@ function prediction(
 }
 
 describe('buildReport', () => {
+  it('rejects empty predictions instead of emitting synthetic zero metrics', () => {
+    expect(() => buildReport([], {
+      packageSizeBytes: 1,
+      packageSizeScope: 'install-footprint',
+    })).toThrow(/empty/i);
+  });
+
   it('computes category whole-string accuracy and arithmetic fill accuracy', () => {
     const report = buildReport(
       [
@@ -48,7 +60,7 @@ describe('buildReport', () => {
           actualFill: '6',
         }),
       ],
-      { packageSizeBytes: 13_500_000 },
+      { ...PACKAGE_OPTIONS, packageSizeBytes: 13_500_000 },
     );
 
     expect(report.categories.digits.wholeStringAccuracy).toBe(0.5);
@@ -62,7 +74,7 @@ describe('buildReport', () => {
         prediction({ category: 'letters', expected: 'kitten', actual: 'sitting' }),
         prediction({ category: 'letters', expected: 'abc', actual: 'abc' }),
       ],
-      { packageSizeBytes: 1 },
+      PACKAGE_OPTIONS,
     );
 
     expect(report.categories.letters.characterAccuracy).toBeCloseTo(2 / 3);
@@ -80,11 +92,24 @@ describe('buildReport', () => {
           warmLatencyMs,
         }),
       ),
-      { packageSizeBytes: 1 },
+      PACKAGE_OPTIONS,
     );
 
     expect(report.medianWarmLatencyMs).toBe(30);
     expect(report.p95WarmLatencyMs).toBe(100);
+  });
+
+  it('averages the two middle values for an even warm-latency sample count', () => {
+    const report = buildReport(
+      [10, 20, 30, 40].map((warmLatencyMs, index) => prediction({
+        category: 'digits',
+        expected: String(index),
+        actual: String(index),
+        warmLatencyMs,
+      })),
+      { packageSizeBytes: 1, packageSizeScope: 'install-footprint' },
+    );
+    expect(report.medianWarmLatencyMs).toBe(25);
   });
 
   it('reports cold initialization and package-size contribution', () => {
@@ -97,11 +122,12 @@ describe('buildReport', () => {
           coldInitMs: 321.5,
         }),
       ],
-      { packageSizeBytes: 24_000_000 },
+      { ...PACKAGE_OPTIONS, packageSizeBytes: 24_000_000 },
     );
 
     expect(report.coldInitMs).toBe(321.5);
     expect(report.packageSizeBytes).toBe(24_000_000);
+    expect(report.packageSizeScope).toBe('install-footprint');
   });
 
   it('defines false high confidence as wrong strings at least 0.90 over all predictions', () => {
@@ -112,7 +138,7 @@ describe('buildReport', () => {
         prediction({ category: 'letters', expected: 'C', actual: 'D', confidence: 0.89 }),
         prediction({ category: 'digits', expected: '2', actual: '2', confidence: 0.99 }),
       ],
-      { packageSizeBytes: 1 },
+      PACKAGE_OPTIONS,
     );
 
     expect(report.falseHighConfidenceCount).toBe(2);

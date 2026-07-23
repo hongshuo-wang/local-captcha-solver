@@ -6,69 +6,79 @@
       "id": "digits-001",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-001.png",
-      "answer": "7928",
+      "answer": "8263",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 42,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.5
+        "rotationDegrees": -2
       }
     },
     {
       "id": "digits-002",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-002.png",
-      "answer": "5969",
+      "answer": "14975",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "digits-003",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-003.png",
-      "answer": "8965",
+      "answer": "043278",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "digits-004",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-004.png",
-      "answer": "4926",
+      "answer": "9150",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 39,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "digits-005",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-005.png",
-      "answer": "5555",
+      "answer": "68240",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 37,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
         "rotationDegrees": -1.2
       }
     },
@@ -76,489 +86,559 @@
       "id": "digits-006",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-006.png",
-      "answer": "38385",
+      "answer": "135769",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 34,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -1
       }
     },
     {
       "id": "digits-007",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-007.png",
-      "answer": "5878",
+      "answer": "7953",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "digits-008",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-008.png",
-      "answer": "76575",
+      "answer": "06842",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 35,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "digits-009",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-009.png",
-      "answer": "47286",
+      "answer": "121806",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 39,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "digits-010",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-010.png",
-      "answer": "84729",
+      "answer": "5793",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.9
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "digits-011",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-011.png",
-      "answer": "73949",
+      "answer": "47025",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 40,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.7
+        "rotationDegrees": 0
       }
     },
     {
       "id": "digits-012",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-012.png",
-      "answer": "67472",
+      "answer": "146398",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "digits-013",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-013.png",
-      "answer": "75726",
+      "answer": "6307",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.3
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "digits-014",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-014.png",
-      "answer": "8583",
+      "answer": "19284",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 35,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.3
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "digits-015",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-015.png",
-      "answer": "44425",
+      "answer": "527341",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 39,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.9
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "digits-016",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-016.png",
-      "answer": "4974",
+      "answer": "0586",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1
       }
     },
     {
       "id": "digits-017",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-017.png",
-      "answer": "66682",
+      "answer": "99067",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 38,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "digits-018",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-018.png",
-      "answer": "5876",
+      "answer": "835214",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 36,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.1
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "digits-019",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-019.png",
-      "answer": "77277",
+      "answer": "6375",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.1
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "digits-020",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-020.png",
-      "answer": "82668",
+      "answer": "40189",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 42,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 35,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.9
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "digits-021",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-021.png",
-      "answer": "84289",
+      "answer": "262513",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.3
+        "rotationDegrees": 2
       }
     },
     {
       "id": "digits-022",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-022.png",
-      "answer": "8876",
+      "answer": "7094",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -2
       }
     },
     {
       "id": "digits-023",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-023.png",
-      "answer": "8926",
+      "answer": "88231",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 42,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
         "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "digits-024",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-024.png",
-      "answer": "3728",
+      "answer": "769405",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.5
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "digits-025",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-025.png",
-      "answer": "32972",
+      "answer": "9125",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 41,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -2
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "digits-026",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-026.png",
-      "answer": "26763",
+      "answer": "84037",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.9
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "digits-027",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-027.png",
-      "answer": "6672",
+      "answer": "659376",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 37,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "rotationDegrees": -1
       }
     },
     {
       "id": "digits-028",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-028.png",
-      "answer": "52392",
+      "answer": "8120",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.7
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "digits-029",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-029.png",
-      "answer": "5228",
+      "answer": "48702",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 40,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "digits-030",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-030.png",
-      "answer": "8989",
+      "answer": "619354",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "digits-031",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-031.png",
-      "answer": "3889",
+      "answer": "5026",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.3
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "digits-032",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-032.png",
-      "answer": "25274",
+      "answer": "13978",
       "generation": {
-        "fontFamily": "Courier New",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": -1
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
       }
     },
     {
       "id": "digits-033",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-033.png",
-      "answer": "93533",
+      "answer": "495083",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 36,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 1
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "digits-034",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-034.png",
-      "answer": "69456",
+      "answer": "2461",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "digits-035",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-035.png",
-      "answer": "8253",
+      "answer": "78671",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.2
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "digits-036",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-036.png",
-      "answer": "5824",
+      "answer": "450932",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.9
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "digits-037",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-037.png",
-      "answer": "66937",
+      "answer": "2103",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.1
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1
       }
     },
     {
       "id": "digits-038",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-038.png",
-      "answer": "73743",
+      "answer": "45679",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.7
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "digits-039",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-039.png",
-      "answer": "92682",
+      "answer": "831974",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
         "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "digits-040",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-040.png",
-      "answer": "9536",
+      "answer": "8652",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
         "rotationDegrees": 1.6
       }
     },
@@ -566,181 +646,207 @@
       "id": "digits-041",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-041.png",
-      "answer": "67426",
+      "answer": "01904",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.1
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "digits-042",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-042.png",
-      "answer": "6629",
+      "answer": "725683",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.8
+        "rotationDegrees": 2
       }
     },
     {
       "id": "digits-043",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-043.png",
-      "answer": "6782",
+      "answer": "6502",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.8
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -2
       }
     },
     {
       "id": "digits-044",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-044.png",
-      "answer": "7787",
+      "answer": "19843",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 36,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "digits-045",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-045.png",
-      "answer": "7477",
+      "answer": "786230",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 37,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "digits-046",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-046.png",
-      "answer": "5936",
+      "answer": "4719",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.6
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "digits-047",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-047.png",
-      "answer": "87829",
+      "answer": "51896",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.4
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "digits-048",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-048.png",
-      "answer": "63575",
+      "answer": "230547",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
       "id": "digits-049",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-049.png",
-      "answer": "58329",
+      "answer": "7243",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": -2
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "digits-050",
       "category": "digits",
       "image": "benchmark/fixtures/generated/digits-050.png",
-      "answer": "3746",
+      "answer": "16059",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 40,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "letters-001",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-001.png",
-      "answer": "JVYx",
+      "answer": "lJXa",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.3
+        "rotationDegrees": -2
       }
     },
     {
       "id": "letters-002",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-002.png",
-      "answer": "egrs",
+      "answer": "ZjgAH",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "letters-003",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-003.png",
-      "answer": "ZHGq",
+      "answer": "nSdkei",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "interferenceLines": 2,
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
         "rotationDegrees": -1.6
       }
     },
@@ -748,110 +854,126 @@
       "id": "letters-004",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-004.png",
-      "answer": "xsBc",
+      "answer": "bTmF",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "letters-005",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-005.png",
-      "answer": "JDgX",
+      "answer": "ohuwP",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.7
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "letters-006",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-006.png",
-      "answer": "UNXn",
+      "answer": "WIcMpY",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 36,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -1
       }
     },
     {
       "id": "letters-007",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-007.png",
-      "answer": "YDEZ",
+      "answer": "QBqN",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.9
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "letters-008",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-008.png",
-      "answer": "bLQx",
+      "answer": "sDRtK",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 41,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.4
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "letters-009",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-009.png",
-      "answer": "zJan",
+      "answer": "yzfECV",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "letters-010",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-010.png",
-      "answer": "EwTt",
+      "answer": "rUOx",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 36,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "letters-011",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-011.png",
-      "answer": "bgEB",
+      "answer": "GvLZr",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
         "rotationDegrees": 0
       }
@@ -860,349 +982,399 @@
       "id": "letters-012",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-012.png",
-      "answer": "tMJy",
+      "answer": "hzYwGO",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 34,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "letters-013",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-013.png",
-      "answer": "jMZW",
+      "answer": "FcJU",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": 0
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "letters-014",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-014.png",
-      "answer": "pgEU",
+      "answer": "NDgiE",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 41,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.1
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "letters-015",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-015.png",
-      "answer": "qaEV",
+      "answer": "sAbqvI",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 34,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "letters-016",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-016.png",
-      "answer": "tkhg",
+      "answer": "LPed",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1
       }
     },
     {
       "id": "letters-017",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-017.png",
-      "answer": "BrVF",
+      "answer": "pnTRo",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.7
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "letters-018",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-018.png",
-      "answer": "nFmu",
+      "answer": "QjWxmB",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.9
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "letters-019",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-019.png",
-      "answer": "zxgw",
+      "answer": "CVtu",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "letters-020",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-020.png",
-      "answer": "WPwQ",
+      "answer": "KXafl",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "letters-021",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-021.png",
-      "answer": "JHet",
+      "answer": "yHkSMK",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.1
+        "rotationDegrees": 2
       }
     },
     {
       "id": "letters-022",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-022.png",
-      "answer": "xjvY",
+      "answer": "SRWz",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 34,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 2
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -2
       }
     },
     {
       "id": "letters-023",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-023.png",
-      "answer": "fLqa",
+      "answer": "bMuIH",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 35,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.5
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "letters-024",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-024.png",
-      "answer": "Xrww",
+      "answer": "epZtYC",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
         "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.3
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "letters-025",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-025.png",
-      "answer": "TZvd",
+      "answer": "EmUh",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.8
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "letters-026",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-026.png",
-      "answer": "jqwz",
+      "answer": "TLvwO",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "letters-027",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-027.png",
-      "answer": "CTFZ",
+      "answer": "QXVsok",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0
+        "rotationDegrees": -1
       }
     },
     {
       "id": "letters-028",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-028.png",
-      "answer": "RvQS",
+      "answer": "yfFG",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
         "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.7
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "letters-029",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-029.png",
-      "answer": "Nufd",
+      "answer": "adNji",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 36,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.5
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "letters-030",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-030.png",
-      "answer": "rqKK",
+      "answer": "BPglnq",
       "generation": {
-        "fontFamily": "Georgia",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 36,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.9
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "letters-031",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-031.png",
-      "answer": "QTEM",
+      "answer": "xJDr",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 37,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.3
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "letters-032",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-032.png",
-      "answer": "gQDD",
+      "answer": "AcsuR",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 38,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.3
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
       }
     },
     {
       "id": "letters-033",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-033.png",
-      "answer": "VESN",
+      "answer": "KFDOkj",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.4
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "letters-034",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-034.png",
-      "answer": "SCMh",
+      "answer": "QMWG",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.9
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "letters-035",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-035.png",
-      "answer": "cKDh",
+      "answer": "TJoeX",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 40,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.3
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "letters-036",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-036.png",
-      "answer": "aCxD",
+      "answer": "LbfpUx",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 40,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
         "rotationDegrees": 0.8
       }
     },
@@ -1210,1646 +1382,1874 @@
       "id": "letters-037",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-037.png",
-      "answer": "hkEu",
+      "answer": "BSdA",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "rotationDegrees": 1
       }
     },
     {
       "id": "letters-038",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-038.png",
-      "answer": "YWcT",
+      "answer": "rmnHv",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 40,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.7
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "letters-039",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-039.png",
-      "answer": "QDty",
+      "answer": "cENhqw",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.3
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "letters-040",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-040.png",
-      "answer": "FwrT",
+      "answer": "tyzP",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 34,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.9
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "letters-041",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-041.png",
-      "answer": "ZGax",
+      "answer": "iCgIV",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "letters-042",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-042.png",
-      "answer": "cWTC",
+      "answer": "YlZaie",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
       "id": "letters-043",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-043.png",
-      "answer": "Nzba",
+      "answer": "VoDs",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 42,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "rotationDegrees": -2
       }
     },
     {
       "id": "letters-044",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-044.png",
-      "answer": "WdYb",
+      "answer": "KUbwl",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 42,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.7
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "letters-045",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-045.png",
-      "answer": "XDQu",
+      "answer": "QfdHku",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.7
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "letters-046",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-046.png",
-      "answer": "Aatd",
+      "answer": "xtWF",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "letters-047",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-047.png",
-      "answer": "gYpt",
+      "answer": "JPTIM",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 36,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
         "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "letters-048",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-048.png",
-      "answer": "XQgS",
+      "answer": "jCrvqy",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
       "id": "letters-049",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-049.png",
-      "answer": "Hwch",
+      "answer": "gEXR",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "letters-050",
       "category": "letters",
       "image": "benchmark/fixtures/generated/letters-050.png",
-      "answer": "vfjp",
+      "answer": "zpGLO",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "alphanumeric-001",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-001.png",
-      "answer": "JhUq",
+      "answer": "MhWU",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.7
+        "rotationDegrees": -2
       }
     },
     {
       "id": "alphanumeric-002",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-002.png",
-      "answer": "sXwK",
+      "answer": "4A9nY",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 41,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.9
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "alphanumeric-003",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-003.png",
-      "answer": "VeYH",
+      "answer": "tHPfgZ",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.1
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "alphanumeric-004",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-004.png",
-      "answer": "QZQu",
+      "answer": "TyIm",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 42,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "alphanumeric-005",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-005.png",
-      "answer": "eVs6",
+      "answer": "2udqB",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.3
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "alphanumeric-006",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-006.png",
-      "answer": "aBW4",
+      "answer": "SDXVEz",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.3
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
       "id": "alphanumeric-007",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-007.png",
-      "answer": "apb8",
+      "answer": "lwRj",
       "generation": {
-        "fontFamily": "Verdana",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 40,
-        "foreground": "#111827",
+        "foreground": "#333333",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.7
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "alphanumeric-008",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-008.png",
-      "answer": "GuBT",
+      "answer": "bcvik",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 40,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.4
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "alphanumeric-009",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-009.png",
-      "answer": "kbME",
+      "answer": "seFLNo",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "alphanumeric-010",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-010.png",
-      "answer": "rgkm",
+      "answer": "K1QG",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 35,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "alphanumeric-011",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-011.png",
-      "answer": "D4Gy",
+      "answer": "Jrap8",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "rotationDegrees": 0
       }
     },
     {
       "id": "alphanumeric-012",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-012.png",
-      "answer": "mS6K",
+      "answer": "06375x",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.9
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "alphanumeric-013",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-013.png",
-      "answer": "DLAG",
+      "answer": "OCVx",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.7
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "alphanumeric-014",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-014.png",
-      "answer": "4j3B",
+      "answer": "EegMO",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "alphanumeric-015",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-015.png",
-      "answer": "8j8P",
+      "answer": "dhu7SL",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 36,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.2
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "alphanumeric-016",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-016.png",
-      "answer": "yBTw",
+      "answer": "la5Z",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 37,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "rotationDegrees": 1
       }
     },
     {
       "id": "alphanumeric-017",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-017.png",
-      "answer": "5jeq",
+      "answer": "K468p",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 41,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.9
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "alphanumeric-018",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-018.png",
-      "answer": "nJmS",
+      "answer": "FTwQPq",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.1
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "alphanumeric-019",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-019.png",
-      "answer": "D3ek",
+      "answer": "iNrb",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.3
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "alphanumeric-020",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-020.png",
-      "answer": "u5Zh",
+      "answer": "JBGAX",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 35,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -2
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "alphanumeric-021",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-021.png",
-      "answer": "5FqK",
+      "answer": "zCW90s",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 40,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.9
+        "rotationDegrees": 2
       }
     },
     {
       "id": "alphanumeric-022",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-022.png",
-      "answer": "ukjU",
+      "answer": "2yIY",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.1
+        "rotationDegrees": -2
       }
     },
     {
       "id": "alphanumeric-023",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-023.png",
-      "answer": "7gRA",
+      "answer": "1Rvcn",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.8
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "alphanumeric-024",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-024.png",
-      "answer": "9FWu",
+      "answer": "fUm3jH",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.4
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "alphanumeric-025",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-025.png",
-      "answer": "h2XR",
+      "answer": "kDto",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.1
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "alphanumeric-026",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-026.png",
-      "answer": "WZsh",
+      "answer": "JPu8G",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 34,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.3
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "alphanumeric-027",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-027.png",
-      "answer": "bA5d",
+      "answer": "LO6rCE",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
         "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.7
+        "rotationDegrees": -1
       }
     },
     {
       "id": "alphanumeric-028",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-028.png",
-      "answer": "9gvM",
+      "answer": "X5n4",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 35,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.9
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "alphanumeric-029",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-029.png",
-      "answer": "d4eX",
+      "answer": "lgWqS",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -1
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "alphanumeric-030",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-030.png",
-      "answer": "NurH",
+      "answer": "VRBAFc",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.3
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "alphanumeric-031",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-031.png",
-      "answer": "Ny8a",
+      "answer": "KNpU",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 37,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.5
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "alphanumeric-032",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-032.png",
-      "answer": "ws4b",
+      "answer": "TQay1",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 38,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0
       }
     },
     {
       "id": "alphanumeric-033",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-033.png",
-      "answer": "utdH",
+      "answer": "YHbtw0",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 34,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "alphanumeric-034",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-034.png",
-      "answer": "qNKL",
+      "answer": "ovf3",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 37,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": -0.9
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "alphanumeric-035",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-035.png",
-      "answer": "PHWj",
+      "answer": "eI7sh",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 34,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.9
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "alphanumeric-036",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-036.png",
-      "answer": "wCB9",
+      "answer": "kj9M2i",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "alphanumeric-037",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-037.png",
-      "answer": "8Mh5",
+      "answer": "dxzZ",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "rotationDegrees": 1
       }
     },
     {
       "id": "alphanumeric-038",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-038.png",
-      "answer": "Gz2S",
+      "answer": "DmOMN",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.1
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "alphanumeric-039",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-039.png",
-      "answer": "4PD4",
+      "answer": "UmP3Y6",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 36,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "alphanumeric-040",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-040.png",
-      "answer": "8jS2",
+      "answer": "XcKe",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 40,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "alphanumeric-041",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-041.png",
-      "answer": "XTjv",
+      "answer": "siLzp",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 41,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.9
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "alphanumeric-042",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-042.png",
-      "answer": "BsPt",
+      "answer": "dlWfCw",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 2
       }
     },
     {
       "id": "alphanumeric-043",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-043.png",
-      "answer": "buWa",
+      "answer": "THVZ",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.9
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -2
       }
     },
     {
       "id": "alphanumeric-044",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-044.png",
-      "answer": "nukk",
+      "answer": "hxRSn",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 1
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "alphanumeric-045",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-045.png",
-      "answer": "UN6V",
+      "answer": "oqAFt1",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "alphanumeric-046",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-046.png",
-      "answer": "eF95",
+      "answer": "Bu8k",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 39,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "alphanumeric-047",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-047.png",
-      "answer": "49Kw",
+      "answer": "brI42",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "alphanumeric-048",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-048.png",
-      "answer": "VkQZ",
+      "answer": "Qja0vG",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.5
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
       "id": "alphanumeric-049",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-049.png",
-      "answer": "RjRF",
+      "answer": "E5yD",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 41,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "alphanumeric-050",
       "category": "alphanumeric",
       "image": "benchmark/fixtures/generated/alphanumeric-050.png",
-      "answer": "HQns",
+      "answer": "9J7gk",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.9
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "arithmetic-001",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-001.png",
-      "answer": "39+20",
-      "fill": "59",
+      "answer": "12+4",
+      "fill": "16",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.4
+        "rotationDegrees": -2
       }
     },
     {
       "id": "arithmetic-002",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-002.png",
-      "answer": "11-6",
-      "fill": "5",
+      "answer": "33-15",
+      "fill": "18",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 1.8
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "arithmetic-003",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-003.png",
-      "answer": "45x29",
-      "fill": "1305",
+      "answer": "7x25",
+      "fill": "175",
       "generation": {
-        "fontFamily": "Courier New",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.5
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "arithmetic-004",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-004.png",
-      "answer": "35÷5",
-      "fill": "7",
+      "answer": "54÷6",
+      "fill": "9",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.6
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "arithmetic-005",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-005.png",
-      "answer": "35+9",
-      "fill": "44",
+      "answer": "15+23",
+      "fill": "38",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 37,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": -0.8
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "arithmetic-006",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-006.png",
-      "answer": "20-9",
-      "fill": "11",
+      "answer": "45-3",
+      "fill": "42",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 37,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.6
+        "rotationDegrees": -1
       }
     },
     {
       "id": "arithmetic-007",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-007.png",
-      "answer": "47x10",
-      "fill": "470",
+      "answer": "12x22",
+      "fill": "264",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 41,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.5
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "arithmetic-008",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-008.png",
-      "answer": "21÷3",
-      "fill": "7",
+      "answer": "8÷2",
+      "fill": "4",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 37,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "arithmetic-009",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-009.png",
-      "answer": "9+5",
-      "fill": "14",
+      "answer": "45+16",
+      "fill": "61",
       "generation": {
-        "fontFamily": "Arial",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "arithmetic-010",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-010.png",
-      "answer": "15-9",
-      "fill": "6",
+      "answer": "45-27",
+      "fill": "18",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 36,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.9
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "arithmetic-011",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-011.png",
-      "answer": "32x9",
-      "fill": "288",
+      "answer": "42x5",
+      "fill": "210",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 38,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "rotationDegrees": 0
       }
     },
     {
       "id": "arithmetic-012",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-012.png",
-      "answer": "108÷9",
-      "fill": "12",
+      "answer": "80÷8",
+      "fill": "10",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.7
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "arithmetic-013",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-013.png",
-      "answer": "7+13",
-      "fill": "20",
+      "answer": "23+10",
+      "fill": "33",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 39,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 37,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0.2
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "arithmetic-014",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-014.png",
-      "answer": "47-3",
-      "fill": "44",
+      "answer": "29-12",
+      "fill": "17",
       "generation": {
-        "fontFamily": "Verdana",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
         "fontSizePx": 38,
-        "foreground": "#111827",
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.7
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "arithmetic-015",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-015.png",
-      "answer": "3x23",
-      "fill": "69",
+      "answer": "36x27",
+      "fill": "972",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 40,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.1
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 39,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "arithmetic-016",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-016.png",
-      "answer": "63÷7",
-      "fill": "9",
+      "answer": "10÷5",
+      "fill": "2",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 41,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 40,
+        "foreground": "#111111",
         "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.3
+        "rotationDegrees": 1
       }
     },
     {
       "id": "arithmetic-017",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-017.png",
-      "answer": "2+25",
-      "fill": "27",
+      "answer": "31+4",
+      "fill": "35",
       "generation": {
-        "fontFamily": "Courier New",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 41,
-        "foreground": "#111827",
+        "foreground": "#767676",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.2
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "arithmetic-018",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-018.png",
-      "answer": "25-10",
-      "fill": "15",
+      "answer": "20-15",
+      "fill": "5",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 36,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 42,
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.5
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "arithmetic-019",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-019.png",
-      "answer": "25x19",
-      "fill": "475",
+      "answer": "20x26",
+      "fill": "520",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 2,
-        "rotationDegrees": -1.7
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 34,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "arithmetic-020",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-020.png",
-      "answer": "21÷3",
-      "fill": "7",
+      "answer": "4÷2",
+      "fill": "2",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 36,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 35,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.9
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "arithmetic-021",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-021.png",
-      "answer": "7+20",
-      "fill": "27",
+      "answer": "10+13",
+      "fill": "23",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 36,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.5
+        "rotationDegrees": 2
       }
     },
     {
       "id": "arithmetic-022",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-022.png",
-      "answer": "27-9",
-      "fill": "18",
+      "answer": "38-27",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 37,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -2
       }
     },
     {
       "id": "arithmetic-023",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-023.png",
-      "answer": "41x15",
-      "fill": "615",
+      "answer": "34x2",
+      "fill": "68",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 37,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 38,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.3
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "arithmetic-024",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-024.png",
-      "answer": "32÷8",
-      "fill": "4",
+      "answer": "22÷2",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 39,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.6
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "arithmetic-025",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-025.png",
-      "answer": "40+20",
-      "fill": "60",
+      "answer": "8+5",
+      "fill": "13",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 34,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 0
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 40,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "arithmetic-026",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-026.png",
-      "answer": "30-29",
-      "fill": "1",
+      "answer": "23-3",
+      "fill": "20",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 36,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 41,
+        "foreground": "#595959",
         "background": "#ffffff",
-        "interferenceLines": 1,
-        "rotationDegrees": -0.8
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "arithmetic-027",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-027.png",
-      "answer": "21x7",
-      "fill": "147",
+      "answer": "26x9",
+      "fill": "234",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 42,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.1
+        "rotationDegrees": -1
       }
     },
     {
       "id": "arithmetic-028",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-028.png",
-      "answer": "60÷5",
-      "fill": "12",
+      "answer": "48÷6",
+      "fill": "8",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.8
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 34,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "arithmetic-029",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-029.png",
-      "answer": "12+24",
-      "fill": "36",
+      "answer": "48+7",
+      "fill": "55",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 42,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 35,
+        "foreground": "#767676",
         "background": "#ffffff",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.3
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.6
       }
     },
     {
       "id": "arithmetic-030",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-030.png",
-      "answer": "18-9",
-      "fill": "9",
+      "answer": "12-6",
+      "fill": "6",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 34,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 36,
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.1
+        "rotationDegrees": -0.4
       }
     },
     {
       "id": "arithmetic-031",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-031.png",
-      "answer": "48x24",
-      "fill": "1152",
+      "answer": "8x28",
+      "fill": "224",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
         "fontSizePx": 37,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.4
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.2
       }
     },
     {
       "id": "arithmetic-032",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-032.png",
-      "answer": "20÷5",
-      "fill": "4",
+      "answer": "66÷6",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 39,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 38,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": 0.3
+        "rotationDegrees": 0
       }
     },
     {
       "id": "arithmetic-033",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-033.png",
-      "answer": "40+14",
-      "fill": "54",
+      "answer": "49+16",
+      "fill": "65",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 41,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 39,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -1.5
+        "rotationDegrees": 0.2
       }
     },
     {
       "id": "arithmetic-034",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-034.png",
-      "answer": "25-12",
-      "fill": "13",
+      "answer": "29-10",
+      "fill": "19",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 34,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": 0.7
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 40,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 0.4
       }
     },
     {
       "id": "arithmetic-035",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-035.png",
-      "answer": "42x13",
-      "fill": "546",
+      "answer": "24x2",
+      "fill": "48",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 38,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 41,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.2
+        "rotationDegrees": 0.6
       }
     },
     {
       "id": "arithmetic-036",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-036.png",
-      "answer": "88÷8",
-      "fill": "11",
+      "answer": "12÷2",
+      "fill": "6",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 38,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 42,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.2
+        "rotationDegrees": 0.8
       }
     },
     {
       "id": "arithmetic-037",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-037.png",
-      "answer": "31+5",
-      "fill": "36",
+      "answer": "11+21",
+      "fill": "32",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 40,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 34,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.5
+        "rotationDegrees": 1
       }
     },
     {
       "id": "arithmetic-038",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-038.png",
-      "answer": "33-24",
-      "fill": "9",
+      "answer": "26-13",
+      "fill": "13",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 37,
-        "foreground": "#172554",
-        "background": "#f8fafc",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.9
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 35,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.2
       }
     },
     {
       "id": "arithmetic-039",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-039.png",
-      "answer": "10x12",
-      "fill": "120",
+      "answer": "31x17",
+      "fill": "527",
       "generation": {
-        "fontFamily": "Arial",
-        "fontSizePx": 39,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 36,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.4
+        "rotationDegrees": 1.4
       }
     },
     {
       "id": "arithmetic-040",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-040.png",
-      "answer": "36÷9",
-      "fill": "4",
+      "answer": "22÷2",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 42,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.6
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 37,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": 1.6
       }
     },
     {
       "id": "arithmetic-041",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-041.png",
-      "answer": "16+27",
-      "fill": "43",
+      "answer": "9+10",
+      "fill": "19",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 41,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 38,
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": 1.8
       }
     },
     {
       "id": "arithmetic-042",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-042.png",
-      "answer": "15-9",
-      "fill": "6",
+      "answer": "19-14",
+      "fill": "5",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 34,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 39,
+        "foreground": "#595959",
         "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.4
+        "rotationDegrees": 2
       }
     },
     {
       "id": "arithmetic-043",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-043.png",
-      "answer": "15x24",
-      "fill": "360",
+      "answer": "43x26",
+      "fill": "1118",
       "generation": {
-        "fontFamily": "Courier New",
-        "fontSizePx": 42,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 40,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 1.6
+        "rotationDegrees": -2
       }
     },
     {
       "id": "arithmetic-044",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-044.png",
-      "answer": "6÷3",
-      "fill": "2",
+      "answer": "77÷7",
+      "fill": "11",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 37,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 41,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
         "interferenceLines": 2,
-        "rotationDegrees": -1.7
+        "rotationDegrees": -1.8
       }
     },
     {
       "id": "arithmetic-045",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-045.png",
-      "answer": "27+19",
-      "fill": "46",
+      "answer": "48+5",
+      "fill": "53",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 39,
-        "foreground": "#111827",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
+        "fontSizePx": 42,
+        "foreground": "#767676",
         "background": "#ffffff",
+        "contrastBand": "4.5:1",
         "interferenceLines": 1,
-        "rotationDegrees": -0.2
+        "rotationDegrees": -1.6
       }
     },
     {
       "id": "arithmetic-046",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-046.png",
-      "answer": "29-20",
-      "fill": "9",
+      "answer": "49-4",
+      "fill": "45",
       "generation": {
-        "fontFamily": "Helvetica",
-        "fontSizePx": 35,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 34,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.7
+        "rotationDegrees": -1.4
       }
     },
     {
       "id": "arithmetic-047",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-047.png",
-      "answer": "6x12",
-      "fill": "72",
+      "answer": "11x21",
+      "fill": "231",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 36,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Mono",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansMono.ttf",
+        "fontSizePx": 35,
+        "foreground": "#333333",
+        "background": "#ffffff",
+        "contrastBand": "12:1",
         "interferenceLines": 1,
-        "rotationDegrees": 0
+        "rotationDegrees": -1.2
       }
     },
     {
       "id": "arithmetic-048",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-048.png",
-      "answer": "32÷8",
-      "fill": "4",
+      "answer": "9÷3",
+      "fill": "3",
       "generation": {
-        "fontFamily": "Georgia",
-        "fontSizePx": 35,
-        "foreground": "#3f1d0b",
-        "background": "#fff7ed",
-        "interferenceLines": 1,
-        "rotationDegrees": -1.2
+        "fontFamily": "Benchmark Condensed",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSansCondensed.ttf",
+        "fontSizePx": 36,
+        "foreground": "#111111",
+        "background": "#ffffff",
+        "contrastBand": "18:1",
+        "interferenceLines": 2,
+        "rotationDegrees": -1
       }
     },
     {
       "id": "arithmetic-049",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-049.png",
-      "answer": "29+21",
-      "fill": "50",
+      "answer": "48+6",
+      "fill": "54",
       "generation": {
-        "fontFamily": "Helvetica",
+        "fontFamily": "Benchmark Sans",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf",
         "fontSizePx": 37,
-        "foreground": "#14261b",
-        "background": "#f0fdf4",
-        "interferenceLines": 2,
-        "rotationDegrees": 0.8
+        "foreground": "#767676",
+        "background": "#ffffff",
+        "contrastBand": "4.5:1",
+        "interferenceLines": 1,
+        "rotationDegrees": -0.8
       }
     },
     {
       "id": "arithmetic-050",
       "category": "arithmetic",
       "image": "benchmark/fixtures/generated/arithmetic-050.png",
-      "answer": "23-8",
-      "fill": "15",
+      "answer": "19-18",
+      "fill": "1",
       "generation": {
-        "fontFamily": "Verdana",
-        "fontSizePx": 35,
-        "foreground": "#172554",
-        "background": "#f8fafc",
+        "fontFamily": "Benchmark Serif",
+        "fontFile": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSerif.ttf",
+        "fontSizePx": 38,
+        "foreground": "#595959",
+        "background": "#ffffff",
+        "contrastBand": "7:1",
         "interferenceLines": 2,
-        "rotationDegrees": 1.8
+        "rotationDegrees": -0.6
       }
     }
   ]
