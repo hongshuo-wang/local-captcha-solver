@@ -58,6 +58,26 @@ function encodeBase64(bytes: Uint8Array): string {
   return globalThis.btoa(binary);
 }
 
+function decodePercentBytes(value: string): Uint8Array | undefined {
+  const bytes = new Uint8Array(value.length);
+  let length = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code === 0x25) {
+      const high = value.charCodeAt(index + 1);
+      const low = value.charCodeAt(index + 2);
+      const hex = String.fromCharCode(high, low);
+      if (!/^[0-9a-f]{2}$/i.test(hex)) return undefined;
+      bytes[length++] = Number.parseInt(hex, 16);
+      index += 2;
+    } else {
+      if (code > 0x7f) return undefined;
+      bytes[length++] = code;
+    }
+  }
+  return bytes.slice(0, length);
+}
+
 function parseDataUrl(dataUrl: string): { bytes: Uint8Array; mimeType: string } | ImageAcquisitionResult {
   if (dataUrl.length > MAX_IMAGE_DATA_URL_BYTES) return unavailable('size');
   const match = /^data:([^,]*),([\s\S]*)$/i.exec(dataUrl);
@@ -71,11 +91,7 @@ function parseDataUrl(dataUrl: string): { bytes: Uint8Array; mimeType: string } 
   if (base64) {
     bytes = decodeBase64(match[2]);
   } else {
-    try {
-      bytes = new TextEncoder().encode(decodeURIComponent(match[2]));
-    } catch {
-      return unavailable('type');
-    }
+    bytes = decodePercentBytes(match[2]);
   }
   if (bytes === undefined) return unavailable('type');
   if (bytes.length > MAX_IMAGE_BYTES) return unavailable('size');

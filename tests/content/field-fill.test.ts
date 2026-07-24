@@ -67,6 +67,21 @@ describe('fillEmptyField', () => {
     expect(field.value).toBe('');
   });
 
+  it.each([
+    (ancestor: HTMLElement) => { ancestor.hidden = true; },
+    (ancestor: HTMLElement) => { ancestor.style.display = 'none'; },
+    (ancestor: HTMLElement) => { ancestor.style.visibility = 'hidden'; },
+  ])('rejects a field hidden by an ancestor', (hide) => {
+    const ancestor = document.createElement('div');
+    const field = document.createElement('input');
+    ancestor.append(field);
+    document.body.append(ancestor);
+    hide(ancestor);
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
+    expect(field.value).toBe('');
+  });
+
   it('never creates click, keyboard, submit, or form submission side effects', () => {
     const form = document.createElement('form');
     const field = document.createElement('input');
@@ -119,6 +134,21 @@ describe('fillEmptyField', () => {
     Object.defineProperty(field, 'hidden', {
       configurable: true,
       get: () => ++reads === 2,
+    });
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
+    expect(field.value).toBe('');
+  });
+
+  it('rechecks ancestor visibility immediately before invoking the native setter', () => {
+    const ancestor = document.createElement('div');
+    const field = document.createElement('input');
+    ancestor.append(field);
+    document.body.append(ancestor);
+    let checks = 0;
+    Object.defineProperty(ancestor, 'hasAttribute', {
+      configurable: true,
+      value: (name: string) => name === 'hidden' && ++checks === 2,
     });
 
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });

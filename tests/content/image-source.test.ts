@@ -55,6 +55,19 @@ describe('acquireImage', () => {
     if (result.state === 'ready') expectOcrImageDataUrl(result.dataUrl);
   });
 
+  it('preserves high-octet percent-encoded image bytes', async () => {
+    const result = await acquireImage(image('data:image/png,%89PNG%0D%0A%1A%0A'));
+
+    expect(result).toMatchObject({ state: 'ready', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' });
+    if (result.state === 'ready') expectOcrImageDataUrl(result.dataUrl);
+  });
+
+  it.each(['%', '%0', '%GG'])('rejects malformed percent-encoded image bytes: %s', async (payload) => {
+    await expect(acquireImage(image(`data:image/png,${payload}`))).resolves.toEqual({
+      state: 'image_unavailable', reason: 'type',
+    });
+  });
+
   it('acquires blob URLs through its injected fetch primitive', async () => {
     const fetch = vi.fn(async () => new Response(new Uint8Array([4, 5]), { headers: { 'content-type': 'image/gif; charset=binary' } }));
 

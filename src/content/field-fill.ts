@@ -6,10 +6,17 @@ export type FieldFillResult =
 
 const TEXT_LIKE_TYPES = new Set(['', 'text', 'search', 'email', 'tel', 'url', 'number']);
 
+function isEffectivelyVisible(field: HTMLInputElement): boolean {
+  for (let element: Element | null = field; element !== null; element = element.parentElement) {
+    if ((element === field && field.hidden) || element.hasAttribute('hidden')) return false;
+    const style = globalThis.getComputedStyle?.(element);
+    if (style?.display === 'none' || style?.visibility === 'hidden' || style?.visibility === 'collapse') return false;
+  }
+  return true;
+}
+
 function isEligible(field: HTMLInputElement): boolean {
-  if (!TEXT_LIKE_TYPES.has(field.type.toLowerCase()) || field.disabled || field.readOnly || field.hidden) return false;
-  const style = globalThis.getComputedStyle?.(field);
-  return style?.display !== 'none' && style?.visibility !== 'hidden' && style?.visibility !== 'collapse';
+  return TEXT_LIKE_TYPES.has(field.type.toLowerCase()) && !field.disabled && !field.readOnly && isEffectivelyVisible(field);
 }
 
 /** Fill only a still-empty text-like input, without submitting or simulating user gestures. */
