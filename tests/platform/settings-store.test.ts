@@ -27,6 +27,36 @@ function adapterWith(initialValue?: unknown): BrowserAdapter & { values: Map<str
   };
 }
 
+function adapterWithGatedReads(): BrowserAdapter & { releaseReads(): void; values: Map<string, unknown> } {
+  const values = new Map<string, unknown>();
+  let getCalls = 0;
+  let release: (() => void) | undefined;
+  const readsReady = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  return {
+    values,
+    releaseReads(): void {
+      release?.();
+    },
+    async getLocal<T>(key: string): Promise<T | undefined> {
+      getCalls += 1;
+      if (getCalls <= 2) await readsReady;
+      return values.get(key) as T | undefined;
+    },
+    async setLocal<T>(key: string, value: T): Promise<void> {
+      values.set(key, value);
+    },
+    async requestOrigins(): Promise<boolean> {
+      return true;
+    },
+    async removeOrigins(): Promise<boolean> {
+      return true;
+    },
+  };
+}
+
 describe('createSettingsStore', () => {
   it('reads the versioned captcha settings schema from the stable storage key', async () => {
     const adapter = adapterWith({ version: 1, allowlistedHosts: ['portal.example.test'] });
@@ -85,6 +115,37 @@ describe('createSettingsStore', () => {
     await expect(store.read()).resolves.toEqual({ version: 1, allowlistedHosts: [] });
   });
 
+  it('serializes concurrent mutations so independent enables do not lose either hostname', async () => {
+    const adapter = adapterWithGatedReads();
+    const store = createSettingsStore(adapter);
+    const first = store.enable('a.example.test');
+    const second = store.enable('b.example.test');
+
+    adapter.releaseReads();
+    await Promise.all([first, second]);
+
+    await expect(store.read()).resolves.toEqual({
+      version: 1,
+      allowlistedHosts: ['a.example.test', 'b.example.test'],
+    });
+  });
+
+  it('serializes concurrent enable and disable so a removed hostname is not reintroduced', async () => {
+    const adapter = adapterWithGatedReads();
+    adapter.values.set(SETTINGS_STORAGE_KEY, { version: 1, allowlistedHosts: ['a.example.test'] });
+    const store = createSettingsStore(adapter);
+    const remove = store.disable('a.example.test');
+    const add = store.enable('b.example.test');
+
+    adapter.releaseReads();
+    await Promise.all([remove, add]);
+
+    await expect(store.read()).resolves.toEqual({
+      version: 1,
+      allowlistedHosts: ['b.example.test'],
+    });
+  });
+
   it.each([
     'https://example.test',
     'example.test/path',
@@ -93,6 +154,9 @@ describe('createSettingsStore', () => {
     'example test',
     'example.test\n',
     '127.0.0.1',
+    '127.1',
+    '127.0.0',
+    '2130706433',
     '[::1]',
     'localhost',
     '',

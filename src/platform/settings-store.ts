@@ -16,6 +16,7 @@ export interface SettingsStore {
 
 const EMPTY_SETTINGS: CaptchaSettings = { version: 1, allowlistedHosts: [] };
 const HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
+const mutationQueues = new WeakMap<BrowserAdapter, Promise<void>>();
 
 function isSupportedHostname(hostname: string): boolean {
   return hostname !== 'localhost'
@@ -31,6 +32,9 @@ export function normalizeHostname(hostname: string): string {
 
   const normalized = hostname.toLowerCase();
   if (!isSupportedHostname(normalized)) throw new Error('Hostname must be a supported DNS hostname');
+  if (new URL(`https://${normalized}`).hostname !== normalized) {
+    throw new Error('Hostname must not be an IP address shorthand');
+  }
   return normalized;
 }
 
@@ -77,6 +81,12 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
       allowlistedHosts: [...new Set(hosts)].sort(),
     });
   };
+  const mutate = (operation: () => Promise<void>): Promise<void> => {
+    const previous = mutationQueues.get(adapter) ?? Promise.resolve();
+    const next = previous.catch(() => undefined).then(operation);
+    mutationQueues.set(adapter, next.catch(() => undefined));
+    return next;
+  };
 
   return {
     read,
@@ -85,15 +95,19 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
     },
     async enable(hostname: string): Promise<void> {
       const normalized = normalizeHostname(hostname);
-      const settings = await read();
-      if (!settings.allowlistedHosts.includes(normalized)) await write([...settings.allowlistedHosts, normalized]);
+      await mutate(async () => {
+        const settings = await read();
+        if (!settings.allowlistedHosts.includes(normalized)) await write([...settings.allowlistedHosts, normalized]);
+      });
     },
     async disable(hostname: string): Promise<void> {
       const normalized = normalizeHostname(hostname);
-      const settings = await read();
-      if (settings.allowlistedHosts.includes(normalized)) {
-        await write(settings.allowlistedHosts.filter((host) => host !== normalized));
-      }
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.allowlistedHosts.includes(normalized)) {
+          await write(settings.allowlistedHosts.filter((host) => host !== normalized));
+        }
+      });
     },
   };
 }
