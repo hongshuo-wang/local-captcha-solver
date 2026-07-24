@@ -35,6 +35,10 @@ export function normalizeHostname(hostname: string): string {
 }
 
 export function hostnameForPage(pageUrl: string): string {
+  if (pageUrl.trim() !== pageUrl || /[\u0000-\u001f\u007f]/.test(pageUrl) || !/^https?:\/\//.test(pageUrl)) {
+    throw new Error('Page URL must begin with an unmodified HTTP or HTTPS authority');
+  }
+
   let url: URL;
   try {
     url = new URL(pageUrl);
@@ -42,7 +46,7 @@ export function hostnameForPage(pageUrl: string): string {
     throw new Error('Page URL must be a valid URL');
   }
 
-  const rawAuthority = /^[a-z][a-z\d+.-]*:\/\/([^/?#]*)/i.exec(pageUrl)?.[1];
+  const rawAuthority = /^https?:\/\/([^/?#]*)/.exec(pageUrl)?.[1];
   const hasUserinfo = rawAuthority?.includes('@') ?? false;
   if ((url.protocol !== 'http:' && url.protocol !== 'https:') || hasUserinfo || url.username || url.password || url.port) {
     throw new Error('Page URL must be a normal HTTP or HTTPS page URL');
