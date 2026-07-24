@@ -101,4 +101,5 @@ export type WorkflowResult =
   | { state: 'permission_denied'; candidateId: string }
   | { state: 'recognition_failed'; candidateId: string }
   | { state: 'stale'; candidateId: string }
-  | { state: 'model_unavailable'; candidateId: string };
+  | { state: 'model_unavailable'; candidateId: string }
+  | { state: 'ambiguous_image'; candidateIds: readonly string[] };

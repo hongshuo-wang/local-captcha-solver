@@ -1,7 +1,9 @@
 import { acquireImage } from '../src/content/image-source';
+import { snapshotForImage } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
 import { clearWorkflowStatus, showRecognizing, showWorkflowStatus } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
+import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../src/core/candidate-scorer';
 import type { OcrResult } from '../src/core/types';
 
 type Runtime = { sendMessage(message: unknown): Promise<unknown>; onMessage: { addListener(listener: (message: unknown) => unknown): void } };
@@ -16,7 +18,7 @@ export function createRuntimeContent(runtime: Runtime) {
     },
   });
   let automaticEnabled = true;
-  const displayed = { run: async (...args: Parameters<typeof workflow.run>) => { if (args[1] === 'automatic' && !automaticEnabled) return { state: 'stale', candidateId: '' } as const; showRecognizing(args[0]); const result = await workflow.run(...args); if (args[1] !== 'automatic' || automaticEnabled) showWorkflowStatus(result, args[0]); return result; } };
+  const displayed = { cancel: workflow.cancel, cancelAll: workflow.cancelAll, run: async (...args: Parameters<typeof workflow.run>) => { if (args[1] === 'automatic' && !automaticEnabled) return { state: 'stale', candidateId: '' } as const; const snapshot = snapshotForImage(args[0]); const shouldShow = args[1] !== 'automatic' || (snapshot !== undefined && scoreCaptchaCandidate(snapshot.candidate.candidate).score >= AUTOMATIC_CANDIDATE_THRESHOLD); if (shouldShow) showRecognizing(args[0]); const result = await workflow.run(...args); if (shouldShow && (args[1] !== 'automatic' || automaticEnabled)) showWorkflowStatus(result, args[0]); return result; } };
   let observer: ReturnType<typeof observeCaptchaImages> | undefined;
   runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
@@ -25,7 +27,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:auto-enable') { automaticEnabled = true; observer ??= observeCaptchaImages(displayed); return { enabled: true }; }
     if (type === 'captcha:auto-disable') { automaticEnabled = false; observer?.disconnect(); observer = undefined; clearWorkflowStatus(); return { enabled: false }; }
     if (type === 'captcha:scan') { document.querySelectorAll('img').forEach((image) => void displayed.run(image, 'automatic')); return { queued: true }; }
-    if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? [...document.images].filter((image) => image.currentSrc === source || image.src === source) : []; return matches.length === 1 ? displayed.run(matches[0]!, 'context') : { state: 'needs_confirmation', fieldIds: [] }; }
+    if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => image.currentSrc === source || image.src === source) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return result; }
     if (type === 'captcha:get-status') return { enabled: observer !== undefined };
     return undefined;
   });

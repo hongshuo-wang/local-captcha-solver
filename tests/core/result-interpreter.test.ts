@@ -255,6 +255,7 @@ describe('WorkflowResult', () => {
     recognition_failed: { state: 'recognition_failed', candidateId: 'captcha-5' },
     stale: { state: 'stale', candidateId: 'captcha-6' },
     model_unavailable: { state: 'model_unavailable', candidateId: 'captcha-7' },
+    ambiguous_image: { state: 'ambiguous_image', candidateIds: ['captcha-8'] },
   } satisfies {
     [State in WorkflowResult['state']]: Extract<WorkflowResult, { state: State }>;
   };
@@ -279,13 +280,15 @@ describe('WorkflowResult', () => {
       case 'stale':
       case 'model_unavailable':
         return `${result.state}:${result.candidateId}`;
+      case 'ambiguous_image':
+        return `${result.state}:${result.candidateIds.join(',')}`;
       default:
         return assertNever(result);
     }
   }
 
   it('keeps all workflow states in one exhaustive vocabulary', () => {
-    expect(Object.values(fixturesByState).map(describeState)).toHaveLength(9);
+    expect(Object.values(fixturesByState).map(describeState)).toHaveLength(10);
     expect(Object.keys(fixturesByState)).toEqual([
       'filled',
       'needs_confirmation',
@@ -296,6 +299,7 @@ describe('WorkflowResult', () => {
       'recognition_failed',
       'stale',
       'model_unavailable',
+      'ambiguous_image',
     ]);
   });
 

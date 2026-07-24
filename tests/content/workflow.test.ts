@@ -41,4 +41,38 @@ describe('captcha workflow', () => {
     const recognize = async () => { revision = 'second'; return [{ mode: 'digits' as const, text: '1', confidence: .9 }]; };
     await expect(workflow({ snapshot, recognize }).run(image, 'explicit')).resolves.toMatchObject({ state: 'stale' });
   });
+
+  it('deduplicates same-revision automatic work and does not let it supersede explicit work', async () => {
+    const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
+    let release!: () => void; const gate = new Promise<void>((resolve) => { release = resolve; });
+    const acquire = vi.fn(async () => { await gate; return { state: 'ready' as const, dataUrl: 'data:image/png;base64,AQ==', mimeType: 'image/png', revision: 'bytes' }; });
+    const snapshot = () => ({ candidate: { id: 'i', element: localImage, revision: 'r', candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'f', element: localField, field: { id: 'f', type: 'text', value: localField.value, visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '7', confidence: .9 }] });
+    const explicit = instance.run(localImage, 'explicit'); const automatic = instance.run(localImage, 'automatic');
+    release();
+    await expect(explicit).resolves.toMatchObject({ state: 'filled' });
+    await expect(automatic).resolves.toMatchObject({ state: 'filled' });
+    expect(acquire).toHaveBeenCalledOnce();
+  });
+  it('lets explicit work supersede an older automatic request', async () => {
+    const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
+    let release!: () => void; const gate = new Promise<void>((resolve) => { release = resolve; });
+    const snapshot = () => ({ candidate: { id: 'i2', element: localImage, revision: 'r', candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'f2', element: localField, field: { id: 'f2', type: 'text', value: localField.value, visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire: async () => { await gate; return { state: 'ready' as const, dataUrl: 'data:image/png;base64,AQ==', mimeType: 'image/png', revision: 'bytes' }; }, recognize: async () => [{ mode: 'digits' as const, text: '8', confidence: .9 }] });
+    const automatic = instance.run(localImage, 'automatic'); const explicit = instance.run(localImage, 'explicit'); release();
+    await expect(automatic).resolves.toMatchObject({ state: 'stale' }); await expect(explicit).resolves.toMatchObject({ state: 'filled' });
+  });
+  it('deduplicates equal-priority requests and collapses identical OCR values', async () => {
+    const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
+    let release!: () => void; const gate = new Promise<void>((resolve) => { release = resolve; }); const acquire = vi.fn(async () => { await gate; return { state: 'ready' as const, dataUrl: 'data:image/png;base64,AQ==', mimeType: 'image/png', revision: 'bytes' }; });
+    const snapshot = () => ({ candidate: { id: 'i3', element: localImage, revision: 'r', candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'f3', element: localField, field: { id: 'f3', type: 'text', value: localField.value, visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '19', confidence: .9 }, { mode: 'alphanumeric' as const, text: '19', confidence: .99 }] });
+    const first = instance.run(localImage, 'automatic'); const second = instance.run(localImage, 'automatic'); release();
+    await expect(first).resolves.toMatchObject({ state: 'filled', fillValue: '19' }); await expect(second).resolves.toMatchObject({ state: 'filled', fillValue: '19' }); expect(acquire).toHaveBeenCalledOnce();
+  });
+  it('returns confirmation for an ambiguous matched field', async () => {
+    const other = document.createElement('input'); document.body.append(other);
+    const snapshot = () => ({ ...base.snapshot(), fields: [base.snapshot().fields[0], { id: 'field-2', element: other, field: { id: 'field-2', type: 'text', value: '', visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    await expect(workflow({ snapshot }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation', fieldIds: ['field-1', 'field-2'] });
+  });
 });

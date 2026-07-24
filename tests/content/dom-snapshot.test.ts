@@ -11,14 +11,19 @@ describe('DOM snapshots', () => {
 
     expect(first).toHaveLength(1);
     expect(first[0]?.id).toBe(second[0]?.id);
-    expect(detail.candidate.candidate).toMatchObject({ attrText: expect.stringContaining('captcha'), inForm: true, nearShortInput: true, width: 120, height: 40 });
-    expect(detail.fields).toHaveLength(1);
-    expect(detail.fields[0]?.field).toMatchObject({ type: 'text', sameForm: true, labelText: expect.stringContaining('Verification'), value: '' });
+    expect(detail).toBeDefined();
+    expect(detail?.candidate.candidate).toMatchObject({ attrText: expect.stringContaining('captcha'), inForm: true, nearShortInput: true, width: 120, height: 40 });
+    expect(detail?.fields).toHaveLength(1);
+    expect(detail?.fields[0]?.field).toMatchObject({ type: 'text', sameForm: true, labelText: expect.stringContaining('Verification'), value: '' });
   });
 
   it('excludes hidden images and ineligible fields', () => {
     document.body.innerHTML = '<img id="image" src="x"><input type="password"><input hidden><input disabled><input id="ok">';
     const image = document.querySelector('#image') as HTMLImageElement;
-    expect(snapshotForImage(image, document).fields.map(({ element }) => element.id)).toEqual(['ok']);
+    expect(snapshotForImage(image, document)?.fields.map(({ element }) => element.id)).toEqual(['ok']);
+  });
+  it('does not snapshot a hidden image as a fallback candidate', () => {
+    document.body.innerHTML = '<img id="hidden" hidden src="x">';
+    expect(snapshotForImage(document.querySelector('#hidden') as HTMLImageElement, document)).toBeUndefined();
   });
 });
