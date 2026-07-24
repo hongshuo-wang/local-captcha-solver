@@ -23,7 +23,7 @@ const CAPTCHA_LABEL_TERMS = /\b(?:captcha|verification|verify|security|code|answ
 
 function scoreField(field: FieldSnapshot): RankedField | undefined {
   const type = field.type.toLowerCase();
-  if (!field.visible || field.disabled || field.readOnly || UNSAFE_TYPES.has(type) || !TEXT_LIKE_TYPES.has(type) || field.value.trim() !== '') {
+  if (!field.visible || field.disabled || field.readOnly || UNSAFE_TYPES.has(type) || !TEXT_LIKE_TYPES.has(type) || field.value !== '') {
     return undefined;
   }
 

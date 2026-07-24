@@ -6,6 +6,30 @@ import {
 } from '../../src/core/candidate-scorer';
 
 describe('scoreCaptchaCandidate', () => {
+  it('adds independent reasons and score for each positive evidence category', () => {
+    const baseline = {
+      attrText: '',
+      nearbyText: '',
+      width: 140,
+      height: 48,
+      inForm: false,
+      nearShortInput: false,
+    };
+    const baseResult = scoreCaptchaCandidate(baseline);
+    const cases = [
+      [{ ...baseline, attrText: 'captcha' }, 'captcha or verification attribute'],
+      [{ ...baseline, nearbyText: 'Verification required' }, 'captcha or verification nearby text'],
+      [{ ...baseline, inForm: true }, 'inside form'],
+      [{ ...baseline, nearShortInput: true }, 'near short input'],
+    ] as const;
+
+    for (const [candidate, reason] of cases) {
+      const result = scoreCaptchaCandidate(candidate);
+      expect(result.score).toBeGreaterThan(baseResult.score);
+      expect(result.reasons).toContain(reason);
+    }
+  });
+
   it('accepts a compact verification image supported by form context', () => {
     const result = scoreCaptchaCandidate({
       attrText: 'captcha verification challenge',

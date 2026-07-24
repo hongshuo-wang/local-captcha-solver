@@ -50,6 +50,7 @@ describe('matchCaptchaField', () => {
       field({ id: 'button', type: 'button' }),
       field({ id: 'submit', type: 'submit' }),
       field({ id: 'filled', value: 'already filled' }),
+      field({ id: 'whitespace', value: '   ' }),
     ]);
 
     expect(match).toEqual({ state: 'none', candidates: [] });
