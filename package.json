@@ -11,7 +11,6 @@
     "dev": "wxt",
     "build": "wxt build -b chrome",
     "build:edge": "wxt build -b edge",
-    "build:verify": "node scripts/verify-build.mjs",
     "zip": "wxt zip -b chrome",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
