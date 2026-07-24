@@ -62,18 +62,42 @@ describe('matchCaptchaField', () => {
     expect(match.candidates).toHaveLength(2);
   });
 
-  it('requires both the unique threshold and the winner margin', () => {
+  it('does not guess when a lower-scoring eligible runner-up is within the margin', () => {
+    const match = matchCaptchaField(image, [
+      field({ id: 'winner', distance: 100, sameForm: false }),
+      field({ id: 'runner-up', distance: 400, sameForm: false, labelText: 'Security answer' }),
+    ]);
+
+    expect(match.state).toBe('ambiguous');
+    expect(match.candidates.map((candidate) => candidate.score)).toEqual([65, 55]);
+  });
+
+  it('selects a winner when its lead meets the margin', () => {
+    const winner = field({ id: 'winner', distance: 20, labelText: 'Response' });
+    const match = matchCaptchaField(image, [
+      winner,
+      field({ id: 'runner-up', distance: 400, sameForm: false, labelText: 'Security answer' }),
+    ]);
+
+    expect(match.state).toBe('unique');
+    if (match.state === 'unique') expect(match.winner).toBe(winner);
+  });
+
+  it('requires a winner score strictly above the threshold', () => {
+    const exactThreshold = matchCaptchaField(image, [
+      field({ distance: 100, labelText: 'General response' }),
+    ]);
+
+    expect(exactThreshold).toEqual({ state: 'none', candidates: [] });
+  });
+
+  it('exports the automatic matching threshold and margin', () => {
     const belowThreshold = matchCaptchaField(image, [
       field({ distance: 600, sameForm: false, labelText: 'General response' }),
-    ]);
-    const closeRunnerUp = matchCaptchaField(image, [
-      field({ id: 'first', distance: 20 }),
-      field({ id: 'second', distance: 30, labelText: 'Security answer' }),
     ]);
 
     expect(UNIQUE_FIELD_THRESHOLD).toBe(60);
     expect(UNIQUE_FIELD_MARGIN).toBe(15);
     expect(belowThreshold).toEqual({ state: 'none', candidates: [] });
-    expect(closeRunnerUp.state).toBe('ambiguous');
   });
 });

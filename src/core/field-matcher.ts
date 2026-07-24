@@ -52,18 +52,22 @@ function scoreField(field: FieldSnapshot): RankedField | undefined {
 }
 
 export function matchCaptchaField(_image: unknown, fields: readonly FieldSnapshot[]): FieldMatch<FieldSnapshot> {
-  const candidates = fields
+  const rankedFields = fields
     .map(scoreField)
-    .filter((candidate): candidate is RankedField => candidate !== undefined && candidate.score >= UNIQUE_FIELD_THRESHOLD)
+    .filter((candidate): candidate is RankedField => candidate !== undefined)
     .sort((left, right) => right.score - left.score || left.field.distance - right.field.distance || left.field.id.localeCompare(right.field.id));
 
-  const winner = candidates[0];
-  if (!winner) return { state: 'none', candidates };
+  const winner = rankedFields[0];
+  if (!winner || winner.score <= UNIQUE_FIELD_THRESHOLD) return { state: 'none', candidates: [] };
 
-  const runnerUp = candidates[1];
+  const runnerUp = rankedFields[1];
   if (runnerUp && winner.score - runnerUp.score < UNIQUE_FIELD_MARGIN) {
-    return { state: 'ambiguous', candidates };
+    return { state: 'ambiguous', candidates: rankedFields };
   }
 
-  return { state: 'unique', winner: winner.field, candidates };
+  return {
+    state: 'unique',
+    winner: winner.field,
+    candidates: rankedFields.filter((candidate) => candidate.score > UNIQUE_FIELD_THRESHOLD),
+  };
 }
