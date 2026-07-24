@@ -2,7 +2,11 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const forbiddenBrowserDependency = /\b(?:chrome|browser)\s*\.|from\s+['\"]wxt\/browser['\"]|import\s*\(\s*['\"]wxt\/browser['\"]\s*\)/;
+const forbiddenBrowserDependency = /\b(?:chrome|browser)\s*\.|from\s+['\"]wxt\/browser['\"]|import\s*(?:\(\s*)?['\"]wxt\/browser['\"]\s*\)?/;
+
+function hasForbiddenBrowserDependency(source: string): boolean {
+  return forbiddenBrowserDependency.test(source);
+}
 
 async function sourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -19,6 +23,14 @@ describe('browser-independent import boundary', () => {
     const files = (await Promise.all(['src/core', 'src/ocr'].map(sourceFiles))).flat();
     const violations = await Promise.all(files.map(async (file) => ({ file, contents: await readFile(file, 'utf8') })));
 
-    expect(violations.filter(({ contents }) => forbiddenBrowserDependency.test(contents)).map(({ file }) => file)).toEqual([]);
+    expect(violations.filter(({ contents }) => hasForbiddenBrowserDependency(contents)).map(({ file }) => file)).toEqual([]);
+  });
+
+  it.each([
+    "import 'wxt/browser';",
+    "export { browser } from 'wxt/browser';",
+    "export * from 'wxt/browser';",
+  ])('detects a forbidden wxt/browser import form: %s', (source) => {
+    expect(hasForbiddenBrowserDependency(source)).toBe(true);
   });
 });

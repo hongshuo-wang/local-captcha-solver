@@ -46,6 +46,8 @@ describe('originsForPage', () => {
   it.each([
     'ftp://example.test/file',
     'https://user:pass@example.test/',
+    'https://@example.test/',
+    'https://:@example.test/',
     'https://example.test:8443/',
     'https://127.0.0.1/',
     'https://[::1]/',
@@ -53,6 +55,13 @@ describe('originsForPage', () => {
     'not a URL',
   ])('rejects an unsupported page URL %j', (pageUrl) => {
     expect(() => originsForPage(pageUrl)).toThrow();
+  });
+
+  it('allows an at sign outside the URL authority userinfo segment', () => {
+    expect(originsForPage('https://example.test/path@segment?email=a@example.test')).toEqual([
+      'http://example.test/*',
+      'https://example.test/*',
+    ]);
   });
 });
 

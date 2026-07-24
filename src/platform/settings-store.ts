@@ -42,7 +42,9 @@ export function hostnameForPage(pageUrl: string): string {
     throw new Error('Page URL must be a valid URL');
   }
 
-  if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.port) {
+  const rawAuthority = /^[a-z][a-z\d+.-]*:\/\/([^/?#]*)/i.exec(pageUrl)?.[1];
+  const hasUserinfo = rawAuthority?.includes('@') ?? false;
+  if ((url.protocol !== 'http:' && url.protocol !== 'https:') || hasUserinfo || url.username || url.password || url.port) {
     throw new Error('Page URL must be a normal HTTP or HTTPS page URL');
   }
   return normalizeHostname(url.hostname);
