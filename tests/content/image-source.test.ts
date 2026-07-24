@@ -21,6 +21,15 @@ describe('acquireImage', () => {
     });
   });
 
+  it.each([
+    {} as Pick<Crypto, 'subtle'>,
+    { subtle: { digest: vi.fn(async () => { throw new Error('digest failed'); }) } } as unknown as Pick<Crypto, 'subtle'>,
+  ])('fails closed when SHA-256 is unavailable', async (crypto) => {
+    await expect(acquireImage(image('data:image/png;base64,AQID'), { crypto })).resolves.toEqual({
+      state: 'image_unavailable', reason: 'network',
+    });
+  });
+
   it('accepts case-insensitive base64 data URLs and rejects malformed encoded data', async () => {
     await expect(acquireImage(image('data:image/png;BASE64,AQID'))).resolves.toMatchObject({
       state: 'ready', mimeType: 'image/png',
@@ -35,6 +44,7 @@ describe('acquireImage', () => {
 
     await expect(acquireImage(image('blob:https://page.example.test/captcha'), { fetch })).resolves.toMatchObject({
       state: 'ready', dataUrl: 'data:image/gif;base64,BAU=', mimeType: 'image/gif',
+      revision: '2fa1b377bf67309f65e5e7bc9d924345ca648dec4e601a398a9cb497dcba3765',
     });
   });
 
@@ -62,7 +72,10 @@ describe('acquireImage', () => {
 
     await expect(acquireImage(image('https://page.example.test/captcha.jpg'), {
       pageOrigin: 'https://page.example.test', toDataUrl,
-    })).resolves.toMatchObject({ state: 'ready', mimeType: 'image/jpeg' });
+    })).resolves.toMatchObject({
+      state: 'ready', mimeType: 'image/jpeg',
+      revision: '4e399d0536e9eb556ea05e7c19f52034fc44dc7eea2f3b5af2da5336ca9c9cf1',
+    });
     expect(toDataUrl).toHaveBeenCalledOnce();
   });
 
@@ -93,6 +106,23 @@ describe('acquireImage', () => {
       pageOrigin: 'https://page.example.test',
       fetchRemote: async () => ({ state: 'ready', bytes: new Uint8Array([1]), mimeType: 'text/plain' }),
     })).resolves.toEqual({ state: 'image_unavailable', reason: 'type' });
+  });
+
+  it('returns a SHA-256 revision for a successful remote acquisition', async () => {
+    await expect(acquireImage(image('https://cdn.example.test/captcha'), {
+      pageOrigin: 'https://page.example.test',
+      fetchRemote: async () => ({ state: 'ready', bytes: new Uint8Array([8, 9]), mimeType: 'image/png' }),
+    })).resolves.toEqual({
+      state: 'ready', dataUrl: 'data:image/png;base64,CAk=', mimeType: 'image/png',
+      revision: '73907589101a7e8ab83178e7db2997aab7272cd02d364e8e3ecc2beccda4b631',
+    });
+  });
+
+  it('maps a content-side remote message failure to network', async () => {
+    await expect(acquireImage(image('https://cdn.example.test/captcha'), {
+      pageOrigin: 'https://page.example.test',
+      fetchRemote: async () => { throw new Error('message disconnected'); },
+    })).resolves.toEqual({ state: 'image_unavailable', reason: 'network' });
   });
 
   it.each([

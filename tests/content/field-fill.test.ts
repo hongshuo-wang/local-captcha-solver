@@ -45,13 +45,14 @@ describe('fillEmptyField', () => {
     expect(field.value).toBe('   ');
   });
 
-  it.each(['hidden', 'disabled', 'readonly', 'password'])('rejects an ineligible %s field', (state) => {
-    const field = input(state === 'hidden' || state === 'password' ? state : 'text');
+  it.each(['hidden', 'disabled', 'readonly', 'password', 'file', 'checkbox', 'radio', 'button', 'submit'])('rejects an ineligible %s field', (state) => {
+    const field = input(['hidden', 'password', 'file', 'checkbox', 'radio', 'button', 'submit'].includes(state) ? state : 'text');
     if (state === 'disabled') field.disabled = true;
     if (state === 'readonly') field.readOnly = true;
+    const initialValue = field.value;
 
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
-    expect(field.value).toBe('');
+    expect(field.value).toBe(initialValue);
   });
 
   it('never creates click, keyboard, submit, or form submission side effects', () => {
@@ -76,5 +77,27 @@ describe('fillEmptyField', () => {
     field.remove();
 
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'stale' });
+  });
+
+  it('rechecks a controlled value immediately before invoking the native setter', () => {
+    const field = input();
+    let reads = 0;
+    Object.defineProperty(field, 'value', {
+      configurable: true,
+      get: () => ++reads === 2 ? 'controlled value' : '',
+    });
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_empty' });
+  });
+
+  it('rechecks eligibility immediately before invoking the native setter', () => {
+    const field = input();
+    let reads = 0;
+    Object.defineProperty(field, 'disabled', {
+      configurable: true,
+      get: () => ++reads === 2,
+    });
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
   });
 });

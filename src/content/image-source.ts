@@ -68,26 +68,26 @@ function parseDataUrl(dataUrl: string): { bytes: Uint8Array; mimeType: string } 
   return { bytes, mimeType };
 }
 
-function fallbackRevision(bytes: Uint8Array): string {
-  let left = 0x811c9dc5;
-  let right = 0x01000193;
-  for (const byte of bytes) {
-    left = Math.imul(left ^ byte, 0x01000193) >>> 0;
-    right = Math.imul(right ^ (byte + left), 0x85ebca6b) >>> 0;
-  }
-  return `fallback-${left.toString(16).padStart(8, '0')}${right.toString(16).padStart(8, '0')}`;
-}
-
-async function revisionFor(bytes: Uint8Array, crypto: Pick<Crypto, 'subtle'> | undefined): Promise<string> {
-  if (crypto?.subtle === undefined) return fallbackRevision(bytes);
+async function revisionFor(bytes: Uint8Array, crypto: Pick<Crypto, 'subtle'> | undefined): Promise<string | undefined> {
+  if (crypto?.subtle === undefined) return undefined;
   try {
     const copy = new Uint8Array(bytes.length);
     copy.set(bytes);
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', copy.buffer));
     return [...digest].map((value) => value.toString(16).padStart(2, '0')).join('');
   } catch {
-    return fallbackRevision(bytes);
+    return undefined;
   }
+}
+
+async function readyFromDataUrl(
+  dataUrl: string,
+  parsed: { bytes: Uint8Array; mimeType: string },
+  crypto: Pick<Crypto, 'subtle'> | undefined,
+): Promise<ImageAcquisitionResult> {
+  const revision = await revisionFor(parsed.bytes, crypto);
+  if (revision === undefined) return unavailable('network');
+  return { state: 'ready', dataUrl, mimeType: parsed.mimeType, revision };
 }
 
 async function readBlobResponse(response: Response): Promise<{ bytes: Uint8Array; mimeType: string } | ImageAcquisitionResult> {
@@ -145,11 +145,13 @@ async function readyFromBytes(bytes: Uint8Array, mimeType: string, crypto: Pick<
   if (imageMimeType === undefined) return unavailable('type');
   const dataUrl = `data:${imageMimeType};base64,${encodeBase64(bytes)}`;
   if (dataUrl.length > MAX_IMAGE_BYTES) return unavailable('size');
+  const revision = await revisionFor(bytes, crypto);
+  if (revision === undefined) return unavailable('network');
   return {
     state: 'ready',
     dataUrl,
     mimeType: imageMimeType,
-    revision: await revisionFor(bytes, crypto),
+    revision,
   };
 }
 
@@ -165,9 +167,7 @@ export async function acquireImage(image: HTMLImageElement, primitives: ImageSou
   if (src.startsWith('data:')) {
     const parsed = parseDataUrl(src);
     if (isUnavailable(parsed)) return parsed;
-    return {
-      state: 'ready', dataUrl: src, mimeType: parsed.mimeType, revision: await revisionFor(parsed.bytes, crypto),
-    };
+    return readyFromDataUrl(src, parsed, crypto);
   }
 
   if (src.startsWith('blob:')) {
@@ -195,9 +195,7 @@ export async function acquireImage(image: HTMLImageElement, primitives: ImageSou
       const dataUrl = (primitives.toDataUrl ?? defaultCanvasDataUrl)(image);
       const parsed = parseDataUrl(dataUrl);
       if (isUnavailable(parsed)) return parsed;
-      return {
-        state: 'ready', dataUrl, mimeType: parsed.mimeType, revision: await revisionFor(parsed.bytes, crypto),
-      };
+      return readyFromDataUrl(dataUrl, parsed, crypto);
     } catch {
       // A tainted canvas must use the permission-aware background route.
     }
