@@ -65,6 +65,17 @@ describe('OCR inference protocol', () => {
     ).toBe(false);
   });
 
+  it('accepts the exact raw image byte limit after base64 expansion', () => {
+    const fullGroups = Math.floor(MAX_IMAGE_BYTES / 3);
+    const remainder = MAX_IMAGE_BYTES % 3;
+    const encoded = `${'A'.repeat(fullGroups * 4)}${remainder === 0 ? '' : remainder === 1 ? 'AA==' : 'AAA='}`;
+
+    expect(isInferenceRequest({
+      ...validRequest,
+      imageDataUrl: `data:image/png;base64,${encoded}`,
+    })).toBe(true);
+  });
+
   it.each([
     { ...validRequest, modes: [] },
     { ...validRequest, modes: ['digits', 'digits'] },

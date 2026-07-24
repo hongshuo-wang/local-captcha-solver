@@ -1,7 +1,13 @@
 import type { OcrResult, RecognitionMode } from '../core/types';
+import {
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_DATA_URL_BYTES,
+} from '../core/image-limits';
 
-export const MAX_IMAGE_DATA_URL_BYTES = 2 * 1024 * 1024;
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+export {
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_DATA_URL_BYTES,
+} from '../core/image-limits';
 
 export type InferenceErrorCode =
   | 'image_unavailable'

@@ -1,4 +1,16 @@
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+import {
+  MAX_CAPTCHA_IMAGE_DIMENSION,
+  MAX_CAPTCHA_IMAGE_PIXELS,
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_DATA_URL_BYTES,
+} from '../core/image-limits';
+
+export {
+  MAX_CAPTCHA_IMAGE_DIMENSION,
+  MAX_CAPTCHA_IMAGE_PIXELS,
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_DATA_URL_BYTES,
+} from '../core/image-limits';
 
 export type ImageUnavailableReason = 'cors' | 'permission' | 'type' | 'size' | 'network';
 
@@ -23,7 +35,7 @@ function unavailable(reason: ImageUnavailableReason): ImageAcquisitionResult {
 }
 
 function validImageMimeType(value: string): string | undefined {
-  const mimeType = value.trim().toLowerCase();
+  const mimeType = value.split(';', 1)[0]?.trim().toLowerCase() ?? '';
   return mimeType.startsWith('image/') && mimeType.length > 'image/'.length ? mimeType : undefined;
 }
 
@@ -47,18 +59,20 @@ function encodeBase64(bytes: Uint8Array): string {
 }
 
 function parseDataUrl(dataUrl: string): { bytes: Uint8Array; mimeType: string } | ImageAcquisitionResult {
-  if (dataUrl.length > MAX_IMAGE_BYTES) return unavailable('size');
-  const match = /^data:([^;,]+)(;base64)?,([\s\S]*)$/i.exec(dataUrl);
+  if (dataUrl.length > MAX_IMAGE_DATA_URL_BYTES) return unavailable('size');
+  const match = /^data:([^,]*),([\s\S]*)$/i.exec(dataUrl);
   if (match === null) return unavailable('type');
-  const mimeType = validImageMimeType(match[1]);
+  const metadata = match[1].split(';');
+  const mimeType = validImageMimeType(metadata[0] ?? '');
   if (mimeType === undefined) return unavailable('type');
+  const base64 = metadata.slice(1).some((parameter) => parameter.trim().toLowerCase() === 'base64');
 
   let bytes: Uint8Array | undefined;
-  if (match[2]?.toLowerCase() === ';base64') {
-    bytes = decodeBase64(match[3]);
+  if (base64) {
+    bytes = decodeBase64(match[2]);
   } else {
     try {
-      bytes = new TextEncoder().encode(decodeURIComponent(match[3]));
+      bytes = new TextEncoder().encode(decodeURIComponent(match[2]));
     } catch {
       return unavailable('type');
     }
@@ -81,13 +95,10 @@ async function revisionFor(bytes: Uint8Array, crypto: Pick<Crypto, 'subtle'> | u
 }
 
 async function readyFromDataUrl(
-  dataUrl: string,
   parsed: { bytes: Uint8Array; mimeType: string },
   crypto: Pick<Crypto, 'subtle'> | undefined,
 ): Promise<ImageAcquisitionResult> {
-  const revision = await revisionFor(parsed.bytes, crypto);
-  if (revision === undefined) return unavailable('network');
-  return { state: 'ready', dataUrl, mimeType: parsed.mimeType, revision };
+  return readyFromBytes(parsed.bytes, parsed.mimeType, crypto);
 }
 
 async function readBlobResponse(response: Response): Promise<{ bytes: Uint8Array; mimeType: string } | ImageAcquisitionResult> {
@@ -126,10 +137,21 @@ async function readBlobResponse(response: Response): Promise<{ bytes: Uint8Array
   }
 }
 
-function defaultCanvasDataUrl(image: HTMLImageElement): string {
+class CanvasSizeError extends Error {}
+
+function canvasDimensions(image: HTMLImageElement): readonly [number, number] {
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
-  if (width <= 0 || height <= 0) throw new Error('Image dimensions are unavailable');
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width <= 0 || height <= 0) {
+    throw new Error('Image dimensions are unavailable');
+  }
+  if (width > MAX_CAPTCHA_IMAGE_DIMENSION || height > MAX_CAPTCHA_IMAGE_DIMENSION || width * height > MAX_CAPTCHA_IMAGE_PIXELS) {
+    throw new CanvasSizeError('Image dimensions exceed canvas limits');
+  }
+  return [width, height];
+}
+
+function defaultCanvasDataUrl(image: HTMLImageElement, width: number, height: number): string {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -139,12 +161,21 @@ function defaultCanvasDataUrl(image: HTMLImageElement): string {
   return canvas.toDataURL();
 }
 
+function canvasDataUrl(image: HTMLImageElement, toDataUrl: ImageSourcePrimitives['toDataUrl']): string {
+  const [width, height] = canvasDimensions(image);
+  return toDataUrl === undefined ? defaultCanvasDataUrl(image, width, height) : toDataUrl(image);
+}
+
+function isCanvasSecurityError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'SecurityError';
+}
+
 async function readyFromBytes(bytes: Uint8Array, mimeType: string, crypto: Pick<Crypto, 'subtle'> | undefined): Promise<ImageAcquisitionResult> {
   if (bytes.length > MAX_IMAGE_BYTES) return unavailable('size');
   const imageMimeType = validImageMimeType(mimeType);
   if (imageMimeType === undefined) return unavailable('type');
   const dataUrl = `data:${imageMimeType};base64,${encodeBase64(bytes)}`;
-  if (dataUrl.length > MAX_IMAGE_BYTES) return unavailable('size');
+  if (dataUrl.length > MAX_IMAGE_DATA_URL_BYTES) return unavailable('size');
   const revision = await revisionFor(bytes, crypto);
   if (revision === undefined) return unavailable('network');
   return {
@@ -167,7 +198,7 @@ export async function acquireImage(image: HTMLImageElement, primitives: ImageSou
   if (src.startsWith('data:')) {
     const parsed = parseDataUrl(src);
     if (isUnavailable(parsed)) return parsed;
-    return readyFromDataUrl(src, parsed, crypto);
+    return readyFromDataUrl(parsed, crypto);
   }
 
   if (src.startsWith('blob:')) {
@@ -189,16 +220,14 @@ export async function acquireImage(image: HTMLImageElement, primitives: ImageSou
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return unavailable('type');
 
-  const pageOrigin = primitives.pageOrigin ?? globalThis.location?.origin;
-  if (url.origin === pageOrigin) {
-    try {
-      const dataUrl = (primitives.toDataUrl ?? defaultCanvasDataUrl)(image);
-      const parsed = parseDataUrl(dataUrl);
-      if (isUnavailable(parsed)) return parsed;
-      return readyFromDataUrl(dataUrl, parsed, crypto);
-    } catch {
-      // A tainted canvas must use the permission-aware background route.
-    }
+  try {
+    const dataUrl = canvasDataUrl(image, primitives.toDataUrl);
+    const parsed = parseDataUrl(dataUrl);
+    if (isUnavailable(parsed)) return parsed;
+    return readyFromDataUrl(parsed, crypto);
+  } catch (error) {
+    if (error instanceof CanvasSizeError) return unavailable('size');
+    if (!isCanvasSecurityError(error)) return unavailable('cors');
   }
 
   if (primitives.fetchRemote === undefined) return unavailable('cors');

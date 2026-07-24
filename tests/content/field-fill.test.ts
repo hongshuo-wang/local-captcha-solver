@@ -55,6 +55,18 @@ describe('fillEmptyField', () => {
     expect(field.value).toBe(initialValue);
   });
 
+  it.each([
+    (field: HTMLInputElement) => { field.hidden = true; },
+    (field: HTMLInputElement) => { field.style.display = 'none'; },
+    (field: HTMLInputElement) => { field.style.visibility = 'hidden'; },
+  ])('rejects fields hidden by attribute or computed style', (hide) => {
+    const field = input();
+    hide(field);
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
+    expect(field.value).toBe('');
+  });
+
   it('never creates click, keyboard, submit, or form submission side effects', () => {
     const form = document.createElement('form');
     const field = document.createElement('input');
@@ -99,5 +111,17 @@ describe('fillEmptyField', () => {
     });
 
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
+  });
+
+  it('rechecks hidden state immediately before invoking the native setter', () => {
+    const field = input();
+    let reads = 0;
+    Object.defineProperty(field, 'hidden', {
+      configurable: true,
+      get: () => ++reads === 2,
+    });
+
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_eligible' });
+    expect(field.value).toBe('');
   });
 });
