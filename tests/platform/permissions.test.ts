@@ -43,6 +43,13 @@ describe('originsForPage', () => {
     ]);
   });
 
+  it('accepts case-insensitive HTTP schemes and normalizes the hostname', () => {
+    expect(originsForPage('HtTpS://Portal.Example.test/captcha')).toEqual([
+      'http://portal.example.test/*',
+      'https://portal.example.test/*',
+    ]);
+  });
+
   it.each([
     'ftp://example.test/file',
     'https://user:pass@example.test/',
