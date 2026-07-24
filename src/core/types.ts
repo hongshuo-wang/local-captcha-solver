@@ -98,6 +98,7 @@ export type WorkflowResult =
   | { state: 'no_candidate' }
   | { state: 'no_field'; candidateId: string; displayText: string; fillValue: string }
   | { state: 'image_unavailable'; candidateId: string }
+  | { state: 'permission_denied'; candidateId: string }
   | { state: 'recognition_failed'; candidateId: string }
   | { state: 'stale'; candidateId: string }
   | { state: 'model_unavailable'; candidateId: string };

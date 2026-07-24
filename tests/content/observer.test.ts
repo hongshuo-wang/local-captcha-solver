@@ -1,0 +1,20 @@
+import { describe, expect, it, vi } from 'vitest';
+import { observeCaptchaImages } from '../../src/content/observer';
+
+describe('captcha observer', () => {
+  it('scans initial and added images, debounces source/load changes, and stops after disconnect', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<img id="first">';
+    const run = vi.fn(async () => ({ state: 'no_candidate' as const }));
+    const observer = observeCaptchaImages({ run });
+    expect(run).toHaveBeenCalledWith(document.querySelector('#first'), 'automatic');
+    const added = document.createElement('div'); added.innerHTML = '<img id="second">'; document.body.append(added);
+    await Promise.resolve();
+    const second = document.querySelector('#second') as HTMLImageElement;
+    second.setAttribute('src', 'a'); second.dispatchEvent(new Event('load')); second.setAttribute('srcset', 'b');
+    await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledWith(second, 'automatic');
+    const count = run.mock.calls.length; observer.disconnect(); second.setAttribute('src', 'c'); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(count); vi.useRealTimers();
+  });
+});
