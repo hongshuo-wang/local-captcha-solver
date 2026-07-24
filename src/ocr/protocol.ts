@@ -1,6 +1,7 @@
 import type { OcrResult, RecognitionMode } from '../core/types';
 
 export const MAX_IMAGE_DATA_URL_BYTES = 2 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export type InferenceErrorCode =
   | 'image_unavailable'
@@ -43,7 +44,8 @@ const INFERENCE_ERROR_CODES = new Set<InferenceErrorCode>([
   'model_unavailable',
   'recognition_failed',
 ]);
-const DATA_URL_PATTERN = /^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/]+={0,2})$/i;
+const DATA_URL_PATTERN = /^data:(image\/[a-z0-9][a-z0-9!#$&^_.+-]*);base64,([A-Za-z0-9+/]+={0,2})$/i;
+const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
@@ -61,9 +63,22 @@ function isImageDataUrl(value: unknown): value is string {
   if (typeof value !== 'string') {
     return false;
   }
+  if (value.length > MAX_IMAGE_DATA_URL_BYTES) {
+    return false;
+  }
 
   const match = DATA_URL_PATTERN.exec(value);
-  return match !== null && match[1].length <= MAX_IMAGE_DATA_URL_BYTES;
+  if (match === null) {
+    return false;
+  }
+
+  const encoded = match[2];
+  if (!BASE64_PATTERN.test(encoded)) {
+    return false;
+  }
+
+  const paddingLength = encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0;
+  return (encoded.length / 4) * 3 - paddingLength <= MAX_IMAGE_BYTES;
 }
 
 function isOcrResult(value: unknown): value is OcrResult {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   MAX_IMAGE_DATA_URL_BYTES,
+  MAX_IMAGE_BYTES,
   isInferenceRequest,
   isInferenceResponse,
 } from '../../src/ocr/protocol';
@@ -30,20 +31,36 @@ describe('OCR inference protocol', () => {
 
   it.each([
     { ...validRequest, imageDataUrl: 'data:text/plain;base64,AQID' },
+    { ...validRequest, imageDataUrl: 'data:image/;base64,AQID' },
     { ...validRequest, imageDataUrl: 'data:image/png;base64,' },
+    { ...validRequest, imageDataUrl: 'data:image/png;base64,A' },
+    { ...validRequest, imageDataUrl: 'data:image/png;base64,AAA' },
+    { ...validRequest, imageDataUrl: 'data:image/png;base64,AA=A' },
+    { ...validRequest, imageDataUrl: 'data:image/png;base64,AAAA=' },
     { ...validRequest, imageDataUrl: 'data:image/png,not-base64' },
     { ...validRequest, imageDataUrl: 'not-a-data-url' },
   ])('rejects invalid image data URLs', (message) => {
     expect(isInferenceRequest(message)).toBe(false);
   });
 
-  it('rejects image data URLs larger than the encoded payload limit', () => {
-    const oversized = 'A'.repeat(MAX_IMAGE_DATA_URL_BYTES + 1);
+  it('rejects image data URLs larger than the full URL limit', () => {
+    const oversizedMime = 'a'.repeat(MAX_IMAGE_DATA_URL_BYTES);
 
     expect(
       isInferenceRequest({
         ...validRequest,
-        imageDataUrl: `data:image/png;base64,${oversized}`,
+        imageDataUrl: `data:image/${oversizedMime};base64,AA==`,
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects data URLs whose decoded image would exceed the byte limit', () => {
+    const oversizedPayload = 'A'.repeat((Math.floor(MAX_IMAGE_BYTES / 3) + 1) * 4);
+
+    expect(
+      isInferenceRequest({
+        ...validRequest,
+        imageDataUrl: `data:image/png;base64,${oversizedPayload}`,
       }),
     ).toBe(false);
   });

@@ -62,14 +62,22 @@ async function loadCharset(): Promise<readonly string[]> {
   return charset;
 }
 
-const enginePromise = loadCharset().then(
-  (charset) =>
-    new DdddOcrEngine(
-      createSessionFactory(),
-      getExtensionUrl('/models/common_old.onnx'),
-      charset,
-    ),
-);
+const enginePromise = loadCharset()
+  .then(
+    (charset) =>
+      new DdddOcrEngine(
+        createSessionFactory(),
+        getExtensionUrl('/models/common_old.onnx'),
+        charset,
+      ),
+  )
+  .catch((cause: unknown) => {
+    throw new OcrEngineError(
+      'model_unavailable',
+      cause instanceof Error ? cause.message : 'OCR model initialization failed',
+      cause,
+    );
+  });
 
 function failure(
   requestId: string,
