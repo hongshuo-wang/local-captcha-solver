@@ -45,10 +45,11 @@ export function createModelStatusStore(now: () => number = Date.now): ModelStatu
   const listeners = new Set<Listener>();
 
   function snapshot(): ModelStatusSnapshot {
-    return {
+    const snapshotLogs = Object.freeze(logs.map((log) => Object.freeze({ ...log })));
+    return Object.freeze({
       ...state,
-      logs: logs.map((log) => ({ ...log })),
-    };
+      logs: snapshotLogs,
+    });
   }
 
   function publish(log: ModelLog): void {

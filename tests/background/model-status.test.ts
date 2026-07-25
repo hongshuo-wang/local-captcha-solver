@@ -21,6 +21,7 @@ describe('ModelStatusStore', () => {
     store.subscribe(listener);
 
     store.beginWarmup();
+    expect(store.snapshot()).toMatchObject({ status: 'loading', progress: 50 });
     now = 1100;
     store.warmupReady();
 
@@ -44,18 +45,45 @@ describe('ModelStatusStore', () => {
     expect(store.snapshot().logs.at(-1)?.message).not.toContain('internal stack trace');
   });
 
-  it('returns immutable snapshots and clones logs', () => {
+  it('returns frozen snapshots, log arrays, and log records', () => {
     const store = createModelStatusStore(() => 1000);
     store.warmupReady();
-    const first = store.snapshot();
-    (first.logs as unknown as { push(value: unknown): void }).push({});
-    (first as { message: string }).message = 'changed';
+    const snapshot = store.snapshot();
 
-    const second = store.snapshot();
-    expect(second.logs).toHaveLength(1);
-    expect(second.message).not.toBe('changed');
-    expect(second).not.toBe(first);
-    expect(second.logs).not.toBe(first.logs);
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.logs)).toBe(true);
+    expect(Object.isFrozen(snapshot.logs[0])).toBe(true);
+    expect(() => (snapshot as { message: string }).message = 'changed').toThrow(TypeError);
+    expect(() => (snapshot.logs as unknown as { push(value: unknown): void }).push({})).toThrow(TypeError);
+  });
+
+  it('does not let one subscriber change the snapshot observed by another', () => {
+    const store = createModelStatusStore(() => 1000);
+    const second = vi.fn();
+    store.subscribe((snapshot) => {
+      expect(() => (snapshot as { message: string }).message = 'changed').toThrow(TypeError);
+      expect(() => (snapshot.logs as unknown as { push(value: unknown): void }).push({})).toThrow(TypeError);
+    });
+    store.subscribe(second);
+
+    store.beginWarmup();
+
+    expect(second).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.not.stringMatching('changed'),
+      logs: [expect.objectContaining({ kind: 'warmup', outcome: 'started' })],
+    }));
+  });
+
+  it('stops notifying a subscriber after unsubscribe', () => {
+    const store = createModelStatusStore(() => 1000);
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+
+    store.beginWarmup();
+    unsubscribe();
+    store.warmupReady();
+
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it('retains only the most recent 30 user-facing records', () => {
