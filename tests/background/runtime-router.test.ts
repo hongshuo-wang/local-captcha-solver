@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createRuntimeRouter } from '../../src/background/runtime-router';
+import { createModelStatusStore } from '../../src/background/model-status';
 
 function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } = {}) {
   const fetch = vi.fn(async () => ({ state: 'ready' as const, bytes: new Uint8Array([1]), mimeType: 'image/png' }));
@@ -10,8 +11,9 @@ function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } =
   const activeTab = vi.fn(async () => ({ id: 4, url: 'https://portal.example.test/login' }));
   const enablePage = vi.fn(async () => ({ enabled: true }));
   const disablePage = vi.fn(async () => ({ disabled: true, permissionRemoved: true }));
+  const modelStatus = createModelStatusStore(() => 1000);
   return { fetch, recognize, warmup, contains, activeTab, enablePage, disablePage, router: createRuntimeRouter({
-    permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize, warmup },
+    permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize, warmup }, modelStatus,
     siteState: { isEnabled: vi.fn(async () => options.stateEnabled ?? false), enablePage, disablePage },
     activeTab,
   }) };
@@ -39,6 +41,20 @@ describe('background runtime router', () => {
     await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://portal.example.test/captcha.png' }, sender)).resolves.toMatchObject({ state: 'ready' });
     await expect(app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'data:image/png;base64,AQ==', revision: 'r1', modes: ['digits'] }, sender)).resolves.toEqual([{ mode: 'digits', text: '42', confidence: .9 }]);
     expect(app.recognize).toHaveBeenCalledWith('data:image/png;base64,AQ==', 'r1', ['digits']);
+  });
+
+  it('publishes recognition success and exposes the model status snapshot', async () => {
+    const app = harness();
+    await app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'data:image/png;base64,AQ==', revision: 'r1', modes: ['digits'] }, sender);
+    const snapshot = await app.router.handle({ type: 'captcha:get-model-status' }, {});
+    expect(snapshot).toMatchObject({ status: 'loading', logs: [{ kind: 'recognition', outcome: 'started' }, { kind: 'recognition', outcome: 'success' }] });
+    expect((snapshot as { logs: readonly { durationMs?: number }[] }).logs.at(-1)?.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('retries model warmup without requiring a page sender', async () => {
+    const app = harness();
+    await expect(app.router.handle({ type: 'captcha:retry-model-warmup' }, {})).resolves.toMatchObject({ status: 'loading' });
+    expect(app.warmup).toHaveBeenCalledOnce();
   });
 
   it('accepts same-origin iframe/path senders but rejects cross-origin sender URLs', async () => {
@@ -108,6 +124,14 @@ describe('background runtime router', () => {
     await expect(app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'not a data URL', revision: '', modes: ['invalid'] }, sender)).resolves.toEqual({ type: 'captcha:recognition-error', code: 'recognition_failed' });
     app.recognize.mockRejectedValueOnce(Object.assign(new Error('offline'), { code: 'model_unavailable' }));
     await expect(app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'data:image/png;base64,AQ==', revision: 'r1', modes: ['digits'] }, sender)).resolves.toEqual({ type: 'captcha:recognition-error', code: 'model_unavailable' });
+    const status = await app.router.handle({ type: 'captcha:get-model-status' }, {});
+    expect(status).toMatchObject({ status: 'error', logs: [
+      { kind: 'recognition', outcome: 'started' },
+      { kind: 'recognition', outcome: 'failure' },
+      { kind: 'recognition', outcome: 'started' },
+      { kind: 'recognition', outcome: 'failure' },
+    ] });
+    expect((status as { logs: readonly { outcome: string; durationMs?: number }[] }).logs.filter((log) => log.outcome !== 'started').every((log) => typeof log.durationMs === 'number')).toBe(true);
     expect(await app.router.handle({ type: 'other' }, sender)).toBeUndefined();
   });
 });

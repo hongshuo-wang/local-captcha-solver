@@ -5,18 +5,36 @@ import { originsForPage } from '../platform/permissions';
 import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
 import type { EnableRegistrationOptions } from './content-registration';
+import type { ModelStatusStore } from './model-status';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
 export interface RuntimeRouterAdapter {
   permissions: { contains(details: { origins: readonly string[] }): Promise<boolean> };
   imageFetcher: ImageFetcher;
   inferenceHost: InferenceHost;
+  modelStatus: ModelStatusStore;
   siteState: {
     isEnabled(pageUrl: string): Promise<boolean>;
     enablePage(pageUrl: string, options?: EnableRegistrationOptions): Promise<unknown>;
     disablePage(pageUrl: string): Promise<unknown>;
   };
   activeTab(): Promise<{ id?: number; url?: string } | undefined>;
+}
+
+export function runWarmup(adapter: Pick<RuntimeRouterAdapter, 'inferenceHost' | 'modelStatus'>): Promise<void> | undefined {
+  const warmup = adapter.inferenceHost.warmup;
+  if (warmup === undefined) return undefined;
+  adapter.modelStatus.beginWarmup();
+  const promise = Promise.resolve().then(() => warmup.call(adapter.inferenceHost)).then(
+    () => {
+      adapter.modelStatus.warmupReady();
+    },
+    (error: unknown) => {
+      adapter.modelStatus.warmupFailed(error instanceof Error ? error.message : 'warmup failed');
+      throw error;
+    },
+  );
+  return promise;
 }
 
 export interface RuntimeRouter { handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined>; }
@@ -52,8 +70,7 @@ function recognitionError(error: unknown): { type: 'captcha:recognition-error'; 
 
 export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRouter {
   const startWarmup = (): void => {
-    const warmup = adapter.inferenceHost.warmup;
-    if (warmup !== undefined) void warmup.call(adapter.inferenceHost).catch(() => undefined);
+    void runWarmup(adapter)?.catch(() => undefined);
   };
   const currentPage = async (sender: RuntimeSender): Promise<string | undefined> => {
     if (sender.tab !== undefined) return senderPage(sender);
@@ -78,9 +95,29 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         return adapter.imageFetcher.fetch(request.url);
       }
       if (request.type === 'captcha:recognize') {
+        const startedAt = performance.now();
+        adapter.modelStatus.recognitionStarted();
         const inferenceRequest = { type: 'ocr:recognize' as const, requestId: 'runtime-validation', imageRevision: request.revision, imageDataUrl: request.imageDataUrl, modes: request.modes };
-        if (!isInferenceRequest(inferenceRequest)) return recognitionError(undefined);
-        try { return await adapter.inferenceHost.recognize(inferenceRequest.imageDataUrl, inferenceRequest.imageRevision, inferenceRequest.modes); } catch (error) { return recognitionError(error); }
+        if (!isInferenceRequest(inferenceRequest)) {
+          adapter.modelStatus.recognitionFailed('invalid request', performance.now() - startedAt, false);
+          return recognitionError(undefined);
+        }
+        try {
+          const results = await adapter.inferenceHost.recognize(inferenceRequest.imageDataUrl, inferenceRequest.imageRevision, inferenceRequest.modes);
+          const confidence = results.length === 0 ? 0 : results.reduce((sum, result) => sum + result.confidence, 0) / results.length;
+          adapter.modelStatus.recognitionSucceeded(performance.now() - startedAt, confidence);
+          return results;
+        } catch (error) {
+          const durationMs = performance.now() - startedAt;
+          const modelUnavailable = typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'model_unavailable';
+          adapter.modelStatus.recognitionFailed(error instanceof Error ? error.message : 'recognition failed', durationMs, modelUnavailable);
+          return recognitionError(error);
+        }
+      }
+      if (request.type === 'captcha:get-model-status') return adapter.modelStatus.snapshot();
+      if (request.type === 'captcha:retry-model-warmup') {
+        void runWarmup(adapter)?.catch(() => undefined);
+        return adapter.modelStatus.snapshot();
       }
       if (request.type === 'captcha:get-site-state' || request.type === 'captcha:get-status') {
         const page = await currentPage(sender);
