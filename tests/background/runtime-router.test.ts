@@ -80,7 +80,45 @@ describe('background runtime router', () => {
 
     await expect(app.router.handle({ type: 'captcha:get-site-state' }, sender)).resolves.toEqual({ enabled: true });
     await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' }, sender)).resolves.toEqual({ enabled: true });
+    expect(app.warmup).toHaveBeenCalledOnce();
+  });
+
+  it('does not repeat normal warmup after the model is ready', async () => {
+    const app = harness({ pagePermission: true, stateEnabled: true });
+    await app.router.handle({ type: 'captcha:get-site-state' }, sender);
+    for (let index = 0; index < 5; index += 1) await Promise.resolve();
+    expect(await app.router.handle({ type: 'captcha:get-model-status' }, {})).toMatchObject({ status: 'ready' });
+
+    await app.router.handle({ type: 'captcha:get-site-state' }, sender);
+    expect(app.warmup).toHaveBeenCalledOnce();
+  });
+
+  it('allows a forced retry and ignores a stale earlier warmup completion', async () => {
+    const app = harness();
+    let resolveFirst: (() => void) | undefined;
+    let resolveSecond: (() => void) | undefined;
+    app.warmup
+      .mockImplementationOnce(() => new Promise<undefined>((resolve) => { resolveFirst = () => resolve(undefined); }))
+      .mockImplementationOnce(() => new Promise<undefined>((resolve) => { resolveSecond = () => resolve(undefined); }));
+
+    await expect(app.router.handle({ type: 'captcha:retry-model-warmup' }, {})).resolves.toMatchObject({ status: 'loading' });
+    await expect(app.router.handle({ type: 'captcha:retry-model-warmup' }, {})).resolves.toMatchObject({ status: 'loading' });
     expect(app.warmup).toHaveBeenCalledTimes(2);
+
+    resolveFirst?.();
+    for (let index = 0; index < 3; index += 1) await Promise.resolve();
+    expect(await app.router.handle({ type: 'captcha:get-model-status' }, {})).toMatchObject({ status: 'loading' });
+    resolveSecond?.();
+    for (let index = 0; index < 3; index += 1) await Promise.resolve();
+    expect(await app.router.handle({ type: 'captcha:get-model-status' }, {})).toMatchObject({ status: 'ready' });
+  });
+
+  it('records a synchronous warmup throw as a failed forced retry', async () => {
+    const app = harness();
+    app.warmup.mockImplementationOnce(() => { throw new Error('model load failed'); });
+    await app.router.handle({ type: 'captcha:retry-model-warmup' }, {});
+    for (let index = 0; index < 3; index += 1) await Promise.resolve();
+    expect(await app.router.handle({ type: 'captcha:get-model-status' }, {})).toMatchObject({ status: 'error', logs: [{ kind: 'warmup', outcome: 'started' }, { kind: 'warmup', outcome: 'failure' }] });
   });
 
   it('never falls back to activeTab for malformed or cross-origin tab senders', async () => {

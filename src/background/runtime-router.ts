@@ -21,18 +21,39 @@ export interface RuntimeRouterAdapter {
   activeTab(): Promise<{ id?: number; url?: string } | undefined>;
 }
 
-export function runWarmup(adapter: Pick<RuntimeRouterAdapter, 'inferenceHost' | 'modelStatus'>): Promise<void> | undefined {
+interface WarmupRunState {
+  active?: Promise<void>;
+  generation: number;
+}
+
+const warmupStates = new WeakMap<object, WarmupRunState>();
+
+export function runWarmup(
+  adapter: Pick<RuntimeRouterAdapter, 'inferenceHost' | 'modelStatus'>,
+  options: { force?: boolean } = {},
+): Promise<void> | undefined {
   const warmup = adapter.inferenceHost.warmup;
   if (warmup === undefined) return undefined;
+  const stateKey = adapter.modelStatus as object;
+  const state = warmupStates.get(stateKey) ?? { generation: 0 };
+  warmupStates.set(stateKey, state);
+  const status = adapter.modelStatus.snapshot().status;
+  if (!options.force && (status === 'ready' || (status === 'loading' && state.active !== undefined))) return state.active;
+  const generation = ++state.generation;
   adapter.modelStatus.beginWarmup();
   const promise = Promise.resolve().then(() => warmup.call(adapter.inferenceHost)).then(
     () => {
-      adapter.modelStatus.warmupReady();
+      if (state.generation === generation) adapter.modelStatus.warmupReady();
     },
     (error: unknown) => {
-      adapter.modelStatus.warmupFailed(error instanceof Error ? error.message : 'warmup failed');
+      if (state.generation === generation) adapter.modelStatus.warmupFailed(error instanceof Error ? error.message : 'warmup failed');
       throw error;
     },
+  );
+  state.active = promise;
+  promise.then(
+    () => { if (state.active === promise) state.active = undefined; },
+    () => { if (state.active === promise) state.active = undefined; },
   );
   return promise;
 }
@@ -116,7 +137,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       }
       if (request.type === 'captcha:get-model-status') return adapter.modelStatus.snapshot();
       if (request.type === 'captcha:retry-model-warmup') {
-        void runWarmup(adapter)?.catch(() => undefined);
+        void runWarmup(adapter, { force: true })?.catch(() => undefined);
         return adapter.modelStatus.snapshot();
       }
       if (request.type === 'captcha:get-site-state' || request.type === 'captcha:get-status') {
