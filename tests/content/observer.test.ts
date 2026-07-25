@@ -31,4 +31,11 @@ describe('captcha observer', () => {
     for (const change of [() => image.setAttribute('src', 'a'), () => image.setAttribute('srcset', 'b'), () => image.dispatchEvent(new Event('load'))]) { change(); await vi.advanceTimersByTimeAsync(150); }
     expect(run).toHaveBeenCalledTimes(4); observer.disconnect(); vi.useRealTimers();
   });
+  it('requeues an existing image when its input or ancestor visibility context changes', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<div id="wrap"><img id="image" alt="captcha" width="120" height="40"></div>';
+    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const wrap = document.querySelector('#wrap') as HTMLElement;
+    document.body.append(document.createElement('input')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    wrap.className = 'changed'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
+  });
 });

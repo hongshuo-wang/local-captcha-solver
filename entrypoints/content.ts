@@ -17,8 +17,9 @@ export function createRuntimeContent(runtime: Runtime) {
       return response;
     },
   });
-  let automaticEnabled = true;
-  const displayed = { cancel: workflow.cancel, cancelAll: workflow.cancelAll, run: async (...args: Parameters<typeof workflow.run>) => { if (args[1] === 'automatic' && !automaticEnabled) return { state: 'stale', candidateId: '' } as const; const snapshot = snapshotForImage(args[0]); const shouldShow = args[1] !== 'automatic' || (snapshot !== undefined && scoreCaptchaCandidate(snapshot.candidate.candidate).score >= AUTOMATIC_CANDIDATE_THRESHOLD); if (shouldShow) showRecognizing(args[0]); const result = await workflow.run(...args); if (shouldShow && (args[1] !== 'automatic' || automaticEnabled)) showWorkflowStatus(result, args[0]); return result; } };
+  let automaticEnabled = false;
+  const statusTokens = new WeakMap<HTMLImageElement, number>();
+  const displayed = { cancel: workflow.cancel, cancelAll: workflow.cancelAll, run: async (...args: Parameters<typeof workflow.run>) => { if (args[1] === 'automatic' && !automaticEnabled) return { state: 'stale', candidateId: '' } as const; const token = (statusTokens.get(args[0]) ?? 0) + 1; statusTokens.set(args[0], token); const snapshot = snapshotForImage(args[0]); const shouldShow = args[1] !== 'automatic' || (snapshot !== undefined && scoreCaptchaCandidate(snapshot.candidate.candidate).score >= AUTOMATIC_CANDIDATE_THRESHOLD); if (shouldShow) showRecognizing(args[0]); const result = await workflow.run(...args); if (shouldShow && statusTokens.get(args[0]) === token && (args[1] !== 'automatic' || automaticEnabled)) showWorkflowStatus(result, args[0]); return result; } };
   let observer: ReturnType<typeof observeCaptchaImages> | undefined;
   runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
