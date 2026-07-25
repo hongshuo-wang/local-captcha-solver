@@ -44,17 +44,24 @@ function isPermissionDenied(value: unknown): boolean {
     (value as { reason?: unknown }).reason === 'permission-denied';
 }
 
+function isSiteChanged(value: unknown): boolean {
+  return typeof value === 'object' && value !== null &&
+    (value as { enabled?: unknown }).enabled === false &&
+    (value as { reason?: unknown }).reason === 'site-changed';
+}
+
 export function createPopupController(adapter: PopupControllerAdapter, view: PopupView): PopupController {
   let hostname = 'Loading site...';
   let supported = false;
   let knownEnabled = false;
+  let stateKnown = false;
 
   const render = (state: Omit<PopupViewState, 'hostname'>): void => view.render({ hostname, ...state });
   const renderKnown = (error?: string, status = knownEnabled ? ON_STATUS : OFF_STATUS): void => render({ checked: knownEnabled, disabled: false, status, error });
 
-  return {
-    async start(): Promise<void> {
+  const start = async (): Promise<void> => {
       render({ checked: false, disabled: true, status: 'Checking site setting...' });
+      stateKnown = false;
       try {
         const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
         const pageUrl = tabs[0]?.url;
@@ -72,18 +79,21 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         const response = await adapter.runtime.sendMessage({ type: 'captcha:get-site-state' });
         if (!isSiteState(response)) throw new Error('malformed');
         knownEnabled = response.enabled;
+        stateKnown = true;
         renderKnown();
       } catch {
         knownEnabled = false;
-        render({ checked: false, disabled: false, status: OFF_STATUS, error: 'Could not load this site setting.' });
+        render({ checked: false, disabled: true, status: OFF_STATUS, error: 'Could not load this site setting.' });
       }
-    },
+    };
 
+  return {
+    start,
     async setEnabled(enabled: boolean): Promise<void> {
-      if (!supported) return;
+      if (!supported || !stateKnown) return;
       render({ checked: knownEnabled, disabled: true, status: 'Updating site setting...' });
       try {
-        const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled });
+        const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled, hostname });
         if (enabled && isSiteState(response) && response.enabled) {
           knownEnabled = true;
           renderKnown();
@@ -91,6 +101,10 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         }
         if (enabled && isPermissionDenied(response)) {
           renderKnown('Permission was not granted for this site.');
+          return;
+        }
+        if (isSiteChanged(response)) {
+          await start();
           return;
         }
         if (!enabled && isDisableState(response)) {

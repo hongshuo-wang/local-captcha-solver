@@ -4,16 +4,17 @@ import { createPopupController, type PopupView } from '../../src/popup/controlle
 
 function harness(options: { url?: string; state?: unknown; change?: unknown } = {}) {
   const sendMessage = vi.fn(async (message: { type: string }) => {
-    if (message.type === 'captcha:get-site-state') return options.state ?? { enabled: false };
+    if (message.type === 'captcha:get-site-state') return Object.hasOwn(options, 'state') ? options.state : { enabled: false };
     return Object.hasOwn(options, 'change') ? options.change : { enabled: true };
   });
   const render = vi.fn();
   const view: PopupView = { render };
+  const tabsQuery = vi.fn(async () => [{ url: Object.hasOwn(options, 'url') ? options.url : 'https://Portal.Example.test/login' }]);
   const controller = createPopupController({
-    tabs: { query: vi.fn(async () => [{ url: options.url ?? 'https://Portal.Example.test/login' }]) },
+    tabs: { query: tabsQuery },
     runtime: { sendMessage },
   }, view);
-  return { controller, render, sendMessage };
+  return { controller, render, sendMessage, tabsQuery };
 }
 
 describe('popup controller', () => {
@@ -52,8 +53,8 @@ describe('popup controller', () => {
     expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off. Site permission could not be removed.' }));
   });
 
-  it('does not send messages for unsupported pages', async () => {
-    const app = harness({ url: 'edge://extensions/' });
+  it.each(['edge://extensions/', 'about:blank', 'file:///tmp/captcha.html', undefined])('does not send messages for unsupported pages (%s)', async (url) => {
+    const app = harness({ url });
 
     await app.controller.start();
 
@@ -94,5 +95,58 @@ describe('popup controller', () => {
     await app.controller.setEnabled(true);
 
     expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: 'Could not update this site setting.' }));
+  });
+
+  it('includes the rendered hostname in a toggle request', async () => {
+    const app = harness({ state: { enabled: false }, change: { enabled: true } });
+    await app.controller.start();
+
+    await app.controller.setEnabled(true);
+
+    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' });
+  });
+
+  it('refreshes the current site after the background rejects a stale hostname', async () => {
+    const app = harness({ state: { enabled: false } });
+    app.sendMessage.mockImplementation(async (message: { type: string }) => message.type === 'captcha:set-site-enabled'
+      ? { enabled: false, reason: 'site-changed' }
+      : { enabled: false });
+    await app.controller.start();
+    app.tabsQuery.mockResolvedValueOnce([{ url: 'https://other.example.test/login' }]);
+
+    await app.controller.setEnabled(true);
+
+    expect(app.sendMessage).toHaveBeenCalledTimes(3);
+    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:get-site-state' });
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: 'other.example.test', checked: false }));
+  });
+
+  it.each([
+    ['undefined response', undefined],
+    ['malformed response', { enabled: 'yes' }],
+  ])('shows a typed loading error for an initial %s', async (_name, state) => {
+    const app = harness({ state });
+
+    await app.controller.start();
+
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: 'Could not load this site setting.' }));
+  });
+
+  it('shows a typed loading error when the initial state request rejects', async () => {
+    const app = harness();
+    app.sendMessage.mockRejectedValueOnce(new Error('runtime unavailable'));
+
+    await app.controller.start();
+
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: 'Could not load this site setting.' }));
+  });
+
+  it('does not mutate when the initial site state is unknown', async () => {
+    const app = harness({ state: undefined });
+    await app.controller.start();
+
+    await app.controller.setEnabled(true);
+
+    expect(app.sendMessage).toHaveBeenCalledOnce();
   });
 });

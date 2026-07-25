@@ -7,9 +7,11 @@ function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } =
   const recognize = vi.fn(async () => [{ mode: 'digits' as const, text: '42', confidence: .9 }]);
   const contains = vi.fn(async () => options.pagePermission ?? true);
   const activeTab = vi.fn(async () => ({ id: 4, url: 'https://portal.example.test/login' }));
-  return { fetch, recognize, contains, activeTab, router: createRuntimeRouter({
+  const enablePage = vi.fn(async () => ({ enabled: true }));
+  const disablePage = vi.fn(async () => ({ disabled: true, permissionRemoved: true }));
+  return { fetch, recognize, contains, activeTab, enablePage, disablePage, router: createRuntimeRouter({
     permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize },
-    siteState: { isEnabled: vi.fn(async () => options.stateEnabled ?? false), enablePage: vi.fn(async () => ({ enabled: true })), disablePage: vi.fn(async () => ({ disabled: true, permissionRemoved: true })) },
+    siteState: { isEnabled: vi.fn(async () => options.stateEnabled ?? false), enablePage, disablePage },
     activeTab,
   }) };
 }
@@ -54,6 +56,16 @@ describe('background runtime router', () => {
     await expect(app.router.handle({ type: 'captcha:get-site-state' }, { tab: { id: 99, url: 'not a page' }, url: 'not a page' })).resolves.toEqual({ enabled: false });
     await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true }, { tab: { id: 99, url: 'https://portal.example.test/' }, url: 'https://other.example.test/' })).resolves.toEqual({ enabled: false, reason: 'invalid-request' });
     expect(app.activeTab).not.toHaveBeenCalled();
+  });
+
+  it('rejects a popup toggle after the active tab changes without mutating either site', async () => {
+    const app = harness();
+    app.activeTab.mockResolvedValueOnce({ id: 8, url: 'https://other.example.test/login' });
+
+    await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' }, {})).resolves.toEqual({ enabled: false, reason: 'site-changed' });
+
+    expect(app.enablePage).not.toHaveBeenCalled();
+    expect(app.disablePage).not.toHaveBeenCalled();
   });
 
   it('maps malformed and inference errors to guarded OCR failures', async () => {

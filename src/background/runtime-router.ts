@@ -51,7 +51,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   return {
     async handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined> {
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
-      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown };
+      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown };
       if (request.type === 'captcha:acquire-image') {
         const page = senderPage(sender);
         const origin = page === undefined ? undefined : pageOrigin(page);
@@ -77,6 +77,9 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (request.type === 'captcha:set-site-enabled') {
         const page = await currentPage(sender);
         if (page === undefined || typeof request.enabled !== 'boolean') return { enabled: false, reason: 'invalid-request' };
+        let hostname: string;
+        try { hostname = hostnameForPage(page); } catch { return { enabled: false, reason: 'invalid-request' }; }
+        if (request.hostname !== hostname) return { enabled: false, reason: 'site-changed' };
         return request.enabled ? adapter.siteState.enablePage(page) : adapter.siteState.disablePage(page);
       }
       return undefined;
