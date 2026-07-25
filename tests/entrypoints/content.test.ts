@@ -38,7 +38,7 @@ describe('content runtime messages', () => {
     const { createRuntimeContent } = await import('../../entrypoints/content'); const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } }); const image = document.querySelector('#image') as HTMLImageElement;
     content.enable(); const automatic = content.workflow.run(image, 'automatic'); await started; expect(sendMessage).toHaveBeenCalledOnce();
     await content.workflow.run(image, 'explicit'); release([{ mode: 'digits', text: '1', confidence: .9 }]); await automatic;
-    expect(document.querySelector('[data-local-captcha-status]')?.textContent).toBe('CAPTCHA answer filled.');
+    expect(document.querySelector('[data-local-captcha-status]')?.textContent).toContain('识别到：2，已填入');
   });
   it('does not restore status when a pending explicit request resolves after disable', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<img id="image" src="data:image/png;base64,AQ==">'; let release!: (value: unknown) => void; let signal!: () => void; const started = new Promise<void>((resolve) => { signal = resolve; });
@@ -51,5 +51,17 @@ describe('content runtime messages', () => {
     const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize' ? { type: 'captcha:recognition-error', code: 'model_unavailable' } : undefined);
     const { createRuntimeContent } = await import('../../entrypoints/content'); const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
     await expect(content.workflow.run(document.querySelector('#image') as HTMLImageElement, 'context')).resolves.toMatchObject({ state: 'model_unavailable' });
+  });
+  it('shows a low-confidence candidate beside the field and fills only after confirmation', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<form><img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ=="><input id="answer" aria-label="captcha"></form>';
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize' ? [{ mode: 'letters', text: 'ABC', confidence: .94 }] : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content'); const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    const result = await content.workflow.run(document.querySelector('#image') as HTMLImageElement, 'context');
+    expect(result).toMatchObject({ state: 'needs_confirmation', fillValue: 'ABC' });
+    expect((document.querySelector('#answer') as HTMLInputElement).value).toBe('');
+    const button = document.querySelector('[data-local-captcha-status] button') as HTMLButtonElement;
+    expect(button.textContent).toContain('填充'); button.click();
+    expect((document.querySelector('#answer') as HTMLInputElement).value).toBe('ABC');
+    expect(document.querySelector('[data-local-captcha-status]')?.textContent).toContain('已填入');
   });
 });

@@ -22,7 +22,7 @@ describe('captcha workflow', () => {
     await expect(workflow({ snapshot }).run(image, 'automatic')).resolves.toEqual({ state: 'no_candidate' });
   });
   it('does not fill low confidence or conflicting values', async () => {
-    await expect(workflow({ recognize: async () => [{ mode: 'letters', text: 'ABC', confidence: .94 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation' });
+    await expect(workflow({ recognize: async () => [{ mode: 'letters', text: 'ABC', confidence: .94 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation', displayText: 'ABC', fillValue: 'ABC', fieldIds: ['field-1'] });
     await expect(workflow({ recognize: async () => [{ mode: 'digits', text: '123', confidence: .98 }, { mode: 'letters', text: 'ABC', confidence: .94 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation' });
     expect(field.value).toBe('');
   });

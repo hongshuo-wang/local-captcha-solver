@@ -14,7 +14,7 @@ interface RequestRecord { revision: string; priority: number; token: number; pro
 const MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
 const priority = (trigger: WorkflowTrigger): number => trigger === 'automatic' ? 0 : 1;
 function errorResult(candidateId: string, error: unknown): WorkflowResult { const code = typeof error === 'object' && error !== null && 'code' in error ? (error as { code?: string }).code : undefined; return code === 'model_unavailable' ? { state: 'model_unavailable', candidateId } : { state: 'recognition_failed', candidateId }; }
-function choose(results: readonly OcrResult[]): Exclude<ConfidenceCandidate, { kind: 'invalid' }> | undefined { const valid = resultInterpreter.interpret(results).map((result, index) => result.kind === 'invalid' ? result : { ...result, mode: results[index]!.mode }).filter((result): result is Exclude<ConfidenceCandidate, { kind: 'invalid' }> => result.kind !== 'invalid'); const values = new Map<string, Exclude<ConfidenceCandidate, { kind: 'invalid' }>>(); for (const result of valid) { const old = values.get(result.fillValue); if (!old || result.confidence > old.confidence) values.set(result.fillValue, result); } const ranked = [...values.values()].sort((left, right) => right.confidence - left.confidence); const winner = ranked[0]; return winner && canAutoFill(winner) && (!ranked[1] || winner.confidence - ranked[1].confidence + 1e-12 >= .1) ? winner : undefined; }
+function choose(results: readonly OcrResult[]): { candidate: Exclude<ConfidenceCandidate, { kind: 'invalid' }>; safe: boolean } | undefined { const valid = resultInterpreter.interpret(results).map((result, index) => result.kind === 'invalid' ? result : { ...result, mode: results[index]!.mode }).filter((result): result is Exclude<ConfidenceCandidate, { kind: 'invalid' }> => result.kind !== 'invalid'); const values = new Map<string, Exclude<ConfidenceCandidate, { kind: 'invalid' }>>(); for (const result of valid) { const old = values.get(result.fillValue); if (!old || result.confidence > old.confidence) values.set(result.fillValue, result); } const ranked = [...values.values()].sort((left, right) => right.confidence - left.confidence); const winner = ranked[0]; if (winner === undefined) return undefined; return { candidate: winner, safe: canAutoFill(winner) && (!ranked[1] || winner.confidence - ranked[1].confidence + 1e-12 >= .1) }; }
 export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaWorkflow {
   const snapshot = options.snapshot ?? snapshotForImage; const records = new WeakMap<HTMLImageElement, RequestRecord>(); let generation = 0; let sequence = 0;
   const stale = (candidateId: string): WorkflowResult => ({ state: 'stale', candidateId });
@@ -26,15 +26,16 @@ export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaW
     if (acquired.state !== 'ready') return acquired.reason === 'permission' ? { state: 'permission_denied', candidateId } : { state: 'image_unavailable', candidateId };
     let results: readonly OcrResult[]; try { results = await options.recognize(acquired.dataUrl, acquired.revision, MODES); } catch (error) { return errorResult(candidateId, error); }
     const current = snapshot(image); if (!valid(image, record) || current === undefined || current.candidate.revision !== first.candidate.revision) return stale(candidateId);
-    const selected = choose(results); if (!selected) return { state: 'needs_confirmation', candidateId, displayText: '', fieldIds: current.fields.map((field) => field.id) };
+    const chosen = choose(results); if (!chosen) return { state: 'needs_confirmation', candidateId, displayText: '', fieldIds: current.fields.map((field) => field.id) }; const selected = chosen.candidate;
     const match = matchCaptchaField(image, current.fields.map((field) => field.field));
+    if (match.state === 'none') return { state: 'no_field', candidateId, displayText: selected.displayText, fillValue: selected.fillValue };
+    if (!chosen.safe) return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, fieldIds: match.state === 'unique' ? [match.winner.id] : match.candidates.map((item) => item.field.id) };
     if (match.state !== 'unique' && trigger !== 'automatic' && document.activeElement instanceof HTMLInputElement) {
       const focused = document.activeElement;
       const focusedId = current.fields.find((field) => field.element === focused)?.id ?? 'focused-field';
       const focusedFill = fillEmptyField(focused, selected.fillValue);
       if (focusedFill.state === 'filled') return { state: 'filled', candidateId, fieldId: focusedId, displayText: selected.displayText, fillValue: selected.fillValue };
     }
-    if (match.state === 'none') return { state: 'no_field', candidateId, displayText: selected.displayText, fillValue: selected.fillValue };
     if (match.state === 'ambiguous') return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, fieldIds: match.candidates.map((item) => item.field.id) };
     const target = current.fields.find((field) => field.id === match.winner.id); if (!target || !valid(image, record)) return stale(candidateId);
     const fill = fillEmptyField(target.element, selected.fillValue);

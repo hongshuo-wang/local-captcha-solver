@@ -32,6 +32,12 @@ describe('image context menu', () => {
     await expect(app.menu.handleClick({ menuItemId: CONTEXT_MENU_ID, srcUrl: 'https://assets.example.test/captcha.png' }, { id: 9, url: 'chrome://settings/' })).resolves.toEqual({ state: 'unsupported' });
   });
 
+  it('forwards data and blob image URLs instead of silently rejecting them', async () => {
+    const app = harness();
+    await expect(app.menu.handleClick({ menuItemId: CONTEXT_MENU_ID, srcUrl: 'data:image/png;base64,AQ==' }, { id: 9, url: 'https://portal.example.test/login' })).resolves.toEqual({ state: 'sent' });
+    await expect(app.menu.handleClick({ menuItemId: CONTEXT_MENU_ID, srcUrl: 'blob:https://portal.example.test/abc' }, { id: 9, url: 'https://portal.example.test/login' })).resolves.toEqual({ state: 'sent' });
+  });
+
   it('returns an unsupported status when injection cannot run on the selected tab', async () => {
     const app = harness();
     app.sendMessage.mockRejectedValueOnce(new Error('not loaded')); app.executeScript.mockRejectedValueOnce(new Error('blocked'));

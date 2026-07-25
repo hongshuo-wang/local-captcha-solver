@@ -20,6 +20,12 @@ function httpUrl(value: unknown): value is string {
   try { const url = new URL(value); return url.protocol === 'http:' || url.protocol === 'https:'; } catch { return false; }
 }
 
+function imageUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  if (/^(?:data:image\/|blob:)/i.test(value)) return true;
+  return httpUrl(value);
+}
+
 export function createContextMenu(adapter: ContextMenuAdapter): ContextMenu {
   const send = async (tabId: number, message: unknown, frameId: number | undefined) => adapter.tabs.sendMessage(tabId, message, frameId === undefined ? undefined : { frameId });
   return {
@@ -28,7 +34,7 @@ export function createContextMenu(adapter: ContextMenuAdapter): ContextMenu {
       adapter.contextMenus.create({ id: CONTEXT_MENU_ID, title: 'Recognize and fill CAPTCHA', contexts: ['image'] });
     },
     async handleClick(info: MenuClickInfo, tab?: TabIdentity): Promise<{ state: 'sent' | 'unsupported' }> {
-      if (info.menuItemId !== CONTEXT_MENU_ID || tab?.id === undefined || !httpUrl(tab.url) || !httpUrl(info.srcUrl)) return { state: 'unsupported' };
+      if (info.menuItemId !== CONTEXT_MENU_ID || tab?.id === undefined || !httpUrl(tab.url) || !imageUrl(info.srcUrl)) return { state: 'unsupported' };
       try {
         try { await send(tab.id, { type: 'captcha:ping' }, info.frameId); } catch {
           await adapter.scripting.executeScript({ target: { tabId: tab.id, ...(info.frameId === undefined ? {} : { frameIds: [info.frameId] }) }, files: ['content-scripts/content.js'] });
