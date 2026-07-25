@@ -70,4 +70,10 @@ describe('captcha observer', () => {
     (document.querySelector('#label') as HTMLLabelElement).firstChild!.remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
     expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
   });
+  it('requeues for nested field wrappers while keeping unrelated wrappers silent', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<section><img></section><div id="fields"></div><div id="other"></div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const fields = document.querySelector('#fields') as HTMLElement; const other = document.querySelector('#other') as HTMLElement;
+    const wrapper = document.createElement('div'); wrapper.innerHTML = '<div><label>Code</label><input></div>'; fields.append(wrapper); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    wrapper.remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); other.append(document.createElement('div')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
+  });
 });
