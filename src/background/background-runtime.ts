@@ -37,6 +37,8 @@ export function createBackgroundRuntime(adapter: BackgroundRuntimeAdapter): Back
         adapter.storage?.onChanged.addListener((changes, areaName) => { if (areaName === 'local' && Object.hasOwn(changes, 'captcha-settings')) reconcile(); });
         adapter.contextMenus.onClicked.addListener((info, tab) => { void adapter.contextMenu.handleClick(info, tab); });
       }
+      const warmup = adapter.inferenceHost.warmup;
+      if (warmup !== undefined) void warmup.call(adapter.inferenceHost).catch(reportError);
       const attempt = Promise.all([adapter.registration.reconcile(), adapter.contextMenu.install()]).then(() => { initialized = true; }, reportError);
       initializing = attempt;
       await attempt;
