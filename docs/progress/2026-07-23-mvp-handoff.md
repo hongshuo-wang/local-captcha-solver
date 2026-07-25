@@ -6,6 +6,8 @@
 
 Task 7-8 的浏览器体验工作流已经实现并完成代码级验证：候选图片/字段匹配、精确 hostname 白名单和可选权限、本地 offscreen OCR、图片安全获取和空字段填写、动态验证码刷新、右键入口、popup 当前站点开关均已落地。Task 8 另增加了针对构建产物 `.output/chrome-mv3` 的 Playwright E2E 套件：它启动真实 MV3 扩展，并通过 Playwright route 从本地 fixture server 提供未带端口的测试 hostname，覆盖当前站点启用、自动填充、动态 `src` 刷新、预填字段保护、受控 input、聚焦字段 fallback、零提交、离线识别、storage schema 和 popup unsupported 状态。fixture 使用已跟踪且基准证实可识别的 `digits-002.png`（`14975`）和 `digits-017.png`（`99067`）。
 
+跨源验证码图片只有在页面 canvas 可读取 CORS 响应时才可用；带凭据的后台获取严格限制为与页面同源。扩展 host permission 不会绕过非 CORS 或带凭据的跨源读取限制。
+
 本轮 Task 7-8 的实际实现提交如下：
 
 - `d881cf0`、`b7ce122`、`658e95a`：候选评分、严格字段匹配和非空字段保护。

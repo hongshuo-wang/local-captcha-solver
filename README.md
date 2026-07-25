@@ -24,7 +24,7 @@ The current model is intended for simple digit, letter, alphanumeric, and one-op
 
 Automatic recognition fills only an empty eligible field and never clicks a submit button or submits a form. Right-click recognition can use the focused empty input when a page has multiple plausible fields.
 
-Image acquisition is limited by browser same-origin and permission rules. A cross-origin CAPTCHA image may be unavailable when the browser cannot read it or the extension does not have the required host permission.
+Image acquisition is limited by browser same-origin and CORS rules. A cross-origin CAPTCHA image works only when the page can read it through a CORS-enabled canvas. Credentialed background fetching is intentionally same-origin-only; an extension host permission does not make a non-CORS or credentialed cross-origin image readable.
 
 ## Development commands
 
