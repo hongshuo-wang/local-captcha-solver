@@ -55,35 +55,44 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
   let supported = false;
   let knownEnabled = false;
   let stateKnown = false;
+  let operationGeneration = 0;
 
-  const render = (state: Omit<PopupViewState, 'hostname'>): void => view.render({ hostname, ...state });
-  const renderKnown = (error?: string, status = knownEnabled ? ON_STATUS : OFF_STATUS): void => render({ checked: knownEnabled, disabled: false, status, error });
+  const isCurrent = (generation: number): boolean => generation === operationGeneration;
+  const render = (generation: number, state: Omit<PopupViewState, 'hostname'>): void => {
+    if (isCurrent(generation)) view.render({ hostname, ...state });
+  };
+  const renderKnown = (generation: number, error?: string, status = knownEnabled ? ON_STATUS : OFF_STATUS): void => render(generation, { checked: knownEnabled, disabled: false, status, error });
 
   const start = async (): Promise<void> => {
-      render({ checked: false, disabled: true, status: 'Checking site setting...' });
+      const generation = ++operationGeneration;
+      render(generation, { checked: false, disabled: true, status: 'Checking site setting...' });
       stateKnown = false;
       try {
         const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
+        if (!isCurrent(generation)) return;
         const pageUrl = tabs[0]?.url;
         if (typeof pageUrl !== 'string') throw new Error('unsupported');
         hostname = hostnameForPage(pageUrl);
         supported = true;
       } catch {
+        if (!isCurrent(generation)) return;
         hostname = 'Unsupported page';
         supported = false;
-        render({ checked: false, disabled: true, status: UNSUPPORTED_STATUS });
+        render(generation, { checked: false, disabled: true, status: UNSUPPORTED_STATUS });
         return;
       }
 
       try {
         const response = await adapter.runtime.sendMessage({ type: 'captcha:get-site-state' });
+        if (!isCurrent(generation)) return;
         if (!isSiteState(response)) throw new Error('malformed');
         knownEnabled = response.enabled;
         stateKnown = true;
-        renderKnown();
+        renderKnown(generation);
       } catch {
+        if (!isCurrent(generation)) return;
         knownEnabled = false;
-        render({ checked: false, disabled: true, status: OFF_STATUS, error: 'Could not load this site setting.' });
+        render(generation, { checked: false, disabled: true, status: OFF_STATUS, error: 'Could not load this site setting.' });
       }
     };
 
@@ -91,16 +100,19 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
     start,
     async setEnabled(enabled: boolean): Promise<void> {
       if (!supported || !stateKnown) return;
-      render({ checked: knownEnabled, disabled: true, status: 'Updating site setting...' });
+      const generation = ++operationGeneration;
+      const requestHostname = hostname;
+      render(generation, { checked: knownEnabled, disabled: true, status: 'Updating site setting...' });
       try {
-        const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled, hostname });
+        const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled, hostname: requestHostname });
+        if (!isCurrent(generation)) return;
         if (enabled && isSiteState(response) && response.enabled) {
           knownEnabled = true;
-          renderKnown();
+          renderKnown(generation);
           return;
         }
         if (enabled && isPermissionDenied(response)) {
-          renderKnown('Permission was not granted for this site.');
+          renderKnown(generation, 'Permission was not granted for this site.');
           return;
         }
         if (isSiteChanged(response)) {
@@ -109,12 +121,13 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         }
         if (!enabled && isDisableState(response)) {
           knownEnabled = false;
-          renderKnown(undefined, response.permissionRemoved ? OFF_STATUS : `${OFF_STATUS} Site permission could not be removed.`);
+          renderKnown(generation, undefined, response.permissionRemoved ? OFF_STATUS : `${OFF_STATUS} Site permission could not be removed.`);
           return;
         }
         throw new Error('malformed');
       } catch {
-        renderKnown('Could not update this site setting.');
+        if (!isCurrent(generation)) return;
+        renderKnown(generation, 'Could not update this site setting.');
       }
     },
   };

@@ -17,6 +17,12 @@ function harness(options: { url?: string; state?: unknown; change?: unknown } = 
   return { controller, render, sendMessage, tabsQuery };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => { resolve = complete; });
+  return { promise, resolve };
+}
+
 describe('popup controller', () => {
   it('normalizes the active hostname and renders the remotely reported enabled state', async () => {
     const app = harness({ state: { enabled: true } });
@@ -148,5 +154,56 @@ describe('popup controller', () => {
     await app.controller.setEnabled(true);
 
     expect(app.sendMessage).toHaveBeenCalledOnce();
+  });
+
+  it('ignores an older site-state response after a newer start selects another hostname', async () => {
+    const firstState = deferred<unknown>();
+    const secondState = deferred<unknown>();
+    let firstRequested!: () => void;
+    let secondRequested!: () => void;
+    const firstRequest = new Promise<void>((resolve) => { firstRequested = resolve; });
+    const secondRequest = new Promise<void>((resolve) => { secondRequested = resolve; });
+    const tabsQuery = vi.fn().mockResolvedValueOnce([{ url: 'https://first.example.test/' }]).mockResolvedValueOnce([{ url: 'https://second.example.test/' }]);
+    const sendMessage = vi.fn()
+      .mockImplementationOnce(() => { firstRequested(); return firstState.promise; })
+      .mockImplementationOnce(() => { secondRequested(); return secondState.promise; });
+    const render = vi.fn();
+    const controller = createPopupController({ tabs: { query: tabsQuery }, runtime: { sendMessage } }, { render });
+
+    const first = controller.start();
+    await firstRequest;
+    const second = controller.start();
+    await secondRequest;
+    secondState.resolve({ enabled: false });
+    await second;
+    firstState.resolve({ enabled: true });
+    await first;
+
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: 'second.example.test', checked: false, disabled: false }));
+  });
+
+  it('ignores an older mutation response after a newer toggle completes', async () => {
+    const firstMutation = deferred<unknown>();
+    const secondMutation = deferred<unknown>();
+    let firstRequested!: () => void;
+    let secondRequested!: () => void;
+    const firstRequest = new Promise<void>((resolve) => { firstRequested = resolve; });
+    const secondRequest = new Promise<void>((resolve) => { secondRequested = resolve; });
+    const app = harness({ state: { enabled: true } });
+    app.sendMessage.mockImplementationOnce(async () => ({ enabled: true }))
+      .mockImplementationOnce(() => { firstRequested(); return firstMutation.promise; })
+      .mockImplementationOnce(() => { secondRequested(); return secondMutation.promise; });
+    await app.controller.start();
+
+    const first = app.controller.setEnabled(true);
+    await firstRequest;
+    const second = app.controller.setEnabled(false);
+    await secondRequest;
+    secondMutation.resolve({ disabled: true, permissionRemoved: true });
+    await second;
+    firstMutation.resolve({ enabled: true });
+    await first;
+
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off.' }));
   });
 });
