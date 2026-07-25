@@ -60,4 +60,14 @@ describe('captcha observer', () => {
     (document.querySelector('#field') as HTMLInputElement).setAttribute('aria-label', 'Verification code'); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
     expect(run).toHaveBeenCalledWith(document.querySelector('#captcha'), 'automatic'); expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
   });
+  it('does not requeue images for unrelated observed attributes or text', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<img><img><div id="other">ordinary text</div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const other = document.querySelector('#other') as HTMLElement;
+    other.id = 'renamed'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); other.firstChild!.textContent = 'changed ordinary text'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
+  });
+  it('requeues the associated image when label text is removed', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<form><img><label id="label">Verification code</label><input></form>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
+    (document.querySelector('#label') as HTMLLabelElement).firstChild!.remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
+  });
 });
