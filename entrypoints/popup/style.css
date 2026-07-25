@@ -8,7 +8,7 @@
 
 html, body { width: 340px; min-width: 340px; margin: 0; }
 
-body { min-height: 168px; background: #f7f7f5; }
+body { min-height: 250px; background: #f7f7f5; }
 
 #app { width: 340px; padding: 16px; }
 
@@ -16,7 +16,39 @@ body { min-height: 168px; background: #f7f7f5; }
 
 .product-name { font-size: 14px; font-weight: 700; }
 
-.site-panel { padding-top: 12px; }
+.model-panel { padding: 10px 0 9px; border-bottom: 1px solid #d6d6d1; }
+
+.model-status-row { min-height: 20px; display: flex; align-items: center; gap: 7px; }
+
+.model-label, .model-status { margin: 0; }
+
+.model-label { color: #666661; font-size: 12px; }
+
+.model-status { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #575752; font-size: 12px; }
+
+.model-status.ready { color: #28643a; }
+
+.model-status.error { color: #a82d28; }
+
+.model-retry { min-height: 24px; padding: 2px 8px; border: 1px solid #a82d28; border-radius: 4px; color: #8c211d; background: transparent; font-size: 11px; cursor: pointer; }
+
+.model-retry:focus-visible { outline: 2px solid #245c35; outline-offset: 2px; }
+
+.model-retry:disabled { cursor: wait; opacity: .65; }
+
+.model-progress { display: block; width: 100%; height: 5px; margin: 6px 0 7px; border: 0; border-radius: 2px; overflow: hidden; accent-color: #a77c2e; }
+
+.model-progress.ready { accent-color: #3f6f49; }
+
+.model-progress.error { accent-color: #a82d28; }
+
+.model-logs { max-height: 62px; margin: 0; padding: 0 0 0 14px; overflow: hidden; color: #666661; font-size: 11px; line-height: 15px; }
+
+.model-logs li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.model-log-empty { list-style: none; margin-left: -14px; color: #8a8a84; }
+
+.site-panel { padding-top: 10px; }
 
 .site-label, .hostname, .status { margin: 0; }
 

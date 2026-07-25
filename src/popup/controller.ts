@@ -1,5 +1,6 @@
 import { hostnameForPage } from '../platform/settings-store';
 import { originsForPage } from '../platform/permissions';
+import type { ModelLog, ModelStatusSnapshot } from '../background/model-status';
 
 export interface PopupViewState {
   hostname: string;
@@ -25,6 +26,155 @@ export interface PopupControllerAdapter {
 export interface PopupController {
   start(): Promise<void>;
   setEnabled(enabled: boolean): Promise<void>;
+}
+
+export type ModelStatusView =
+  | { renderModelStatus(snapshot: ModelStatusSnapshot): void }
+  | { render(snapshot: ModelStatusSnapshot): void };
+
+export interface ModelStatusControllerAdapter {
+  runtime: { sendMessage(message: unknown): Promise<unknown> };
+}
+
+export interface ModelStatusController {
+  start(): Promise<void>;
+  retry(): Promise<void>;
+}
+
+export interface ModelStatusControllerOptions {
+  readonly pollIntervalMs?: number;
+  readonly maxPollAttempts?: number;
+  readonly delay?: (durationMs: number, signal?: AbortSignal) => Promise<void>;
+}
+
+const MODEL_LOADING: ModelStatusSnapshot = Object.freeze({
+  status: 'loading',
+  progress: 0,
+  message: '正在加载本地识别模型',
+  logs: Object.freeze([]),
+});
+
+const MODEL_UNAVAILABLE: ModelStatusSnapshot = Object.freeze({
+  status: 'error',
+  progress: 0,
+  message: '模型状态暂时不可用',
+  logs: Object.freeze([]),
+});
+
+function isModelLog(value: unknown): value is ModelLog {
+  if (typeof value !== 'object' || value === null) return false;
+  const log = value as Partial<ModelLog>;
+  return typeof log.at === 'number' && Number.isFinite(log.at) &&
+    (log.kind === 'warmup' || log.kind === 'recognition') &&
+    (log.outcome === 'started' || log.outcome === 'success' || log.outcome === 'failure') &&
+    typeof log.message === 'string' &&
+    (log.durationMs === undefined || (typeof log.durationMs === 'number' && Number.isFinite(log.durationMs)));
+}
+
+function isModelStatusSnapshot(value: unknown): value is ModelStatusSnapshot {
+  if (typeof value !== 'object' || value === null) return false;
+  const snapshot = value as Partial<ModelStatusSnapshot>;
+  const validStateProgress = snapshot.status === 'ready'
+    ? snapshot.progress === 100
+    : snapshot.status === 'error'
+      ? snapshot.progress === 0
+      : snapshot.status === 'loading' && (snapshot.progress === 0 || snapshot.progress === 50);
+  return validStateProgress &&
+    typeof snapshot.message === 'string' && Array.isArray(snapshot.logs) &&
+    snapshot.logs.every(isModelLog);
+}
+
+export function createModelStatusController(
+  adapter: ModelStatusControllerAdapter,
+  view: ModelStatusView,
+  options: ModelStatusControllerOptions = {},
+): ModelStatusController {
+  let generation = 0;
+  let activePoll: AbortController | undefined;
+  const configuredInterval = options.pollIntervalMs ?? 500;
+  const pollIntervalMs = Number.isFinite(configuredInterval) ? Math.max(0, configuredInterval) : 500;
+  const configuredMaxRequests = options.maxPollAttempts ?? 60;
+  const maxStatusRequests = Number.isFinite(configuredMaxRequests)
+    ? Math.max(1, Math.floor(configuredMaxRequests))
+    : 60;
+  const delay = options.delay ?? ((durationMs: number, signal: AbortSignal) => new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(resolve, durationMs);
+    signal.addEventListener('abort', () => {
+      clearTimeout(timer);
+      resolve();
+    }, { once: true });
+  }));
+  const render = (snapshot: ModelStatusSnapshot): void => {
+    if ('renderModelStatus' in view) view.renderModelStatus(snapshot);
+    else view.render(snapshot);
+  };
+  const unavailable = (): ModelStatusSnapshot => ({ ...MODEL_UNAVAILABLE, logs: [] });
+
+  const pollUntilTerminal = async (requestGeneration: number, signal: AbortSignal, initial?: ModelStatusSnapshot): Promise<void> => {
+    let snapshot = initial;
+    // A retry response acknowledges the warmup start; only explicit status reads consume the budget.
+    let statusRequests = 0;
+    while (statusRequests < maxStatusRequests || snapshot === undefined) {
+      if (requestGeneration !== generation || signal.aborted) return;
+      if (snapshot === undefined) {
+        try {
+          const response = await adapter.runtime.sendMessage({ type: 'captcha:get-model-status' });
+          if (requestGeneration !== generation || signal.aborted) return;
+          statusRequests += 1;
+          if (!isModelStatusSnapshot(response)) {
+            render(unavailable());
+            return;
+          }
+          snapshot = response;
+        } catch {
+          if (requestGeneration === generation) render(unavailable());
+          return;
+        }
+      }
+      render(snapshot);
+      if (snapshot.status !== 'loading' || statusRequests >= maxStatusRequests) return;
+      await delay(pollIntervalMs, signal);
+      if (requestGeneration !== generation || signal.aborted) return;
+      snapshot = undefined;
+    }
+  };
+
+  const beginPoll = (): { requestGeneration: number; signal: AbortSignal } => {
+    activePoll?.abort();
+    const controller = new AbortController();
+    activePoll = controller;
+    return { requestGeneration: ++generation, signal: controller.signal };
+  };
+
+  return {
+    async start(): Promise<void> {
+      const { requestGeneration, signal } = beginPoll();
+      render(MODEL_LOADING);
+      await pollUntilTerminal(requestGeneration, signal);
+    },
+    async retry(): Promise<void> {
+      const { requestGeneration, signal } = beginPoll();
+      render(MODEL_LOADING);
+      try {
+        const response = await adapter.runtime.sendMessage({ type: 'captcha:retry-model-warmup' });
+        if (requestGeneration !== generation || signal.aborted) return;
+        if (!isModelStatusSnapshot(response)) {
+          render(unavailable());
+          return;
+        }
+        await pollUntilTerminal(requestGeneration, signal, response);
+      } catch {
+        if (requestGeneration === generation && !signal.aborted) {
+          render(unavailable());
+          return;
+        }
+      }
+    },
+  };
 }
 
 type SiteState = { enabled: boolean };

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createPopupController, type PopupView } from '../../src/popup/controller';
+import { createModelStatusController, createPopupController, type ModelStatusView, type PopupView } from '../../src/popup/controller';
+import type { ModelStatusSnapshot } from '../../src/background/model-status';
 
 function harness(options: { url?: string; state?: unknown; change?: unknown; permissionsGranted?: boolean; permissionRequest?: boolean } = {}) {
   const sendMessage = vi.fn(async (message: { type: string }) => {
@@ -231,5 +232,143 @@ describe('popup controller', () => {
     await first;
 
     expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off.' }));
+  });
+});
+
+function modelSnapshot(overrides: Partial<ModelStatusSnapshot> = {}): ModelStatusSnapshot {
+  return {
+    status: 'ready',
+    progress: 100,
+    message: '本地识别模型已就绪',
+    logs: [],
+    ...overrides,
+  };
+}
+
+describe('popup model status controller', () => {
+  it('polls a loading startup snapshot until the model is ready', async () => {
+    const render = vi.fn();
+    const delay = vi.fn(async () => undefined);
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce(modelSnapshot({ status: 'loading', progress: 50, message: '正在加载本地识别模型' }))
+      .mockResolvedValueOnce(modelSnapshot({ status: 'ready', progress: 100 }));
+    const controller = createModelStatusController({ runtime: { sendMessage } }, { render }, { delay, pollIntervalMs: 1 });
+
+    await controller.start();
+
+    expect(delay).toHaveBeenCalledOnce();
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+    expect(sendMessage).toHaveBeenNthCalledWith(1, { type: 'captcha:get-model-status' });
+    expect(sendMessage).toHaveBeenNthCalledWith(2, { type: 'captcha:get-model-status' });
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ready', progress: 100 }));
+  });
+
+  it.each([
+    ['ready', modelSnapshot({ status: 'ready', progress: 100 })],
+    ['error', modelSnapshot({ status: 'error', progress: 0, message: '本地识别模型不可用' })],
+  ] as const)('polls a loading retry until the model reaches %s', async (_name, terminalSnapshot) => {
+    const render = vi.fn();
+    const delay = vi.fn(async () => undefined);
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce(modelSnapshot({ status: 'error', progress: 0, message: '本地识别模型不可用' }))
+      .mockResolvedValueOnce(modelSnapshot({ status: 'loading', progress: 50, message: '正在加载本地识别模型' }))
+      .mockResolvedValueOnce(terminalSnapshot);
+    const controller = createModelStatusController({ runtime: { sendMessage } }, { render }, { delay, pollIntervalMs: 1 });
+
+    await controller.start();
+    await controller.retry();
+
+    expect(sendMessage).toHaveBeenNthCalledWith(2, { type: 'captcha:retry-model-warmup' });
+    expect(sendMessage).toHaveBeenNthCalledWith(3, { type: 'captcha:get-model-status' });
+    expect(delay).toHaveBeenCalledOnce();
+    expect(render).toHaveBeenLastCalledWith(terminalSnapshot);
+  });
+
+  it('does not spend the status-request budget on the retry acknowledgement snapshot', async () => {
+    const render = vi.fn();
+    const delay = vi.fn(async () => undefined);
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce(modelSnapshot({ status: 'error', progress: 0, message: '本地识别模型不可用' }))
+      .mockResolvedValueOnce(modelSnapshot({ status: 'loading', progress: 50 }))
+      .mockResolvedValueOnce(modelSnapshot({ status: 'ready', progress: 100 }));
+    const controller = createModelStatusController(
+      { runtime: { sendMessage } },
+      { render },
+      { delay, pollIntervalMs: 1, maxPollAttempts: 1 },
+    );
+
+    await controller.start();
+    await controller.retry();
+
+    expect(sendMessage).toHaveBeenNthCalledWith(3, { type: 'captcha:get-model-status' });
+    expect(delay).toHaveBeenCalledOnce();
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ready' }));
+  });
+
+  it('cancels a stale loading poll when a newer startup refresh begins', async () => {
+    const waiting = deferred<void>();
+    const render = vi.fn();
+    let firstSignal: AbortSignal | undefined;
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce(modelSnapshot({ status: 'loading', progress: 50 }))
+      .mockResolvedValueOnce(modelSnapshot({ status: 'ready', progress: 100 }));
+    const controller = createModelStatusController({ runtime: { sendMessage } }, { render }, {
+      delay: (_durationMs, signal) => {
+        firstSignal = signal;
+        return waiting.promise;
+      },
+      pollIntervalMs: 1,
+    });
+
+    const first = controller.start();
+    await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledOnce());
+    const second = controller.start();
+    await second;
+    expect(firstSignal?.aborted).toBe(true);
+    waiting.resolve();
+    await first;
+
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ready' }));
+  });
+
+  it('stops polling after the configured loading attempt limit', async () => {
+    const render = vi.fn();
+    const delay = vi.fn(async () => undefined);
+    const sendMessage = vi.fn(async () => modelSnapshot({ status: 'loading', progress: 50 }));
+    const controller = createModelStatusController(
+      { runtime: { sendMessage } },
+      { render },
+      { delay, pollIntervalMs: 1, maxPollAttempts: 2 },
+    );
+
+    await controller.start();
+
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+    expect(delay).toHaveBeenCalledOnce();
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'loading' }));
+  });
+
+  it.each([
+    ['ready', 0],
+    ['error', 50],
+  ] as const)('rejects a contradictory %s progress snapshot', async (status, progress) => {
+    const render = vi.fn();
+    const sendMessage = vi.fn(async () => modelSnapshot({ status, progress }));
+    const controller = createModelStatusController({ runtime: { sendMessage } }, { render });
+
+    await controller.start();
+
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error', message: '模型状态暂时不可用' }));
+  });
+
+  it('renders a typed unavailable state without exposing runtime errors', async () => {
+    const render = vi.fn();
+    const controller = createModelStatusController({ runtime: { sendMessage: vi.fn(async () => { throw new Error('secret stack trace'); }) } }, { render });
+
+    await controller.start();
+
+    expect(render).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error', message: '模型状态暂时不可用' }));
+    expect(render.mock.lastCall?.[0]).not.toEqual(expect.objectContaining({ message: expect.stringContaining('secret') }));
   });
 });
