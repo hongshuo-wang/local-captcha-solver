@@ -68,6 +68,15 @@ describe('background runtime router', () => {
     expect(app.disablePage).not.toHaveBeenCalled();
   });
 
+  it.each([undefined, '', 42, 'Portal.Example.test'])('rejects an invalid expected hostname (%j) before mutation', async (hostname) => {
+    const app = harness();
+
+    await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname }, {})).resolves.toEqual({ enabled: false, reason: 'invalid-request' });
+
+    expect(app.enablePage).not.toHaveBeenCalled();
+    expect(app.disablePage).not.toHaveBeenCalled();
+  });
+
   it('maps malformed and inference errors to guarded OCR failures', async () => {
     const app = harness();
     await expect(app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'not a data URL', revision: '', modes: ['invalid'] }, sender)).resolves.toEqual({ type: 'captcha:recognition-error', code: 'recognition_failed' });

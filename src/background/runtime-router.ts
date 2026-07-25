@@ -1,6 +1,6 @@
 import type { ImageFetcher } from './image-fetch';
 import type { InferenceHost } from './inference-host';
-import { hostnameForPage } from '../platform/settings-store';
+import { hostnameForPage, normalizeHostname } from '../platform/settings-store';
 import { originsForPage } from '../platform/permissions';
 import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
@@ -77,9 +77,15 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (request.type === 'captcha:set-site-enabled') {
         const page = await currentPage(sender);
         if (page === undefined || typeof request.enabled !== 'boolean') return { enabled: false, reason: 'invalid-request' };
+        let expectedHostname: string;
+        try {
+          if (typeof request.hostname !== 'string') throw new Error('invalid hostname');
+          expectedHostname = normalizeHostname(request.hostname);
+          if (expectedHostname !== request.hostname) throw new Error('hostname must be normalized');
+        } catch { return { enabled: false, reason: 'invalid-request' }; }
         let hostname: string;
         try { hostname = hostnameForPage(page); } catch { return { enabled: false, reason: 'invalid-request' }; }
-        if (request.hostname !== hostname) return { enabled: false, reason: 'site-changed' };
+        if (expectedHostname !== hostname) return { enabled: false, reason: 'site-changed' };
         return request.enabled ? adapter.siteState.enablePage(page) : adapter.siteState.disablePage(page);
       }
       return undefined;
