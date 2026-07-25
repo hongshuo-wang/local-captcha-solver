@@ -25,4 +25,13 @@ describe('status UI', () => {
     (region.querySelector('button') as HTMLButtonElement).click();
     expect(onConfirm).toHaveBeenCalledOnce();
   });
+
+  it('keeps the recognizing state visible until a result replaces it', async () => {
+    vi.useFakeTimers();
+    showRecognizing();
+    await vi.advanceTimersByTimeAsync(10000);
+    const region = document.querySelector('[data-local-captcha-status]');
+    expect(region).not.toBeNull();
+    expect(region?.textContent).toContain('正在识别');
+  });
 });

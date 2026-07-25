@@ -51,6 +51,10 @@ function recognitionError(error: unknown): { type: 'captcha:recognition-error'; 
 }
 
 export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRouter {
+  const startWarmup = (): void => {
+    const warmup = adapter.inferenceHost.warmup;
+    if (warmup !== undefined) void warmup.call(adapter.inferenceHost).catch(() => undefined);
+  };
   const currentPage = async (sender: RuntimeSender): Promise<string | undefined> => {
     if (sender.tab !== undefined) return senderPage(sender);
     const tab = await adapter.activeTab();
@@ -81,7 +85,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (request.type === 'captcha:get-site-state' || request.type === 'captcha:get-status') {
         const page = await currentPage(sender);
         if (page === undefined) return { enabled: false };
-        try { return { enabled: await adapter.permissions.contains({ origins: originsForPage(page) }) && await adapter.siteState.isEnabled(page) }; } catch { return { enabled: false }; }
+        try { const enabled = await adapter.permissions.contains({ origins: originsForPage(page) }) && await adapter.siteState.isEnabled(page); if (enabled) startWarmup(); return { enabled }; } catch { return { enabled: false }; }
       }
       if (request.type === 'captcha:set-site-enabled') {
         const page = await currentPage(sender);
@@ -96,9 +100,10 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         try { hostname = hostnameForPage(page); } catch { return { enabled: false, reason: 'invalid-request' }; }
         if (expectedHostname !== hostname) return { enabled: false, reason: 'site-changed' };
         if (request.enabled) {
-          return sender.tab === undefined && typeof request.permissionAlreadyGranted === 'boolean'
+          const result = sender.tab === undefined && typeof request.permissionAlreadyGranted === 'boolean'
             ? adapter.siteState.enablePage(page, { permissionAlreadyGranted: request.permissionAlreadyGranted })
             : adapter.siteState.enablePage(page);
+          const enabled = await result; startWarmup(); return enabled;
         }
         return adapter.siteState.disablePage(page);
       }

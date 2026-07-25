@@ -44,6 +44,7 @@ export interface InferenceHost {
     imageRevision: string,
     modes: readonly RecognitionMode[],
   ): Promise<readonly OcrResult[]>;
+  warmup?(): Promise<void>;
 }
 
 function createRequestId(): string {
@@ -52,6 +53,7 @@ function createRequestId(): string {
 
 class OffscreenInferenceHost implements InferenceHost {
   private documentPromise: Promise<void> | undefined;
+  private warmupPromise: Promise<void> | undefined;
 
   constructor(
     private readonly browser: InferenceBrowser,
@@ -96,6 +98,20 @@ class OffscreenInferenceHost implements InferenceHost {
     }
 
     return response.results;
+  }
+
+  warmup(): Promise<void> {
+    if (this.warmupPromise !== undefined) return this.warmupPromise;
+    const promise = this.recognize(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      '__local_captcha_warmup__',
+      ['digits'],
+    ).then(() => undefined).catch((error: unknown) => {
+      if (this.warmupPromise === promise) this.warmupPromise = undefined;
+      throw error;
+    });
+    this.warmupPromise = promise;
+    return promise;
   }
 
   private ensureOffscreenDocument(): Promise<void> {

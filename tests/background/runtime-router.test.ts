@@ -5,12 +5,13 @@ import { createRuntimeRouter } from '../../src/background/runtime-router';
 function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } = {}) {
   const fetch = vi.fn(async () => ({ state: 'ready' as const, bytes: new Uint8Array([1]), mimeType: 'image/png' }));
   const recognize = vi.fn(async () => [{ mode: 'digits' as const, text: '42', confidence: .9 }]);
+  const warmup = vi.fn(async () => undefined);
   const contains = vi.fn(async () => options.pagePermission ?? true);
   const activeTab = vi.fn(async () => ({ id: 4, url: 'https://portal.example.test/login' }));
   const enablePage = vi.fn(async () => ({ enabled: true }));
   const disablePage = vi.fn(async () => ({ disabled: true, permissionRemoved: true }));
-  return { fetch, recognize, contains, activeTab, enablePage, disablePage, router: createRuntimeRouter({
-    permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize },
+  return { fetch, recognize, warmup, contains, activeTab, enablePage, disablePage, router: createRuntimeRouter({
+    permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize, warmup },
     siteState: { isEnabled: vi.fn(async () => options.stateEnabled ?? false), enablePage, disablePage },
     activeTab,
   }) };
@@ -55,6 +56,15 @@ describe('background runtime router', () => {
   it('does not report an allowlisted site as enabled after its exact permission is removed', async () => {
     const app = harness({ pagePermission: false, stateEnabled: true });
     await expect(app.router.handle({ type: 'captcha:get-site-state' }, sender)).resolves.toEqual({ enabled: false });
+  });
+
+  it('starts non-blocking model warmup when an enabled site is restored or newly enabled', async () => {
+    const app = harness({ pagePermission: true, stateEnabled: true });
+    app.warmup.mockImplementation(() => new Promise(() => undefined));
+
+    await expect(app.router.handle({ type: 'captcha:get-site-state' }, sender)).resolves.toEqual({ enabled: true });
+    await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' }, sender)).resolves.toEqual({ enabled: true });
+    expect(app.warmup).toHaveBeenCalledTimes(2);
   });
 
   it('never falls back to activeTab for malformed or cross-origin tab senders', async () => {

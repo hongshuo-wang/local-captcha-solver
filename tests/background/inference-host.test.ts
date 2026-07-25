@@ -57,6 +57,17 @@ describe('InferenceHost', () => {
     expect(harness.sendMessage).toHaveBeenCalledTimes(2);
   });
 
+  it('warms the OCR session once across concurrent requests', async () => {
+    const harness = createBrowserHarness();
+    const host = createInferenceHost(harness.browser, () => 'warmup-request');
+    const warmup = (host as typeof host & { warmup(): Promise<void> }).warmup;
+
+    await Promise.all([warmup.call(host), warmup.call(host)]);
+    expect(harness.createDocument).toHaveBeenCalledOnce();
+    expect(harness.sendMessage).toHaveBeenCalledOnce();
+    expect(harness.sendMessage.mock.calls[0]?.[0]).toMatchObject({ imageRevision: '__local_captcha_warmup__' });
+  });
+
   it('reuses an existing offscreen client without creating another document', async () => {
     const harness = createBrowserHarness({ contexts: [{}] });
     const host = createInferenceHost(harness.browser, () => 'request');
