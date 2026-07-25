@@ -10,6 +10,16 @@ const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, '../..');
 const extensionPath = join(repositoryRoot, '.output/chrome-mv3');
 
+interface ExtensionApi {
+  runtime: { sendMessage(message: unknown): Promise<unknown> };
+  storage: { local: { get(): Promise<Record<string, unknown>> } };
+  tabs: {
+    query(query: { active: boolean; currentWindow: boolean }): Promise<readonly { id?: number }[]>;
+    sendMessage(tabId: number, message: unknown): Promise<unknown>;
+  };
+  action: { openPopup(): Promise<void> };
+}
+
 let server: FixtureServer;
 let context: BrowserContext;
 let worker: Worker;
@@ -17,14 +27,20 @@ let profileDirectory: string | undefined;
 const extensionNetworkRequests: string[] = [];
 
 async function message(request: unknown): Promise<unknown> {
-  return worker.evaluate((payload) => browser.runtime.sendMessage(payload), request);
+  return worker.evaluate((payload) => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    return api.runtime.sendMessage(payload);
+  }, request);
 }
 
 async function contentMessage(request: unknown): Promise<unknown> {
   return worker.evaluate(async (payload) => {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
     if (tab?.id === undefined) throw new Error('No active fixture tab');
-    return browser.tabs.sendMessage(tab.id, payload);
+    return api.tabs.sendMessage(tab.id, payload);
   }, request);
 }
 
@@ -57,7 +73,11 @@ async function openActionPopup(): Promise<Page> {
   const extensionId = new URL(worker.url()).host;
   const pages = new Set(context.pages());
   const popupPromise = context.waitForEvent('page', (page) => !pages.has(page));
-  await worker.evaluate(() => browser.action.openPopup());
+  await worker.evaluate(() => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    return api.action.openPopup();
+  });
   const popup = await popupPromise;
   await popup.waitForURL(`chrome-extension://${extensionId}/popup.html`);
   return popup;
@@ -65,11 +85,13 @@ async function openActionPopup(): Promise<Page> {
 
 test.beforeAll(async () => {
   await execFileAsync('npm', ['run', 'build'], { cwd: repositoryRoot });
-  server = await startFixtureServer();
+  if (process.platform === 'linux' && process.env.DISPLAY === undefined && process.env.WAYLAND_DISPLAY === undefined) {
+    throw new Error('Headed Playwright Chromium is required for MV3 popup E2E tests. Set DISPLAY/WAYLAND_DISPLAY or run: xvfb-run -a npm run test:e2e');
+  }
   profileDirectory = await mkdtemp(join(tmpdir(), 'local-captcha-solver-e2e-'));
   try {
     context = await chromium.launchPersistentContext(profileDirectory, {
-      headless: true,
+      headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,
@@ -78,6 +100,7 @@ test.beforeAll(async () => {
   } catch (error) {
     throw new Error(`Playwright Chromium is required for extension E2E tests. Run: npx playwright install chromium. Original error: ${error instanceof Error ? error.message : String(error)}`);
   }
+  server = await startFixtureServer();
   await context.route(`${server.origin}/**`, fulfillFixtureRequest);
   worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
   context.on('request', (request) => {
@@ -102,7 +125,11 @@ test('enables the current local site and persists only versioned settings', asyn
   await popup.locator('#site-enabled').check();
   await expect(popup.locator('[data-popup-status]')).toHaveText('Automatic recognition is on.');
   await expect.poll(() => message({ type: 'captcha:get-site-state' })).toEqual({ enabled: true });
-  await expect.poll(async () => worker.evaluate(() => browser.storage.local.get())).toEqual({
+  await expect.poll(async () => worker.evaluate(() => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    return api.storage.local.get();
+  })).toEqual({
     'captcha-settings': { version: 1, allowlistedHosts: [fixtureHostname] },
   });
   await popup.close();
