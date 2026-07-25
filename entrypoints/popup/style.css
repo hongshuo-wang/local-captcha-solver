@@ -1,0 +1,39 @@
+:root {
+  color: #252525;
+  background: #f7f7f5;
+  font-family: Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { width: 340px; min-width: 340px; margin: 0; }
+
+body { min-height: 168px; background: #f7f7f5; }
+
+#app { width: 340px; padding: 16px; }
+
+.popup-header { min-height: 24px; display: flex; align-items: center; border-bottom: 1px solid #d6d6d1; }
+
+.product-name { font-size: 14px; font-weight: 700; }
+
+.site-panel { padding-top: 12px; }
+
+.site-label, .hostname, .status { margin: 0; }
+
+.site-label { min-height: 17px; color: #666661; font-size: 12px; }
+
+.hostname { min-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+
+.toggle-row { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.toggle-row label { font-size: 13px; line-height: 18px; }
+
+.site-toggle { width: 18px; height: 18px; margin: 0; flex: 0 0 18px; accent-color: #3f6f49; }
+
+.site-toggle:focus-visible { outline: 2px solid #245c35; outline-offset: 2px; }
+
+.status { min-height: 18px; font-size: 12px; line-height: 18px; }
+
+.status { color: #575752; }
+
+.status.error { color: #a82d28; }
