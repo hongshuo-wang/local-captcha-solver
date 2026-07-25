@@ -50,4 +50,14 @@ describe('captcha observer', () => {
     await mutate(() => { field.className = 'visible-state'; }); await mutate(() => { field.style.display = 'none'; }); await mutate(() => { field.disabled = true; }); await mutate(() => { field.readOnly = true; }); await mutate(() => { label.firstChild!.textContent = 'Verification code'; }); await mutate(() => { field.remove(); }); await mutate(() => { const replacement = document.createElement('input'); replacement.id = 'field'; form.append(replacement); });
     expect(run).toHaveBeenCalledTimes(8); observer.disconnect(); vi.useRealTimers();
   });
+  it('requeues an image when its field is removed without replacement', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<form id="form"><img><input id="field"></form>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
+    (document.querySelector('#field') as HTMLInputElement).remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
+  });
+  it('uses a bounded visible-image fallback for a changed field outside the image container', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<section><img id="captcha"></section><div><input id="field"></div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
+    (document.querySelector('#field') as HTMLInputElement).setAttribute('aria-label', 'Verification code'); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledWith(document.querySelector('#captcha'), 'automatic'); expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
+  });
 });
