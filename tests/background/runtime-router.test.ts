@@ -35,15 +35,21 @@ describe('background runtime router', () => {
 
   it('routes validated acquisition and OCR requests without result cross-talk', async () => {
     const app = harness();
-    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, sender)).resolves.toMatchObject({ state: 'ready' });
+    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://portal.example.test/captcha.png' }, sender)).resolves.toMatchObject({ state: 'ready' });
     await expect(app.router.handle({ type: 'captcha:recognize', imageDataUrl: 'data:image/png;base64,AQ==', revision: 'r1', modes: ['digits'] }, sender)).resolves.toEqual([{ mode: 'digits', text: '42', confidence: .9 }]);
     expect(app.recognize).toHaveBeenCalledWith('data:image/png;base64,AQ==', 'r1', ['digits']);
   });
 
   it('accepts same-origin iframe/path senders but rejects cross-origin sender URLs', async () => {
     const app = harness();
-    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, { tab: { id: 4, url: 'https://portal.example.test/login' }, url: 'https://portal.example.test/frame/captcha' })).resolves.toMatchObject({ state: 'ready' });
+    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://portal.example.test/captcha.png' }, { tab: { id: 4, url: 'https://portal.example.test/login' }, url: 'https://portal.example.test/frame/captcha' })).resolves.toMatchObject({ state: 'ready' });
     await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, { tab: { id: 4, url: 'https://portal.example.test/login' }, url: 'https://other.example.test/frame/captcha' })).resolves.toEqual({ state: 'image_unavailable', reason: 'permission' });
+  });
+
+  it('rejects a cross-origin image URL even when the sender page is permitted', async () => {
+    const app = harness();
+    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, sender)).resolves.toEqual({ state: 'image_unavailable', reason: 'permission' });
+    expect(app.fetch).not.toHaveBeenCalled();
   });
 
   it('does not report an allowlisted site as enabled after its exact permission is removed', async () => {
@@ -66,6 +72,16 @@ describe('background runtime router', () => {
 
     expect(app.enablePage).not.toHaveBeenCalled();
     expect(app.disablePage).not.toHaveBeenCalled();
+  });
+
+  it('forwards the popup grant guard only from an extension sender', async () => {
+    const app = harness();
+
+    await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: false }, {})).resolves.toEqual({ enabled: true });
+    await expect(app.router.handle({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: false }, sender)).resolves.toEqual({ enabled: true });
+
+    expect(app.enablePage).toHaveBeenNthCalledWith(1, 'https://portal.example.test/login', { permissionAlreadyGranted: false });
+    expect(app.enablePage).toHaveBeenNthCalledWith(2, 'https://portal.example.test/login');
   });
 
   it.each([undefined, '', 42, 'Portal.Example.test'])('rejects an invalid expected hostname (%j) before mutation', async (hostname) => {

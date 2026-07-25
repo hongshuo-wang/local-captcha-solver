@@ -15,7 +15,7 @@ Task 7-8 的浏览器体验工作流已经实现并完成代码级验证：候�
 - `cce7fb0`、`4a37328`、`9792a92`、`69a0117`、`a0744c8`、`ee56c6d`、`d196356`、`2ab0d0b`：自动工作流和动态验证码刷新。
 - `86aa016`、`2b88436`、`f29fc75`、`4927259`、`9ab7635`：右键/popup 路由和 popup 当前站点状态竞争保护。
 
-E2E 运行环境仍必须具备 Playwright Chromium；缺失时测试会硬失败并报告精确前置命令 `npx playwright install chromium`，不会静默跳过。此工作树的受限环境在本次记录时缺少该浏览器二进制，因此尚无实际浏览器填充运行证据；安装后应运行 `npm run build && npm run test:e2e`。
+E2E 运行环境仍必须具备 Playwright Chromium 和 headed 显示；缺失浏览器时测试会硬失败并报告精确前置命令 `npx playwright install chromium`，Linux 无显示时报告 `xvfb-run -a npm run test:e2e`，不会静默跳过。此工作树的受限环境在本次记录时缺少该浏览器二进制，因此尚无实际浏览器填充运行证据；安装后应运行 `npm run build && npm run test:e2e`。
 
 OCR 发布门槛仍然**未通过**：digits 100%，letters 46%，alphanumeric 48%，arithmetic fill 74%。普通三类整串聚合与算术最终填写值都必须达到 90% 才能发布。发布前仍需要：安装 Playwright Chromium 并保存 E2E 通过证据；在真实、获授权页面上做 Edge 手工安装/右键 smoke；以固定语料和固定门槛提升并复跑 OCR 基准；最后执行 Chrome/Edge 构建、完整测试、typecheck 和发布检查。
 

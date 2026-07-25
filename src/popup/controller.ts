@@ -1,4 +1,5 @@
 import { hostnameForPage } from '../platform/settings-store';
+import { originsForPage } from '../platform/permissions';
 
 export interface PopupViewState {
   hostname: string;
@@ -15,6 +16,10 @@ export interface PopupView {
 export interface PopupControllerAdapter {
   tabs: { query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<readonly { url?: unknown }[]> };
   runtime: { sendMessage(message: unknown): Promise<unknown> };
+  permissions: {
+    contains(details: { origins: string[] }): Promise<boolean>;
+    request(details: { origins: string[] }): Promise<boolean>;
+  };
 }
 
 export interface PopupController {
@@ -104,7 +109,20 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
       const requestHostname = hostname;
       render(generation, { checked: knownEnabled, disabled: true, status: 'Updating site setting...' });
       try {
-        const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled, hostname: requestHostname });
+        let response: unknown;
+        if (enabled) {
+          const origins = originsForPage(`https://${requestHostname}/`);
+          const previouslyGranted = await adapter.permissions.contains({ origins: [...origins] });
+          if (!isCurrent(generation)) return;
+          if (!previouslyGranted && !await adapter.permissions.request({ origins: [...origins] })) {
+            if (isCurrent(generation)) renderKnown(generation, 'Permission was not granted for this site.');
+            return;
+          }
+          if (!isCurrent(generation)) return;
+          response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled: true, hostname: requestHostname, permissionAlreadyGranted: previouslyGranted });
+        } else {
+          response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled: false, hostname: requestHostname });
+        }
         if (!isCurrent(generation)) return;
         if (enabled && isSiteState(response) && response.enabled) {
           knownEnabled = true;

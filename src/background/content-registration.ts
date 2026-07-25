@@ -22,6 +22,7 @@ export interface ContentRegistrationAdapter {
     getRegisteredContentScripts(): Promise<readonly RegisteredContentScript[]>;
     registerContentScripts(scripts: readonly Required<RegisteredContentScript>[]): Promise<void>;
     unregisterContentScripts(details: { ids: readonly string[] }): Promise<void>;
+    executeScript(details: { target: { tabId: number; frameIds?: readonly number[] }; files: readonly string[] }): Promise<unknown>;
   };
   tabs: {
     query(details: { url: readonly string[] }): Promise<readonly { id?: number; url?: string }[]>;
@@ -31,10 +32,11 @@ export interface ContentRegistrationAdapter {
 
 export type EnableRegistrationResult = { enabled: true } | { enabled: false; reason: 'permission-denied' | 'permission-unavailable' | 'settings-failed' | 'registration-failed' };
 export type DisableRegistrationResult = { disabled: true; permissionRemoved: boolean };
+export interface EnableRegistrationOptions { permissionAlreadyGranted?: boolean; }
 
 export interface ContentRegistration {
   reconcile(): Promise<void>;
-  enablePage(pageUrl: string): Promise<EnableRegistrationResult>;
+  enablePage(pageUrl: string, options?: EnableRegistrationOptions): Promise<EnableRegistrationResult>;
   disablePage(pageUrl: string): Promise<DisableRegistrationResult>;
 }
 
@@ -65,7 +67,14 @@ function isSameScript(actual: RegisteredContentScript, expected: Required<Regist
 async function notifyTabs(adapter: ContentRegistrationAdapter, hostname: string, type: 'captcha:auto-enable' | 'captcha:auto-disable'): Promise<void> {
   const tabs = await adapter.tabs.query({ url: exactOrigins(hostname) });
   await Promise.all(tabs.filter((tab): tab is { id: number; url?: string } => typeof tab.id === 'number').map(async (tab) => {
-    try { await adapter.tabs.sendMessage(tab.id, { type }); } catch { /* Content may not be loaded yet. */ }
+    try {
+      await adapter.tabs.sendMessage(tab.id, { type });
+      return;
+    } catch {
+      if (type !== 'captcha:auto-enable') return;
+    }
+    try { await adapter.scripting.executeScript({ target: { tabId: tab.id }, files: [CONTENT_SCRIPT_FILE] }); } catch { return; }
+    try { await adapter.tabs.sendMessage(tab.id, { type }); } catch { /* The injected client may still be initializing. */ }
   }));
 }
 
@@ -113,13 +122,18 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
     return scheduled;
   };
 
-  const enablePage = async (pageUrl: string): Promise<EnableRegistrationResult> => {
+  const enablePage = async (pageUrl: string, options?: EnableRegistrationOptions): Promise<EnableRegistrationResult> => {
       const hostname = hostnameForPage(pageUrl);
       const origins = exactOrigins(hostname);
       let previouslyGranted: boolean;
       try { previouslyGranted = await adapter.permissions.contains({ origins }); } catch { return { enabled: false, reason: 'permission-unavailable' }; }
-      if (!previouslyGranted && !await adapter.permissions.request({ origins })) return { enabled: false, reason: 'permission-denied' };
-      const newlyGranted = !previouslyGranted;
+      let newlyGranted = !previouslyGranted;
+      if (options?.permissionAlreadyGranted !== undefined) {
+        if (!previouslyGranted) return { enabled: false, reason: 'permission-denied' };
+        newlyGranted = options.permissionAlreadyGranted === false;
+      } else if (!previouslyGranted && !await adapter.permissions.request({ origins })) {
+        return { enabled: false, reason: 'permission-denied' };
+      }
       try { await adapter.settings.enable(hostname); } catch {
         try { await adapter.settings.disable(hostname); } catch { /* Best-effort storage rollback. */ }
         if (newlyGranted) try { await adapter.permissions.remove({ origins }); } catch { /* Best-effort permission rollback. */ }
@@ -147,5 +161,5 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
       }
   };
 
-  return { reconcile, enablePage: (pageUrl) => serialize(() => enablePage(pageUrl)), disablePage: (pageUrl) => serialize(() => disablePage(pageUrl)) };
+  return { reconcile, enablePage: (pageUrl, options) => serialize(() => enablePage(pageUrl, options)), disablePage: (pageUrl) => serialize(() => disablePage(pageUrl)) };
 }

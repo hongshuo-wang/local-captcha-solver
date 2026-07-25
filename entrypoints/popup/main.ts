@@ -38,4 +38,4 @@ export function startPopup(root: HTMLElement, adapter: PopupControllerAdapter): 
 }
 
 const root = document.querySelector<HTMLElement>('#app');
-if (root !== null && typeof browser !== 'undefined') startPopup(root, { tabs: browser.tabs, runtime: browser.runtime });
+if (root !== null && typeof browser !== 'undefined') startPopup(root, { tabs: browser.tabs, runtime: browser.runtime, permissions: browser.permissions });

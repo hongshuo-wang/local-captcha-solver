@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createPopupController, type PopupView } from '../../src/popup/controller';
 
-function harness(options: { url?: string; state?: unknown; change?: unknown } = {}) {
+function harness(options: { url?: string; state?: unknown; change?: unknown; permissionsGranted?: boolean; permissionRequest?: boolean } = {}) {
   const sendMessage = vi.fn(async (message: { type: string }) => {
     if (message.type === 'captcha:get-site-state') return Object.hasOwn(options, 'state') ? options.state : { enabled: false };
     return Object.hasOwn(options, 'change') ? options.change : { enabled: true };
@@ -10,11 +10,14 @@ function harness(options: { url?: string; state?: unknown; change?: unknown } = 
   const render = vi.fn();
   const view: PopupView = { render };
   const tabsQuery = vi.fn(async () => [{ url: Object.hasOwn(options, 'url') ? options.url : 'https://Portal.Example.test/login' }]);
+  const permissionsContains = vi.fn(async () => options.permissionsGranted ?? false);
+  const permissionsRequest = vi.fn(async () => options.permissionRequest ?? true);
   const controller = createPopupController({
     tabs: { query: tabsQuery },
     runtime: { sendMessage },
+    permissions: { contains: permissionsContains, request: permissionsRequest },
   }, view);
-  return { controller, render, sendMessage, tabsQuery };
+  return { controller, render, sendMessage, tabsQuery, permissionsContains, permissionsRequest };
 }
 
 function deferred<T>() {
@@ -109,7 +112,30 @@ describe('popup controller', () => {
 
     await app.controller.setEnabled(true);
 
-    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' });
+    expect(app.permissionsContains).toHaveBeenCalledWith({ origins: ['http://portal.example.test/*', 'https://portal.example.test/*'] });
+    expect(app.permissionsRequest).toHaveBeenCalledWith({ origins: ['http://portal.example.test/*', 'https://portal.example.test/*'] });
+    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: false });
+  });
+
+  it('does not request an already granted origin from the popup gesture', async () => {
+    const app = harness({ state: { enabled: false }, permissionsGranted: true, change: { enabled: true } });
+
+    await app.controller.start();
+    await app.controller.setEnabled(true);
+
+    expect(app.permissionsContains).toHaveBeenCalledOnce();
+    expect(app.permissionsRequest).not.toHaveBeenCalled();
+    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: true });
+  });
+
+  it('does not update background state when popup permission is denied', async () => {
+    const app = harness({ state: { enabled: false }, permissionRequest: false });
+
+    await app.controller.start();
+    await app.controller.setEnabled(true);
+
+    expect(app.sendMessage).toHaveBeenCalledOnce();
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: 'Permission was not granted for this site.' }));
   });
 
   it('refreshes the current site after the background rejects a stale hostname', async () => {
@@ -168,7 +194,7 @@ describe('popup controller', () => {
       .mockImplementationOnce(() => { firstRequested(); return firstState.promise; })
       .mockImplementationOnce(() => { secondRequested(); return secondState.promise; });
     const render = vi.fn();
-    const controller = createPopupController({ tabs: { query: tabsQuery }, runtime: { sendMessage } }, { render });
+    const controller = createPopupController({ tabs: { query: tabsQuery }, runtime: { sendMessage }, permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) } }, { render });
 
     const first = controller.start();
     await firstRequest;

@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { fixtureHostname, fixtureServerOrigin, startFixtureServer, type FixtureServer } from './fixtures/server';
+import { fixtureHostname, startFixtureServer, type FixtureServer } from './fixtures/server';
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, '../..');
@@ -61,7 +61,7 @@ async function submitCount(page: Page): Promise<number> {
 
 async function fulfillFixtureRequest(route: Route): Promise<void> {
   const requestUrl = new URL(route.request().url());
-  const response = await fetch(`${fixtureServerOrigin}${requestUrl.pathname}${requestUrl.search}`);
+  const response = await fetch(`${server.serverOrigin}${requestUrl.pathname}${requestUrl.search}`);
   await route.fulfill({
     status: response.status,
     headers: Object.fromEntries(response.headers),
@@ -118,12 +118,14 @@ test.afterAll(async () => {
 test('enables the current local site and persists only versioned settings', async () => {
   const page = await open('/automatic.html');
   await expect.poll(() => message({ type: 'captcha:get-site-state' })).toEqual({ enabled: false });
+  await expect(page.locator('#captcha-answer')).toHaveValue('');
   await page.bringToFront();
   const popup = await openActionPopup();
   await expect(popup.locator('[data-popup-hostname]')).toHaveText(fixtureHostname);
   await expect(popup.locator('#site-enabled')).not.toBeChecked();
   await popup.locator('#site-enabled').check();
   await expect(popup.locator('[data-popup-status]')).toHaveText('Automatic recognition is on.');
+  await expect(page.locator('#captcha-answer')).toHaveValue('14975', { timeout: 30_000 });
   await expect.poll(() => message({ type: 'captcha:get-site-state' })).toEqual({ enabled: true });
   await expect.poll(async () => worker.evaluate(() => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;

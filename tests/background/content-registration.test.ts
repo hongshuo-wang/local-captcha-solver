@@ -8,14 +8,15 @@ function harness(options: { permitted?: boolean; registrations?: readonly { id: 
   const registrations = [...(options.registrations ?? [])];
   const registerContentScripts = vi.fn(async (scripts: readonly { id: string; matches: readonly string[]; js: readonly string[]; persistAcrossSessions: boolean }[]) => { registrations.push(...scripts); });
   const unregisterContentScripts = vi.fn(async ({ ids }: { ids?: readonly string[] }) => { for (const id of ids ?? []) { const index = registrations.findIndex((script) => script.id === id); if (index >= 0) registrations.splice(index, 1); } });
+  const executeScript = vi.fn(async () => undefined);
   const sendMessage = vi.fn(async () => undefined);
   const request = vi.fn(async () => true); const remove = vi.fn(async () => true); const contains = vi.fn(async () => options.permitted ?? true); const query = vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]);
   return {
-    values, registrations, registerContentScripts, unregisterContentScripts, sendMessage, request, remove, contains, query,
+    values, registrations, registerContentScripts, unregisterContentScripts, executeScript, sendMessage, request, remove, contains, query,
     registration: createContentRegistration({
       settings: createSettingsStore({ getLocal: async <T>(key: string): Promise<T | undefined> => values.get(key) as T | undefined, setLocal: async <T>(key: string, value: T): Promise<void> => { if (options.setFails) throw new Error('storage failed'); values.set(key, value); }, requestOrigins: async () => true, removeOrigins: async () => true }),
       permissions: { contains, request, remove },
-      scripting: { getRegisteredContentScripts: async () => registrations, registerContentScripts, unregisterContentScripts },
+      scripting: { getRegisteredContentScripts: async () => registrations, registerContentScripts, unregisterContentScripts, executeScript },
       tabs: { query, sendMessage },
     }),
   };
@@ -47,6 +48,36 @@ describe('content registration', () => {
     await expect(app.registration.disablePage('https://portal.example.test/login')).resolves.toMatchObject({ disabled: true });
     expect(app.sendMessage).toHaveBeenLastCalledWith(7, { type: 'captcha:auto-disable' });
     expect(app.values.get(SETTINGS_STORAGE_KEY)).toEqual({ version: 1, allowlistedHosts: [] });
+  });
+
+  it('does not reinject an already-loaded tab before enabling automatic observation', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { version: 1, allowlistedHosts: [] });
+    await expect(app.registration.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: true });
+    expect(app.executeScript).not.toHaveBeenCalled();
+    expect(app.sendMessage).toHaveBeenCalledOnce();
+  });
+
+  it('injects an unloaded tab after send failure and retries auto-enable once', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { version: 1, allowlistedHosts: [] });
+    app.sendMessage.mockRejectedValueOnce(new Error('content client unavailable'));
+    await expect(app.registration.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: true });
+    expect(app.executeScript).toHaveBeenCalledWith({ target: { tabId: 7 }, files: ['content-scripts/content.js'] });
+    expect(app.sendMessage).toHaveBeenCalledTimes(2);
+    const injectionCall = app.executeScript.mock.invocationCallOrder[0]!;
+    const retryCall = app.sendMessage.mock.invocationCallOrder[1]!;
+    expect(injectionCall).toBeLessThan(retryCall);
+  });
+
+  it('skips a second permission request for a popup-granted origin and rolls back that grant on failure', async () => {
+    const app = harness({ permitted: true });
+    app.values.set(SETTINGS_STORAGE_KEY, { version: 1, allowlistedHosts: [] });
+    app.registerContentScripts.mockRejectedValueOnce(new Error('registration failed'));
+
+    await expect(app.registration.enablePage('https://portal.example.test/login', { permissionAlreadyGranted: false })).resolves.toEqual({ enabled: false, reason: 'registration-failed' });
+    expect(app.request).not.toHaveBeenCalled();
+    expect(app.remove).toHaveBeenCalledWith({ origins: ['http://portal.example.test/*', 'https://portal.example.test/*'] });
   });
 
   it('continues disable cleanup when unregistering a runtime script fails', async () => {

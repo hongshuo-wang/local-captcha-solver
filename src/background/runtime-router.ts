@@ -4,6 +4,7 @@ import { hostnameForPage, normalizeHostname } from '../platform/settings-store';
 import { originsForPage } from '../platform/permissions';
 import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
+import type { EnableRegistrationOptions } from './content-registration';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
 export interface RuntimeRouterAdapter {
@@ -12,7 +13,7 @@ export interface RuntimeRouterAdapter {
   inferenceHost: InferenceHost;
   siteState: {
     isEnabled(pageUrl: string): Promise<boolean>;
-    enablePage(pageUrl: string): Promise<unknown>;
+    enablePage(pageUrl: string, options?: EnableRegistrationOptions): Promise<unknown>;
     disablePage(pageUrl: string): Promise<unknown>;
   };
   activeTab(): Promise<{ id?: number; url?: string } | undefined>;
@@ -26,6 +27,14 @@ function pageOrigin(pageUrl: unknown): string | undefined {
     const hostname = hostnameForPage(pageUrl);
     const scheme = new URL(pageUrl).protocol;
     return `${scheme}//${hostname}/*`;
+  } catch { return undefined; }
+}
+
+function requestOrigin(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : undefined;
   } catch { return undefined; }
 }
 
@@ -51,7 +60,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   return {
     async handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined> {
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
-      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown };
+      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown };
       if (request.type === 'captcha:acquire-image') {
         const page = senderPage(sender);
         const origin = page === undefined ? undefined : pageOrigin(page);
@@ -59,7 +68,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         if (origin !== undefined) {
           try { permitted = await adapter.permissions.contains({ origins: [origin] }); } catch { permitted = false; }
         }
-        if (typeof request.url !== 'string' || !permitted) {
+        if (typeof request.url !== 'string' || !permitted || requestOrigin(request.url) !== requestOrigin(page)) {
           return { state: 'image_unavailable', reason: 'permission' };
         }
         return adapter.imageFetcher.fetch(request.url);
@@ -86,7 +95,12 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         let hostname: string;
         try { hostname = hostnameForPage(page); } catch { return { enabled: false, reason: 'invalid-request' }; }
         if (expectedHostname !== hostname) return { enabled: false, reason: 'site-changed' };
-        return request.enabled ? adapter.siteState.enablePage(page) : adapter.siteState.disablePage(page);
+        if (request.enabled) {
+          return sender.tab === undefined && typeof request.permissionAlreadyGranted === 'boolean'
+            ? adapter.siteState.enablePage(page, { permissionAlreadyGranted: request.permissionAlreadyGranted })
+            : adapter.siteState.enablePage(page);
+        }
+        return adapter.siteState.disablePage(page);
       }
       return undefined;
     },

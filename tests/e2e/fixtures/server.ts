@@ -2,13 +2,10 @@ import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { once } from 'node:events';
 
-export const fixtureProxyPort = 32145;
-const PORT = fixtureProxyPort;
 const HOST = '127.0.0.1';
 
 export const fixtureHostname = 'captcha.e2e.test';
 export const fixtureOrigin = `http://${fixtureHostname}`;
-export const fixtureServerOrigin = `http://${HOST}:${PORT}`;
 
 const pages = new Map([
   ['/automatic.html', new URL('./automatic.html', import.meta.url)],
@@ -23,6 +20,7 @@ const images = new Map([
 
 export interface FixtureServer {
   readonly origin: string;
+  readonly serverOrigin: string;
   readonly requests: readonly string[];
   close(): Promise<void>;
 }
@@ -58,7 +56,12 @@ export async function startFixtureServer(): Promise<FixtureServer> {
     }
   });
 
-  server.listen(PORT, HOST);
+  server.listen(0, HOST);
   await once(server, 'listening');
-  return { origin: fixtureOrigin, requests, close: () => close(server) };
+  const address = server.address();
+  if (address === null || typeof address === 'string') {
+    await close(server);
+    throw new Error('Fixture server did not expose an ephemeral TCP address');
+  }
+  return { origin: fixtureOrigin, serverOrigin: `http://${HOST}:${address.port}`, requests, close: () => close(server) };
 }

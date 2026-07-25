@@ -42,6 +42,12 @@ The built-extension E2E suite requires Playwright Chromium. Install it with:
 npx playwright install chromium
 ```
 
+The E2E suite runs headed Chromium because the real action popup and permission prompt require browser user activation. On Linux without a desktop display, run it under Xvfb:
+
+```sh
+xvfb-run -a npm run test:e2e
+```
+
 ## OCR status
 
 Measured deterministic benchmark accuracy is digits 100%, letters 46%, alphanumeric 48%, and arithmetic fill values 74%. The 90% release target remains unmet for the ordinary aggregate and arithmetic fill gate. Treat this extension as an MVP workflow build, not a release-ready CAPTCHA solver.
