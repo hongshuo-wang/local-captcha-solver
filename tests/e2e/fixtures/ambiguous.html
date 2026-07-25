@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Ambiguous CAPTCHA fixture</title></head>
+  <body>
+    <form id="captcha-form" action="#">
+      <img id="captcha-image" src="/fixtures/digits-002.png" alt="CAPTCHA verification code" width="180" height="64">
+      <label for="first-answer">Verification code</label>
+      <input id="first-answer" name="first-answer" aria-label="Verification code" value="already-entered" maxlength="6">
+      <label for="focused-answer">Verification code</label>
+      <input id="focused-answer" name="focused-answer" aria-label="Verification code" maxlength="6">
+      <button id="submit" type="submit">Submit</button>
+    </form>
+    <script>
+      window.__submitCount = 0;
+      const form = document.querySelector('#captcha-form');
+      form.addEventListener('submit', (event) => { event.preventDefault(); window.__submitCount += 1; });
+      document.querySelector('#submit').addEventListener('click', () => { window.__submitCount += 1; });
+      document.querySelectorAll('input').forEach((input) => input.addEventListener('input', () => { input.dataset.controlledValue = input.value; }));
+    </script>
+  </body>
+</html>

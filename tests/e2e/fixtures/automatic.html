@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Automatic CAPTCHA fixture</title></head>
+  <body>
+    <form id="captcha-form" action="#">
+      <label for="captcha-answer">Verification code</label>
+      <img id="captcha-image" src="/fixtures/digits-002.png" alt="CAPTCHA verification code" width="180" height="64">
+      <input id="captcha-answer" name="captcha-answer" aria-label="Verification code" maxlength="6" autocomplete="off">
+      <button id="submit" type="submit">Submit</button>
+    </form>
+    <script>
+      window.__submitCount = 0;
+      const form = document.querySelector('#captcha-form');
+      const answer = document.querySelector('#captcha-answer');
+      form.addEventListener('submit', (event) => { event.preventDefault(); window.__submitCount += 1; });
+      document.querySelector('#submit').addEventListener('click', () => { window.__submitCount += 1; });
+      answer.addEventListener('input', () => { answer.dataset.controlledValue = answer.value; });
+      if (new URL(location.href).searchParams.has('prefilled')) answer.value = 'already-entered';
+    </script>
+  </body>
+</html>

@@ -1,17 +1,36 @@
 # Local CAPTCHA Solver MVP 进度交接
 
-更新时间：2026-07-24
+更新时间：2026-07-25
+
+## 2026-07-25 Edge 体验工作流更新
+
+Task 7-8 的浏览器体验工作流已经实现并完成代码级验证：候选图片/字段匹配、精确 hostname 白名单和可选权限、本地 offscreen OCR、图片安全获取和空字段填写、动态验证码刷新、右键入口、popup 当前站点开关均已落地。Task 8 另增加了针对构建产物 `.output/chrome-mv3` 的 Playwright E2E 套件：它启动真实 MV3 扩展，并通过 Playwright route 从本地 fixture server 提供未带端口的测试 hostname，覆盖当前站点启用、自动填充、动态 `src` 刷新、预填字段保护、受控 input、聚焦字段 fallback、零提交、离线识别、storage schema 和 popup unsupported 状态。fixture 使用已跟踪且基准证实可识别的 `digits-002.png`（`14975`）和 `digits-017.png`（`99067`）。
+
+跨源验证码图片只有在页面 canvas 可读取 CORS 响应时才可用；带凭据的后台获取严格限制为与页面同源。扩展 host permission 不会绕过非 CORS 或带凭据的跨源读取限制。
+
+本轮 Task 7-8 的实际实现提交如下：
+
+- `d881cf0`、`b7ce122`、`658e95a`：候选评分、严格字段匹配和非空字段保护。
+- `d4fea67`、`9cd6562`、`cf42dc7`、`4d7e69e`、`14b4562`：版本化本地设置、hostname 规范化、URL 校验和串行 mutation。
+- `db75ac7`、`41657b5`：offscreen 本地 OCR 与推理资产校验。
+- `f38a76b`、`3bf3d55`、`d5b82a9`、`7a5ad87`：图片获取、revision 和安全填写。
+- `cce7fb0`、`4a37328`、`9792a92`、`69a0117`、`a0744c8`、`ee56c6d`、`d196356`、`2ab0d0b`：自动工作流和动态验证码刷新。
+- `86aa016`、`2b88436`、`f29fc75`、`4927259`、`9ab7635`：右键/popup 路由和 popup 当前站点状态竞争保护。
+
+E2E 运行环境仍必须具备 Playwright Chromium 和 headed 显示；缺失浏览器时测试会硬失败并报告精确前置命令 `npx playwright install chromium`，Linux 无显示时报告 `xvfb-run -a npm run test:e2e`，不会静默跳过。此工作树的受限环境在本次记录时缺少该浏览器二进制，因此尚无实际浏览器填充运行证据；安装后应运行 `npm run build && npm run test:e2e`。
+
+OCR 发布门槛仍然**未通过**：digits 100%，letters 46%，alphanumeric 48%，arithmetic fill 74%。普通三类整串聚合与算术最终填写值都必须达到 90% 才能发布。发布前仍需要：安装 Playwright Chromium 并保存 E2E 通过证据；在真实、获授权页面上做 Edge 手工安装/右键 smoke；以固定语料和固定门槛提升并复跑 OCR 基准；最后执行 Chrome/Edge 构建、完整测试、typecheck 和发布检查。
 
 ## 当前状态
 
 - 仓库：`/Users/harrison/Documents/harrison_project/local-captcha-solver`
-- 隔离工作树：`/Users/harrison/Documents/harrison_project/local-captcha-solver/.worktrees/local-captcha-solver-mvp`
-- 分支：`feature/local-captcha-solver-mvp`
-- 当前实现提交：`ed67cafd1acfa3e3269931532a2d8d5c2e425587`
+- 隔离工作树：`/Users/harrison/Documents/harrison_project/local-captcha-solver/.worktrees/edge-experience-workflow`
+- 分支：`feature/edge-experience-workflow`
+- Task 8 前的实现基线：`9ab7635`
 - 设计文档：`docs/superpowers/specs/2026-07-22-local-captcha-solver-design.md`
 - 实施计划：`docs/superpowers/plans/2026-07-22-local-captcha-solver-mvp.md`
 
-Tasks 1-6 已完成。Task 6 的基准工具和证据已经验收，但 ddddocr 未达到固定的 90% 准确率门槛，因此产品开发在 Task 6 硬门槛处停止。Tasks 7-14 尚未开始。
+原始交接时 Tasks 1-6 已完成，Task 6 的 90% OCR 门槛未通过。后续的 Task 7-8 浏览器体验工作流已按本文顶部的 2026-07-25 更新完成；OCR 门槛仍未通过，因此发布仍被阻断。
 
 ## 已完成
 
@@ -153,7 +172,7 @@ Task 5 和 Task 6 均依次通过独立规格审查和代码质量审查。Task 
 
 已知非阻断警告：ONNX 模型元数据声明输出 `{1,-1}`，实际输出为 `{23,1,8210}`。生产 decoder 已覆盖实际的 `[time,1,classes]` 布局，200 个样本均能完成推理。
 
-## 未完成
+## 历史未完成清单（2026-07-24，已由上方更新替代）
 
 - Task 7：候选图片评分和字段匹配。
 - Task 8：本地设置、精确 hostname 白名单和 Chromium 可选权限。

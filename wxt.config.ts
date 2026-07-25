@@ -1,6 +1,16 @@
 import { defineConfig } from 'wxt';
 
 export default defineConfig({
+  hooks: {
+    'entrypoints:found': (_wxt, entrypoints) => {
+      const companionScript = entrypoints.findIndex((entrypoint) =>
+        entrypoint.inputPath.endsWith('/entrypoints/offscreen.ts'),
+      );
+      if (companionScript !== -1) {
+        entrypoints.splice(companionScript, 1);
+      }
+    },
+  },
   manifest: {
     name: 'Local CAPTCHA Solver',
     description: 'Recognize simple CAPTCHAs locally and fill the matching field.',
