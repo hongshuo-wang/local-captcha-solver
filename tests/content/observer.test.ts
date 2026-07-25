@@ -43,4 +43,11 @@ describe('captcha observer', () => {
     expect(run).toHaveBeenCalledTimes(3); document.body.append(document.createElement('span')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
     expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
   });
+  it('requeues the associated image for field eligibility, label, and replacement changes', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<form id="form"><img id="image"><label id="label" for="field">Answer</label><input id="field"></form>';
+    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const field = document.querySelector('#field') as HTMLInputElement; const label = document.querySelector('#label') as HTMLLabelElement; const form = document.querySelector('#form') as HTMLFormElement;
+    const mutate = async (change: () => void) => { change(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); };
+    await mutate(() => { field.className = 'visible-state'; }); await mutate(() => { field.style.display = 'none'; }); await mutate(() => { field.disabled = true; }); await mutate(() => { field.readOnly = true; }); await mutate(() => { label.firstChild!.textContent = 'Verification code'; }); await mutate(() => { field.remove(); }); await mutate(() => { const replacement = document.createElement('input'); replacement.id = 'field'; form.append(replacement); });
+    expect(run).toHaveBeenCalledTimes(8); observer.disconnect(); vi.useRealTimers();
+  });
 });
