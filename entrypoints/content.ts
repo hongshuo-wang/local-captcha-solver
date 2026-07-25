@@ -1,5 +1,5 @@
 import { acquireImage } from '../src/content/image-source';
-import { snapshotForImage } from '../src/content/dom-snapshot';
+import { isVisible, snapshotForImage } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
 import { clearWorkflowStatus, showRecognizing, showWorkflowStatus } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
@@ -27,7 +27,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:auto-enable') { automaticEnabled = true; observer ??= observeCaptchaImages(displayed); return { enabled: true }; }
     if (type === 'captcha:auto-disable') { automaticEnabled = false; observer?.disconnect(); observer = undefined; clearWorkflowStatus(); return { enabled: false }; }
     if (type === 'captcha:scan') { document.querySelectorAll('img').forEach((image) => void displayed.run(image, 'automatic')); return { queued: true }; }
-    if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => image.currentSrc === source || image.src === source) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return result; }
+    if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return result; } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return result; }
     if (type === 'captcha:get-status') return { enabled: observer !== undefined };
     return undefined;
   });

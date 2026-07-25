@@ -26,4 +26,9 @@ describe('captcha observer', () => {
     expect(run).not.toHaveBeenCalled(); observer.disconnect();
     expect(remove).toHaveBeenCalledWith('load', expect.any(Function), true); expect(cancelAll).toHaveBeenCalledOnce(); vi.useRealTimers();
   });
+  it('processes src, srcset, and load revisions independently', async () => {
+    vi.useFakeTimers(); document.body.innerHTML = '<img id="image">'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const image = document.querySelector('#image') as HTMLImageElement;
+    for (const change of [() => image.setAttribute('src', 'a'), () => image.setAttribute('srcset', 'b'), () => image.dispatchEvent(new Event('load'))]) { change(); await vi.advanceTimersByTimeAsync(150); }
+    expect(run).toHaveBeenCalledTimes(4); observer.disconnect(); vi.useRealTimers();
+  });
 });

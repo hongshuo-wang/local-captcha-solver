@@ -75,4 +75,15 @@ describe('captcha workflow', () => {
     const snapshot = () => ({ ...base.snapshot(), fields: [base.snapshot().fields[0], { id: 'field-2', element: other, field: { id: 'field-2', type: 'text', value: '', visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
     await expect(workflow({ snapshot }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation', fieldIds: ['field-1', 'field-2'] });
   });
+  it('resumes with fresh acquisition after cancelAll invalidates a completed revision', async () => {
+    const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
+    const acquire = vi.fn(async () => ({ state: 'ready' as const, dataUrl: 'data:image/png;base64,AQ==', mimeType: 'image/png', revision: 'bytes' }));
+    const snapshot = () => ({ candidate: { id: 'restart', element: localImage, revision: 'same', candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'restart-field', element: localField, field: { id: 'restart-field', type: 'text', value: localField.value, visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '9', confidence: .9 }] });
+    await instance.run(localImage, 'automatic'); localField.value = ''; instance.cancelAll?.();
+    await expect(instance.run(localImage, 'automatic')).resolves.toMatchObject({ state: 'filled' }); expect(acquire).toHaveBeenCalledTimes(2);
+  });
+  it('accepts an exact 0.10 confidence margin', async () => {
+    await expect(workflow({ recognize: async () => [{ mode: 'digits', text: '1', confidence: .9 }, { mode: 'letters', text: 'A', confidence: .8 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'filled', fillValue: '1' });
+  });
 });
