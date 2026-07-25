@@ -45,4 +45,21 @@ describe('offscreen OCR entrypoint', () => {
       message: 'Charset asset could not load',
     });
   });
+
+  it('uses normalized extension-relative asset URLs for Edge offscreen loading', async () => {
+    const urls: string[] = [];
+    vi.stubGlobal('browser', {
+      runtime: {
+        getURL: (path: string) => { urls.push(path); return `extension://${path}`; },
+        onMessage: { addListener: listener },
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ['a'] })));
+
+    await import('../../entrypoints/offscreen');
+    await Promise.resolve();
+    expect(urls).toContain('ort/');
+    expect(urls).toContain('models/common_old.json');
+    expect(urls).toContain('models/common_old.onnx');
+  });
 });

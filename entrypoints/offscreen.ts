@@ -11,7 +11,7 @@ import type { InferenceErrorCode, InferenceResponse } from '../src/ocr/protocol'
 
 const getExtensionUrl = browser.runtime.getURL as (path: string) => string;
 
-ort.env.wasm.wasmPaths = getExtensionUrl('/ort/');
+ort.env.wasm.wasmPaths = getExtensionUrl('ort/');
 ort.env.wasm.numThreads = 1;
 
 function decodeImageDataUrl(imageDataUrl: string, revision: string): ImagePayload {
@@ -50,7 +50,7 @@ function createSessionFactory(): OcrSessionFactory {
 }
 
 async function loadCharset(): Promise<readonly string[]> {
-  const response = await fetch(getExtensionUrl('/models/common_old.json'));
+  const response = await fetch(getExtensionUrl('models/common_old.json'));
   if (!response.ok) {
     throw new Error(`Could not load OCR charset (${response.status})`);
   }
@@ -67,7 +67,7 @@ const enginePromise = loadCharset()
     (charset) =>
       new DdddOcrEngine(
         createSessionFactory(),
-        getExtensionUrl('/models/common_old.onnx'),
+        getExtensionUrl('models/common_old.onnx'),
         charset,
       ),
   )
