@@ -19,7 +19,7 @@ export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaW
   const snapshot = options.snapshot ?? snapshotForImage; const records = new WeakMap<HTMLImageElement, RequestRecord>(); let generation = 0; let sequence = 0;
   const stale = (candidateId: string): WorkflowResult => ({ state: 'stale', candidateId });
   const valid = (image: HTMLImageElement, record: RequestRecord) => records.get(image) === record && generation === record.generation;
-  async function execute(image: HTMLImageElement, first: ImageDetailSnapshot, record: RequestRecord): Promise<WorkflowResult> {
+  async function execute(image: HTMLImageElement, first: ImageDetailSnapshot, record: RequestRecord, trigger: WorkflowTrigger): Promise<WorkflowResult> {
     const candidateId = first.candidate.id;
     let acquired: ImageAcquisitionResult; try { acquired = await options.acquire(image); } catch { return { state: 'image_unavailable', candidateId }; }
     if (!valid(image, record)) return stale(candidateId);
@@ -28,11 +28,17 @@ export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaW
     const current = snapshot(image); if (!valid(image, record) || current === undefined || current.candidate.revision !== first.candidate.revision) return stale(candidateId);
     const selected = choose(results); if (!selected) return { state: 'needs_confirmation', candidateId, displayText: '', fieldIds: current.fields.map((field) => field.id) };
     const match = matchCaptchaField(image, current.fields.map((field) => field.field));
+    if (match.state !== 'unique' && trigger !== 'automatic' && document.activeElement instanceof HTMLInputElement) {
+      const focused = document.activeElement;
+      const focusedId = current.fields.find((field) => field.element === focused)?.id ?? 'focused-field';
+      const focusedFill = fillEmptyField(focused, selected.fillValue);
+      if (focusedFill.state === 'filled') return { state: 'filled', candidateId, fieldId: focusedId, displayText: selected.displayText, fillValue: selected.fillValue };
+    }
     if (match.state === 'none') return { state: 'no_field', candidateId, displayText: selected.displayText, fillValue: selected.fillValue };
     if (match.state === 'ambiguous') return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, fieldIds: match.candidates.map((item) => item.field.id) };
     const target = current.fields.find((field) => field.id === match.winner.id); if (!target || !valid(image, record)) return stale(candidateId);
     const fill = fillEmptyField(target.element, selected.fillValue);
     return fill.state === 'filled' ? { state: 'filled', candidateId, fieldId: target.id, displayText: selected.displayText, fillValue: selected.fillValue } : fill.state === 'stale' ? stale(candidateId) : { state: 'no_field', candidateId, displayText: selected.displayText, fillValue: selected.fillValue };
   }
-  return { cancel(image) { const record = records.get(image); if (record) records.delete(image); }, invalidate(image) { records.delete(image); }, cancelAll() { generation += 1; }, run(image, trigger) { const first = snapshot(image); if (!first || (trigger === 'automatic' && scoreCaptchaCandidate(first.candidate.candidate).score < AUTOMATIC_CANDIDATE_THRESHOLD)) return Promise.resolve({ state: 'no_candidate' }); const current = records.get(image); const requestPriority = priority(trigger); if (current && !current.settled && current.generation === generation && current.revision === first.candidate.revision && current.priority >= requestPriority) return current.promise; const record = { revision: first.candidate.revision, priority: requestPriority, token: ++sequence, generation, settled: false, promise: Promise.resolve<WorkflowResult>({ state: 'stale', candidateId: first.candidate.id }) }; record.promise = execute(image, first, record); record.promise.then(() => { record.settled = true; }, () => { record.settled = true; }); records.set(image, record); return record.promise; } };
+  return { cancel(image) { const record = records.get(image); if (record) records.delete(image); }, invalidate(image) { records.delete(image); }, cancelAll() { generation += 1; }, run(image, trigger) { const first = snapshot(image); if (!first || (trigger === 'automatic' && scoreCaptchaCandidate(first.candidate.candidate).score < AUTOMATIC_CANDIDATE_THRESHOLD)) return Promise.resolve({ state: 'no_candidate' }); const current = records.get(image); const requestPriority = priority(trigger); if (current && !current.settled && current.generation === generation && current.revision === first.candidate.revision && current.priority >= requestPriority) return current.promise; const record = { revision: first.candidate.revision, priority: requestPriority, token: ++sequence, generation, settled: false, promise: Promise.resolve<WorkflowResult>({ state: 'stale', candidateId: first.candidate.id }) }; record.promise = execute(image, first, record, trigger); record.promise.then(() => { record.settled = true; }, () => { record.settled = true; }); records.set(image, record); return record.promise; } };
 }

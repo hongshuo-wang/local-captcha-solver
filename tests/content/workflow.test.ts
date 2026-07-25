@@ -35,6 +35,19 @@ describe('captcha workflow', () => {
     await expect(workflow({ acquire: async () => ({ state: 'image_unavailable', reason: 'permission' }) }).run(image, 'explicit')).resolves.toMatchObject({ state: 'permission_denied' });
     await expect(workflow({ recognize: async () => { throw Object.assign(new Error(), { code: 'model_unavailable' }); } }).run(image, 'explicit')).resolves.toMatchObject({ state: 'model_unavailable' });
   });
+  it('uses only an empty eligible focused field when an explicit selection has no unique match', async () => {
+    const focused = document.createElement('input');
+    document.body.append(focused); focused.focus();
+    const snapshot = () => ({ ...base.snapshot(), fields: [
+      { id: 'first', element: document.createElement('input'), field: { id: 'first', type: 'text', value: '', visible: true, disabled: false, readOnly: false, distance: 20, sameForm: true, labelText: 'captcha' } },
+      { id: 'second', element: document.createElement('input'), field: { id: 'second', type: 'text', value: '', visible: true, disabled: false, readOnly: false, distance: 20, sameForm: true, labelText: 'captcha' } },
+    ] });
+    await expect(workflow({ snapshot }).run(image, 'context')).resolves.toMatchObject({ state: 'filled', fillValue: '1234' });
+    expect(focused.value).toBe('1234');
+    focused.value = 'already there';
+    await expect(workflow({ snapshot }).run(image, 'context')).resolves.toMatchObject({ state: 'needs_confirmation' });
+    expect(focused.value).toBe('already there');
+  });
   it('returns stale when the source changes during recognition', async () => {
     let revision = 'first';
     const snapshot = () => ({ ...base.snapshot(), candidate: { ...base.snapshot().candidate, revision } });

@@ -23,6 +23,15 @@ describe('content runtime messages', () => {
     const { createRuntimeContent } = await import('../../entrypoints/content'); createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } }); const handle = listener.mock.calls[0]?.[0] as (message: unknown) => unknown;
     expect(handle({ type: 'captcha:get-status' })).toEqual({ enabled: false }); expect(handle({ type: 'captcha:auto-enable' })).toEqual({ enabled: true }); expect(handle({ type: 'captcha:auto-disable' })).toEqual({ enabled: false }); vi.useRealTimers();
   });
+  it('reconciles automatic state when a dynamically registered new document starts', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:get-site-state' ? { enabled: true } : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content'); createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    await Promise.resolve();
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => unknown;
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-site-state' });
+    expect(handle({ type: 'captcha:get-status' })).toEqual({ enabled: true });
+  });
   it('keeps the explicit status when an older automatic request finishes later', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<form><img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ=="><input aria-label="captcha"></form>';
     let release!: (value: unknown) => void; let signal!: () => void; const started = new Promise<void>((resolve) => { signal = resolve; }); let calls = 0; const sendMessage = vi.fn(() => { calls += 1; if (calls === 1) return new Promise((resolve) => { release = resolve; signal(); }); return Promise.resolve([{ mode: 'digits', text: '2', confidence: .9 }]); });
@@ -36,5 +45,11 @@ describe('content runtime messages', () => {
     const sendMessage = vi.fn(() => new Promise((resolve) => { release = resolve; signal(); })); const { createRuntimeContent } = await import('../../entrypoints/content'); const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } }); const image = document.querySelector('#image') as HTMLImageElement;
     const pending = content.workflow.run(image, 'explicit'); await started; content.disable(); release([{ mode: 'digits', text: '5', confidence: .9 }]); await pending;
     expect(document.querySelector('[data-local-captcha-status]')).toBeNull();
+  });
+  it('maps guarded background OCR failures back into workflow status', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ=="><input aria-label="captcha">';
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize' ? { type: 'captcha:recognition-error', code: 'model_unavailable' } : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content'); const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    await expect(content.workflow.run(document.querySelector('#image') as HTMLImageElement, 'context')).resolves.toMatchObject({ state: 'model_unavailable' });
   });
 });
