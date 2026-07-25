@@ -53,21 +53,14 @@ async function fulfillFixtureRequest(route: Route): Promise<void> {
   });
 }
 
-async function grantFixtureHostPermission(): Promise<void> {
+async function openActionPopup(): Promise<Page> {
   const extensionId = new URL(worker.url()).host;
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
-  await popup.evaluate((origin) => {
-    const button = document.createElement('button');
-    button.id = 'grant-fixture-permission';
-    button.addEventListener('click', () => {
-      void browser.permissions.request({ origins: [origin] }).then((granted) => { button.dataset.granted = String(granted); });
-    });
-    document.body.append(button);
-  }, `http://${fixtureHostname}/*`);
-  await popup.locator('#grant-fixture-permission').click();
-  await expect(popup.locator('#grant-fixture-permission')).toHaveAttribute('data-granted', 'true');
-  await popup.close();
+  const pages = new Set(context.pages());
+  const popupPromise = context.waitForEvent('page', (page) => !pages.has(page));
+  await worker.evaluate(() => browser.action.openPopup());
+  const popup = await popupPromise;
+  await popup.waitForURL(`chrome-extension://${extensionId}/popup.html`);
+  return popup;
 }
 
 test.beforeAll(async () => {
@@ -102,13 +95,17 @@ test.afterAll(async () => {
 test('enables the current local site and persists only versioned settings', async () => {
   const page = await open('/automatic.html');
   await expect.poll(() => message({ type: 'captcha:get-site-state' })).toEqual({ enabled: false });
-  await grantFixtureHostPermission();
   await page.bringToFront();
-  await expect(message({ type: 'captcha:set-site-enabled', enabled: true, hostname: fixtureHostname })).resolves.toEqual({ enabled: true });
+  const popup = await openActionPopup();
+  await expect(popup.locator('[data-popup-hostname]')).toHaveText(fixtureHostname);
+  await expect(popup.locator('#site-enabled')).not.toBeChecked();
+  await popup.locator('#site-enabled').check();
+  await expect(popup.locator('[data-popup-status]')).toHaveText('Automatic recognition is on.');
   await expect.poll(() => message({ type: 'captcha:get-site-state' })).toEqual({ enabled: true });
   await expect.poll(async () => worker.evaluate(() => browser.storage.local.get())).toEqual({
     'captcha-settings': { version: 1, allowlistedHosts: [fixtureHostname] },
   });
+  await popup.close();
   await page.close();
 });
 
@@ -152,13 +149,15 @@ test('recognizes already-loaded CAPTCHA data offline and keeps popup unsupported
   expect(await submitCount(page)).toBe(0);
   await context.setOffline(false);
 
-  const extensionId = new URL(worker.url()).host;
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  const unsupported = await context.newPage();
+  await unsupported.goto('chrome://version/');
+  await unsupported.bringToFront();
+  const popup = await openActionPopup();
   await expect(popup.locator('#site-enabled')).toBeDisabled();
   await expect(popup.locator('[data-popup-status]')).toHaveText('Automatic recognition is unavailable on this page.');
   await page.close();
   await popup.close();
+  await unsupported.close();
 
   expect(extensionNetworkRequests).toEqual([]);
   expect(server.requests.every((path) => path === '/automatic.html' || path === '/dynamic.html' || path === '/ambiguous.html' || path === '/fixtures/digits-002.png' || path === '/fixtures/digits-017.png')).toBe(true);
