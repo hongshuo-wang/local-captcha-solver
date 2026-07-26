@@ -18,7 +18,7 @@
 - Read: `/tmp/local-captcha-screenshot-crop.png`
 - Read: `benchmark/fixtures/generated/*.png`
 
-- [ ] **Step 1: 获取并校验固定模型。** 从 `gitpetyr/ppllocr@449af7fbe35378348c34d6c409ca4f2e80ef0878` 获取 `ppllocr/assets/ppllocr_betav2.2.onnx`，要求 Git blob `abb8a97b359c56ddd98f0e0e0502279f6b453c02`、字节数 `80,544,116`、SHA-256 `3410492613965c360260c180e04c46f6afd95caa14cb060535ab042a854af841`。
+- [ ] **Step 1: 获取并校验固定模型。** 从 `gitpetyr/ppllocr@449af7fbe35378348c34d6c409ca4f2e80ef0878` 获取 `ppllocr/assets/ppllocr_betav2.2.onnx`，要求 Git blob `abb8a97b359c56ddd98f0e0e0502279f6b453c02`、字节数 `80,544,116`、SHA-256 `acdecc1e999ac6254226e8cfd803dff74ebe98bbe1432fd6138de0bec0000398`。
 - [ ] **Step 2: 在临时脚本中移植上游推理算法。** 脚本必须保持与 `ppllocr/inference.py` 一致：RGB、`512 x 512` letterbox、NCHW、`/255`、置信度阈值 `0.25`、IoU 阈值 `0.45`、逐类别最大值、NMS、按 `x1` 排序；不得修改仓库生产代码。
 - [ ] **Step 3: 运行真实问题样本。**
 
