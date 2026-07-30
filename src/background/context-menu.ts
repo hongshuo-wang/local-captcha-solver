@@ -31,7 +31,7 @@ export function createContextMenu(adapter: ContextMenuAdapter): ContextMenu {
   return {
     async install(): Promise<void> {
       try { await adapter.contextMenus.remove(CONTEXT_MENU_ID); } catch { /* The initial remove commonly has no matching item. */ }
-      adapter.contextMenus.create({ id: CONTEXT_MENU_ID, title: 'Recognize and fill CAPTCHA', contexts: ['image'] });
+      adapter.contextMenus.create({ id: CONTEXT_MENU_ID, title: '识别并填充验证码', contexts: ['image'] });
     },
     async handleClick(info: MenuClickInfo, tab?: TabIdentity): Promise<{ state: 'sent' | 'unsupported' }> {
       if (info.menuItemId !== CONTEXT_MENU_ID || tab?.id === undefined || !httpUrl(tab.url) || !imageUrl(info.srcUrl)) return { state: 'unsupported' };

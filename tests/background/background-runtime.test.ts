@@ -27,6 +27,32 @@ describe('background runtime composition', () => {
     expect(reconcile).toHaveBeenCalledTimes(2);
   });
 
+  it('responds through sendResponse for callback-only extension runtimes', async () => {
+    const runtimeListener = vi.fn();
+    const recognize = vi.fn(async () => [{ mode: 'digits' as const, text: '7', confidence: .9 }]);
+    const app = createBackgroundRuntime({
+      permissions: { contains: vi.fn(async () => true) }, imageFetcher: { fetch: vi.fn() }, inferenceHost: { recognize }, modelStatus: createModelStatusStore(),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: vi.fn(), disablePage: vi.fn() }, activeTab: vi.fn(async () => undefined),
+      registration: { reconcile: vi.fn(async () => undefined), enablePage: vi.fn(), disablePage: vi.fn() }, contextMenu: { install: vi.fn(async () => undefined), handleClick: vi.fn() },
+      runtime: { onMessage: { addListener: runtimeListener }, onStartup: { addListener: vi.fn() }, onInstalled: { addListener: vi.fn() } },
+      contextMenus: { onClicked: { addListener: vi.fn() } },
+    });
+    await app.start();
+
+    const handle = runtimeListener.mock.calls[0]?.[0] as (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => unknown;
+    const response = vi.fn();
+    const returned = handle({ type: 'captcha:recognize', imageDataUrl: 'data:image/png;base64,AQ==', revision: 'r', modes: ['digits'] }, { tab: { id: 2, url: 'https://portal.example.test/' }, url: 'https://portal.example.test/' }, response);
+
+    expect(returned).toBe(true);
+    await vi.waitFor(() => expect(response).toHaveBeenCalledWith([{ mode: 'digits', text: '7', confidence: .9 }]));
+
+    const ignoredResponse = vi.fn();
+    const ignoredReturned = handle({ type: 'ocr:recognize' }, {}, ignoredResponse);
+    expect(ignoredReturned).toBeUndefined();
+    await Promise.resolve();
+    expect(ignoredResponse).not.toHaveBeenCalled();
+  });
+
   it('publishes warmup lifecycle and maps model status to the action badge', async () => {
     const action = { setBadgeText: vi.fn(async () => undefined), setBadgeBackgroundColor: vi.fn(async () => undefined) };
     const modelStatus = createModelStatusStore(() => 1000);

@@ -39,6 +39,14 @@ describe('createImageFetcher', () => {
     });
   });
 
+  it('checks a port page image with a valid portless Chromium match pattern', async () => {
+    const { fetcher, fetch, contains } = harness(imageResponse());
+
+    await expect(fetcher.fetch('http://172.26.54.105:9000/12345Branch/oauth/code/id')).resolves.toMatchObject({ state: 'ready' });
+    expect(contains).toHaveBeenCalledWith({ origins: ['http://172.26.54.105/*'] });
+    expect(fetch).toHaveBeenCalledWith('http://172.26.54.105:9000/12345Branch/oauth/code/id', expect.objectContaining({ credentials: 'include' }));
+  });
+
   it.each([
     ['ftp://captcha.example.test/image.png', true, imageResponse(), 'type'],
     ['https://captcha.example.test/image.png', false, imageResponse(), 'permission'],

@@ -1,5 +1,7 @@
 # Ppllocr 单引擎替换 Implementation Plan
 
+> 状态：已终止，不执行以下替换任务。可行性硬门槛第 3 项失败：真实样本无法识别为 `7*3` 或计算为 `21`。当前实现保留 ddddocr 单模型，并从同一次推理的字符概率中统一选择普通文本或算式结果。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 先用真实问题样本验证 Ppllocr 2.2 的浏览器可行性；通过后用它替换当前 ddddocr 多模式识别，使所有文字验证码走一次识别、一次类型解释和一次填充流程。

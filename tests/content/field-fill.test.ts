@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fillEmptyField } from '../../src/content/field-fill';
+import { fillEmptyField, replaceField } from '../../src/content/field-fill';
 
 function input(type = 'text'): HTMLInputElement {
   const element = document.createElement('input');
@@ -37,12 +37,40 @@ describe('fillEmptyField', () => {
     expect(events).toEqual(['input:1742', 'change:1742']);
   });
 
+  it('fills an empty textarea with the native setter and input/change events', () => {
+    const field = document.createElement('textarea');
+    document.body.append(field);
+    const events: string[] = [];
+    field.addEventListener('input', () => events.push(`input:${field.value}`));
+    field.addEventListener('change', () => events.push(`change:${field.value}`));
+
+    expect(fillEmptyField(field, '验证码')).toEqual({ state: 'filled' });
+    expect(field.value).toBe('验证码');
+    expect(events).toEqual(['input:验证码', 'change:验证码']);
+  });
+
   it('does not overwrite non-empty values, including whitespace', () => {
     const field = input();
     field.value = '   ';
 
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'not_empty' });
     expect(field.value).toBe('   ');
+  });
+
+  it('does not automatically replace a value previously written by the extension', () => {
+    const field = input();
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'filled' });
+    expect(fillEmptyField(field, '8391')).toEqual({ state: 'not_empty' });
+    expect(field.value).toBe('1742');
+  });
+
+  it('replaces a non-empty value only through the explicit replacement function', () => {
+    const field = input();
+    expect(fillEmptyField(field, '1742')).toEqual({ state: 'filled' });
+    field.value = 'user value';
+    expect(fillEmptyField(field, '8391')).toEqual({ state: 'not_empty' });
+    expect(replaceField(field, '8391')).toEqual({ state: 'filled' });
+    expect(field.value).toBe('8391');
   });
 
   it.each(['hidden', 'disabled', 'readonly', 'password', 'file', 'checkbox', 'radio', 'button', 'submit'])('rejects an ineligible %s field', (state) => {

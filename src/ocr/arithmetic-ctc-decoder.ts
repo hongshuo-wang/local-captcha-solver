@@ -3,6 +3,8 @@ import { analyzeArithmetic, MAX_OCR_TEXT_LENGTH } from '../core/arithmetic';
 const BEAM_WIDTH = 24;
 const OPERATORS = new Set(['+', '-', '*', '/', 'x', 'X', '×', '÷']);
 const SUFFIXES = new Set(['=', '?']);
+const INFERRED_SUFFIX_MARKERS = new Set(['=', '?', '-']);
+const INFERRED_SUFFIX_MARKER_MIN_PROBABILITY = 0.1;
 const RELEVANT_CHARACTERS = new Set([
   '0',
   '1',
@@ -32,6 +34,11 @@ interface RelevantClass {
 interface RowNormalization {
   maximum: number;
   logShiftedDenominator: number;
+}
+
+interface ForcedAlignment {
+  confidence: number;
+  characterTimesteps: Int16Array;
 }
 
 function parseDimensions(dims: readonly number[]): { time: number; classes: number } {
@@ -156,11 +163,19 @@ function arithmeticShape(text: string): { prefix: boolean; complete: boolean } {
   if (index === text.length) {
     return { prefix: true, complete: index > rightStart };
   }
-  if (!SUFFIXES.has(text[index]) || index + 1 !== text.length) {
+  const firstSuffix = text[index];
+  if (!SUFFIXES.has(firstSuffix)) {
+    return { prefix: false, complete: false };
+  }
+  index += 1;
+  if (index === text.length) {
+    return { prefix: true, complete: true };
+  }
+  if (!SUFFIXES.has(text[index]) || text[index] === firstSuffix || index + 1 !== text.length) {
     return { prefix: false, complete: false };
   }
 
-  return { prefix: true, complete: index > rightStart };
+  return { prefix: true, complete: true };
 }
 
 function greedyRelevantText(
@@ -289,13 +304,13 @@ function selectCandidate(
   return complete[0]?.[0] ?? null;
 }
 
-function forcedAlignmentConfidence(
+function forcedAlignment(
   logits: Float32Array,
   time: number,
   classes: number,
   text: string,
   classByCharacter: ReadonlyMap<string, number>,
-): number | null {
+): ForcedAlignment | null {
   const targetClasses = [...text].map((character) => classByCharacter.get(character));
   if (targetClasses.some((classIndex) => classIndex === undefined)) {
     return null;
@@ -385,6 +400,8 @@ function forcedAlignmentConfidence(
   const characterConfidences = Array<number>(resolvedTargetClasses.length).fill(
     NEGATIVE_INFINITY,
   );
+  const characterTimesteps = new Int16Array(resolvedTargetClasses.length);
+  characterTimesteps.fill(-1);
   for (let timestep = 0; timestep < time; timestep += 1) {
     const alignedState = alignedStates[timestep];
     if (alignedState % 2 === 0) {
@@ -402,27 +419,76 @@ function forcedAlignmentConfidence(
         normalization,
       ),
     );
-    characterConfidences[characterPosition] = Math.max(
-      characterConfidences[characterPosition],
-      probability,
-    );
+    if (probability > characterConfidences[characterPosition]) {
+      characterConfidences[characterPosition] = probability;
+      characterTimesteps[characterPosition] = timestep;
+    }
   }
 
   if (characterConfidences.some((confidence) => !Number.isFinite(confidence))) {
     return null;
   }
 
-  return (
-    characterConfidences.reduce((sum, confidence) => sum + confidence, 0) /
-    characterConfidences.length
-  );
+  return {
+    confidence:
+      characterConfidences.reduce((sum, confidence) => sum + confidence, 0) /
+      characterConfidences.length,
+    characterTimesteps,
+  };
+}
+
+function expressionBeforeInferredSuffix(
+  logits: Float32Array,
+  classes: number,
+  text: string,
+  alignment: ForcedAlignment,
+  classByCharacter: ReadonlyMap<string, number>,
+): string | null {
+  const operatorIndex = [...text].findIndex((character) => OPERATORS.has(character));
+  if (operatorIndex < 1) {
+    return null;
+  }
+
+  for (let rightIndex = operatorIndex + 2; rightIndex < text.length; rightIndex += 1) {
+    if (!isDigit(text[rightIndex - 1]) || !isDigit(text[rightIndex])) {
+      break;
+    }
+
+    const previousTimestep = alignment.characterTimesteps[rightIndex - 1];
+    const currentTimestep = alignment.characterTimesteps[rightIndex];
+    for (let timestep = previousTimestep + 1; timestep < currentTimestep; timestep += 1) {
+      const offset = timestep * classes;
+      const normalization = rowNormalization(logits, offset, classes);
+      let markerProbability = 0;
+      for (const marker of INFERRED_SUFFIX_MARKERS) {
+        const classIndex = classByCharacter.get(marker);
+        if (classIndex === undefined) {
+          continue;
+        }
+        markerProbability = Math.max(
+          markerProbability,
+          Math.exp(logProbability(logits, offset, classIndex, normalization)),
+        );
+      }
+      if (markerProbability < INFERRED_SUFFIX_MARKER_MIN_PROBABILITY) {
+        continue;
+      }
+
+      const expression = text.slice(0, rightIndex);
+      if (analyzeArithmetic(expression).kind !== 'unsupported') {
+        return expression;
+      }
+    }
+  }
+
+  return null;
 }
 
 export function decodeArithmeticCtc(
   logits: Float32Array,
   dims: readonly number[],
   charset: readonly string[],
-): { text: string; confidence: number } | null {
+): { text: string; confidence: number; requiresConfirmation?: boolean } | null {
   if (!(logits instanceof Float32Array)) {
     throw new TypeError('CTC logits must be a Float32Array');
   }
@@ -474,16 +540,41 @@ export function decodeArithmeticCtc(
     return null;
   }
 
-  const confidence = forcedAlignmentConfidence(
+  let alignment = forcedAlignment(
     logits,
     time,
     classes,
     text,
     classByCharacter,
   );
-  if (confidence === null) {
+  if (alignment === null) {
     return null;
   }
 
-  return { text, confidence };
+  const inferredExpression = expressionBeforeInferredSuffix(
+    logits,
+    classes,
+    text,
+    alignment,
+    classByCharacter,
+  );
+  if (inferredExpression !== null) {
+    alignment = forcedAlignment(
+      logits,
+      time,
+      classes,
+      inferredExpression,
+      classByCharacter,
+    );
+    if (alignment === null) {
+      return null;
+    }
+    return {
+      text: inferredExpression,
+      confidence: alignment.confidence,
+      requiresConfirmation: true,
+    };
+  }
+
+  return { text, confidence: alignment.confidence };
 }

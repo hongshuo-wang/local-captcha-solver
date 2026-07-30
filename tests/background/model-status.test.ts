@@ -117,4 +117,16 @@ describe('ModelStatusStore', () => {
 
     expect(store.snapshot()).toMatchObject({ status: 'error', progress: 0 });
   });
+
+  it('records workflow outcomes without result text or site information', () => {
+    const store = createModelStatusStore(() => 1000);
+    store.workflowCompleted('filled');
+    store.workflowCompleted('confirmation');
+    store.workflowCompleted('copied');
+    expect(store.snapshot().logs).toEqual([
+      expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '已填入验证码' }),
+      expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '识别完成，等待确认' }),
+      expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '识别完成，已复制结果' }),
+    ]);
+  });
 });

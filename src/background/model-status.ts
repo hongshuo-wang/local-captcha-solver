@@ -2,11 +2,13 @@ export type ModelStatus = 'loading' | 'ready' | 'error';
 
 export interface ModelLog {
   readonly at: number;
-  readonly kind: 'warmup' | 'recognition';
+  readonly kind: 'warmup' | 'recognition' | 'workflow';
   readonly outcome: 'started' | 'success' | 'failure';
   readonly message: string;
   readonly durationMs?: number;
 }
+
+export type WorkflowActivityOutcome = 'filled' | 'confirmation' | 'copied' | 'no_field' | 'failed';
 
 export interface ModelStatusSnapshot {
   readonly status: ModelStatus;
@@ -26,6 +28,7 @@ export interface ModelStatusStore {
   recognitionStarted(): void;
   recognitionSucceeded(durationMs: number, confidence: number): void;
   recognitionFailed(message: string, durationMs: number, modelUnavailable: boolean): void;
+  workflowCompleted(outcome: WorkflowActivityOutcome): void;
 }
 
 type Listener = (snapshot: ModelStatusSnapshot) => void;
@@ -133,6 +136,17 @@ export function createModelStatusStore(now: () => number = Date.now): ModelStatu
         };
       }
       record('recognition', 'failure', userMessage, durationMs);
+    },
+
+    workflowCompleted(outcome) {
+      const messages: Record<WorkflowActivityOutcome, string> = {
+        filled: '已填入验证码',
+        confirmation: '识别完成，等待确认',
+        copied: '识别完成，已复制结果',
+        no_field: '识别完成，未找到输入框',
+        failed: '识别流程未完成',
+      };
+      record('workflow', outcome === 'failed' ? 'failure' : 'success', messages[outcome]);
     },
   };
 }

@@ -13,7 +13,7 @@ describe('image context menu', () => {
     const app = harness();
     await app.menu.install(); await app.menu.install();
     expect(app.remove).toHaveBeenCalledWith(CONTEXT_MENU_ID);
-    expect(app.create).toHaveBeenLastCalledWith({ id: CONTEXT_MENU_ID, title: 'Recognize and fill CAPTCHA', contexts: ['image'] });
+    expect(app.create).toHaveBeenLastCalledWith({ id: CONTEXT_MENU_ID, title: '识别并填充验证码', contexts: ['image'] });
   });
 
   it('pings existing content before forwarding the selected image identity', async () => {

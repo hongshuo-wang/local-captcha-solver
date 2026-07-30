@@ -26,10 +26,74 @@ describe('captcha workflow', () => {
     await expect(workflow({ recognize: async () => [{ mode: 'digits', text: '123', confidence: .98 }, { mode: 'letters', text: 'ABC', confidence: .94 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation' });
     expect(field.value).toBe('');
   });
-  it('returns no_field and preserves a field made nonempty before fill', async () => {
+  it('keeps high-confidence results actionable when automatic filling is disabled', async () => {
+    await expect(workflow({ autoFillEnabled: () => false }).run(image, 'automatic')).resolves.toMatchObject({ state: 'needs_confirmation', fillValue: '1234', fieldIds: ['field-1'] });
+    expect(field.value).toBe('');
+  });
+  it('prefers a structurally valid arithmetic result within the confidence boundary', async () => {
+    await expect(workflow({ recognize: async () => [
+      { mode: 'digits', text: '7432', confidence: .99 },
+      { mode: 'alphanumeric', text: '7t32', confidence: .98 },
+      { mode: 'arithmetic', text: '7*3=?', confidence: .96 },
+    ] }).run(image, 'explicit')).resolves.toMatchObject({
+      state: 'filled',
+      displayText: '7*3 = 21',
+      fillValue: '21',
+    });
+  });
+  it('keeps the best ordinary result when arithmetic falls outside the confidence boundary', async () => {
+    await expect(workflow({ recognize: async () => [
+      { mode: 'digits', text: '7432', confidence: .99 },
+      { mode: 'arithmetic', text: '7*3=?', confidence: .88 },
+    ] }).run(image, 'explicit')).resolves.toMatchObject({
+      state: 'filled',
+      displayText: '7432',
+      fillValue: '7432',
+    });
+  });
+  it('shows but does not auto-fill a preferred low-confidence arithmetic result', async () => {
+    await expect(workflow({ recognize: async () => [
+      { mode: 'digits', text: '7432', confidence: .7 },
+      { mode: 'arithmetic', text: '7*3=?', confidence: .619 },
+    ] }).run(image, 'explicit')).resolves.toMatchObject({
+      state: 'needs_confirmation',
+      displayText: '7*3 = 21',
+      fillValue: '21',
+      fieldIds: ['field-1'],
+    });
+    expect(field.value).toBe('');
+  });
+  it('never auto-fills arithmetic recovered from ambiguous suffix evidence', async () => {
+    await expect(workflow({ recognize: async () => [
+      { mode: 'digits', text: '7432', confidence: .98 },
+      { mode: 'arithmetic', text: '7*3', confidence: .99, requiresConfirmation: true },
+    ] }).run(image, 'explicit')).resolves.toMatchObject({
+      state: 'needs_confirmation',
+      displayText: '7*3 = 21',
+      fillValue: '21',
+      fieldIds: ['field-1'],
+    });
+    expect(field.value).toBe('');
+  });
+  it('returns confirmation and preserves a field made nonempty before fill', async () => {
     await expect(workflow({ snapshot: () => ({ ...base.snapshot(), fields: [] }) }).run(image, 'explicit')).resolves.toMatchObject({ state: 'no_field' });
-    await expect(workflow({ recognize: async () => { field.value = 'taken'; return [{ mode: 'digits', text: '1234', confidence: .9 }]; } }).run(image, 'explicit')).resolves.toMatchObject({ state: 'no_field' });
+    await expect(workflow({ recognize: async () => { field.value = 'taken'; return [{ mode: 'digits', text: '1234', confidence: .9 }]; } }).run(image, 'explicit')).resolves.toMatchObject({ state: 'needs_confirmation' });
     expect(field.value).toBe('taken');
+  });
+
+  it('fills a uniquely matched textarea using Chinese captcha context', async () => {
+    const textarea = document.createElement('textarea');
+    document.body.append(textarea);
+    const snapshot = () => ({
+      ...base.snapshot(),
+      fields: [{ id: 'textarea-1', element: textarea, field: {
+        id: 'textarea-1', type: 'textarea', value: '', visible: true, disabled: false, readOnly: false,
+        distance: 240, sameForm: false, labelText: '请输入验证码',
+      } }],
+    });
+
+    await expect(workflow({ snapshot }).run(image, 'explicit')).resolves.toMatchObject({ state: 'filled', fillValue: '1234' });
+    expect(textarea.value).toBe('1234');
   });
   it('maps acquisition and inference failures', async () => {
     await expect(workflow({ acquire: async () => ({ state: 'image_unavailable', reason: 'permission' }) }).run(image, 'explicit')).resolves.toMatchObject({ state: 'permission_denied' });
@@ -79,7 +143,7 @@ describe('captcha workflow', () => {
     const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
     let release!: () => void; const gate = new Promise<void>((resolve) => { release = resolve; }); const acquire = vi.fn(async () => { await gate; return { state: 'ready' as const, dataUrl: 'data:image/png;base64,AQ==', mimeType: 'image/png', revision: 'bytes' }; });
     const snapshot = () => ({ candidate: { id: 'i3', element: localImage, revision: 'r', candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'f3', element: localField, field: { id: 'f3', type: 'text', value: localField.value, visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
-    const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '19', confidence: .9 }, { mode: 'alphanumeric' as const, text: '19', confidence: .99 }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '19', confidence: .9 }, { mode: 'alphanumeric' as const, text: '19', confidence: .995 }] });
     const first = instance.run(localImage, 'automatic'); const second = instance.run(localImage, 'automatic'); release();
     await expect(first).resolves.toMatchObject({ state: 'filled', fillValue: '19' }); await expect(second).resolves.toMatchObject({ state: 'filled', fillValue: '19' }); expect(acquire).toHaveBeenCalledOnce();
   });
@@ -95,6 +159,17 @@ describe('captcha workflow', () => {
     const instance = createCaptchaWorkflow({ snapshot, acquire, recognize: async () => [{ mode: 'digits' as const, text: '9', confidence: .9 }] });
     await instance.run(localImage, 'automatic'); localField.value = ''; instance.cancelAll?.();
     await expect(instance.run(localImage, 'automatic')).resolves.toMatchObject({ state: 'filled' }); expect(acquire).toHaveBeenCalledTimes(2);
+  });
+  it('does not replace its own unchanged value when a refreshed captcha is recognized automatically', async () => {
+    const localImage = document.createElement('img'); const localField = document.createElement('input'); document.body.append(localImage, localField);
+    let revision = 'first'; let recognition = 0;
+    const snapshot = () => ({ candidate: { id: 'repeat', element: localImage, revision, candidate: { attrText: 'captcha', nearbyText: '', width: 120, height: 40, inForm: true, nearShortInput: true } }, fields: [{ id: 'repeat-field', element: localField, field: { id: 'repeat-field', type: 'text', value: localField.value, replaceable: localField.value !== '', visible: true, disabled: false, readOnly: false, distance: 10, sameForm: true, labelText: 'captcha' } }] });
+    const instance = createCaptchaWorkflow({ snapshot, acquire: base.acquire, recognize: async () => [{ mode: 'digits' as const, text: recognition++ === 0 ? '1234' : '5678', confidence: .9 }] });
+
+    await expect(instance.run(localImage, 'automatic')).resolves.toMatchObject({ state: 'filled', fillValue: '1234' });
+    revision = 'second';
+    await expect(instance.run(localImage, 'automatic')).resolves.toMatchObject({ state: 'needs_confirmation', fillValue: '5678' });
+    expect(localField.value).toBe('1234');
   });
   it('accepts an exact 0.10 confidence margin', async () => {
     await expect(workflow({ recognize: async () => [{ mode: 'digits', text: '1', confidence: .9 }, { mode: 'letters', text: 'A', confidence: .8 }] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'filled', fillValue: '1' });

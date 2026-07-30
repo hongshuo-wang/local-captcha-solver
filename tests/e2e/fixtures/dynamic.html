@@ -18,8 +18,6 @@
       document.querySelector('#submit').addEventListener('click', () => { window.__submitCount += 1; });
       answer.addEventListener('input', () => { answer.dataset.controlledValue = answer.value; });
       document.querySelector('#refresh').addEventListener('click', () => {
-        answer.value = '';
-        answer.dataset.controlledValue = '';
         image.src = '/fixtures/digits-017.png?refresh=1';
       });
     </script>

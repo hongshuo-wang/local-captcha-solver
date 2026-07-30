@@ -10,13 +10,21 @@ function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } =
   const contains = vi.fn(async () => options.pagePermission ?? true);
   const activeTab = vi.fn(async () => ({ id: 4, url: 'https://portal.example.test/login' }));
   const enablePage = vi.fn(async () => ({ enabled: true }));
-  const disablePage = vi.fn(async () => ({ disabled: true, permissionRemoved: true }));
+  const disablePage = vi.fn(async () => ({ disabled: true, permissionRemoved: false }));
+  let copyOnNoField = false;
+  let autoFill = true;
+  let recognitionShortcut: 'middle' | 'alt-click' = 'middle';
+  const readSettings = vi.fn(async () => ({ version: 2 as const, disabledHosts: [], copyOnNoField, autoFill, recognitionShortcut }));
+  const setCopyOnNoField = vi.fn(async (enabled: boolean) => { copyOnNoField = enabled; });
+  const setAutoFill = vi.fn(async (enabled: boolean) => { autoFill = enabled; });
+  const setRecognitionShortcut = vi.fn(async (shortcut: 'middle' | 'alt-click') => { recognitionShortcut = shortcut; });
   const modelStatus = createModelStatusStore(() => 1000);
   return { fetch, recognize, warmup, contains, activeTab, enablePage, disablePage, router: createRuntimeRouter({
     permissions: { contains }, imageFetcher: { fetch }, inferenceHost: { recognize, warmup }, modelStatus,
     siteState: { isEnabled: vi.fn(async () => options.stateEnabled ?? false), enablePage, disablePage },
+    settings: { read: readSettings, setCopyOnNoField, setAutoFill, setRecognitionShortcut },
     activeTab,
-  }) };
+  }), readSettings, setCopyOnNoField, setAutoFill, setRecognitionShortcut };
 }
 
 const sender = { tab: { id: 4, url: 'https://portal.example.test/login' }, url: 'https://portal.example.test/login' };
@@ -51,6 +59,15 @@ describe('background runtime router', () => {
     expect((snapshot as { logs: readonly { durationMs?: number }[] }).logs.at(-1)?.durationMs).toEqual(expect.any(Number));
   });
 
+  it('records guarded workflow activity without accepting popup or malformed events', async () => {
+    const app = harness();
+    await expect(app.router.handle({ type: 'captcha:record-activity', outcome: 'filled' }, sender)).resolves.toEqual({ recorded: true });
+    await expect(app.router.handle({ type: 'captcha:record-activity', outcome: 'filled' }, {})).resolves.toEqual({ recorded: false });
+    await expect(app.router.handle({ type: 'captcha:record-activity', outcome: 'SECRET123' }, sender)).resolves.toEqual({ recorded: false });
+    const snapshot = await app.router.handle({ type: 'captcha:get-model-status' }, {});
+    expect(snapshot).toMatchObject({ logs: [expect.objectContaining({ kind: 'workflow', message: '已填入验证码' })] });
+  });
+
   it('retries model warmup without requiring a page sender', async () => {
     const app = harness();
     await expect(app.router.handle({ type: 'captcha:retry-model-warmup' }, {})).resolves.toMatchObject({ status: 'loading' });
@@ -63,13 +80,20 @@ describe('background runtime router', () => {
     await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, { tab: { id: 4, url: 'https://portal.example.test/login' }, url: 'https://other.example.test/frame/captcha' })).resolves.toEqual({ state: 'image_unavailable', reason: 'permission' });
   });
 
+  it('acquires same-origin images on an IP address with a port', async () => {
+    const app = harness();
+    const intranetSender = { tab: { id: 4, url: 'http://172.26.54.105:9000/login' }, url: 'http://172.26.54.105:9000/login' };
+    await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'http://172.26.54.105:9000/captcha.png' }, intranetSender)).resolves.toMatchObject({ state: 'ready' });
+    expect(app.contains).toHaveBeenCalledWith({ origins: ['http://172.26.54.105/*'] });
+  });
+
   it('rejects a cross-origin image URL even when the sender page is permitted', async () => {
     const app = harness();
     await expect(app.router.handle({ type: 'captcha:acquire-image', url: 'https://cdn.example.test/captcha.png' }, sender)).resolves.toEqual({ state: 'image_unavailable', reason: 'permission' });
     expect(app.fetch).not.toHaveBeenCalled();
   });
 
-  it('does not report an allowlisted site as enabled after its exact permission is removed', async () => {
+  it('does not report a site as enabled after global access is removed', async () => {
     const app = harness({ pagePermission: false, stateEnabled: true });
     await expect(app.router.handle({ type: 'captcha:get-site-state' }, sender)).resolves.toEqual({ enabled: false });
   });
@@ -171,5 +195,28 @@ describe('background runtime router', () => {
     ] });
     expect((status as { logs: readonly { outcome: string; durationMs?: number }[] }).logs.filter((log) => log.outcome !== 'started').every((log) => typeof log.durationMs === 'number')).toBe(true);
     expect(await app.router.handle({ type: 'other' }, sender)).toBeUndefined();
+  });
+
+  it('reads and updates the no-field copy preference', async () => {
+    const app = harness();
+
+    await expect(app.router.handle({ type: 'captcha:get-preferences' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' });
+    await expect(app.router.handle({ type: 'captcha:set-preferences', copyOnNoField: true }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: true, recognitionShortcut: 'middle' });
+    expect(app.setCopyOnNoField).toHaveBeenCalledWith(true);
+    await expect(app.router.handle({ type: 'captcha:set-preferences', autoFill: false }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: false, recognitionShortcut: 'middle' });
+    expect(app.setAutoFill).toHaveBeenCalledWith(false);
+
+    await expect(app.router.handle({ type: 'captcha:set-preferences', recognitionShortcut: 'alt-click' }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' });
+    expect(app.setRecognitionShortcut).toHaveBeenCalledWith('alt-click');
+  });
+
+  it('rejects malformed preference updates without mutating storage', async () => {
+    const app = harness();
+
+    await expect(app.router.handle({ type: 'captcha:set-preferences', copyOnNoField: 'no' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle', reason: 'invalid-request' });
+    await expect(app.router.handle({ type: 'captcha:set-preferences', recognitionShortcut: 'double-click' }, sender)).resolves.toMatchObject({ reason: 'invalid-request' });
+    expect(app.setCopyOnNoField).not.toHaveBeenCalled();
+    expect(app.setAutoFill).not.toHaveBeenCalled();
+    expect(app.setRecognitionShortcut).not.toHaveBeenCalled();
   });
 });

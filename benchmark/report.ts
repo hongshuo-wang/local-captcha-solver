@@ -1,5 +1,6 @@
 export type BenchmarkCategory = 'digits' | 'letters' | 'alphanumeric' | 'arithmetic';
-export type BenchmarkEngine = 'ddddocr' | 'tesseract';
+export type LegacyBenchmarkEngine = 'ddddocr' | 'tesseract';
+export type BenchmarkEngine = LegacyBenchmarkEngine | 'ppocrv6-tiny' | 'ppocrv6-small' | 'captcha-ctc';
 
 export interface BenchmarkPrediction {
   readonly engine: BenchmarkEngine;
@@ -11,6 +12,8 @@ export interface BenchmarkPrediction {
   readonly confidence: number;
   readonly coldInitMs: number;
   readonly warmLatencyMs: number;
+  readonly sampleId?: string;
+  readonly source?: 'generated' | 'real';
 }
 
 export interface CategoryMetrics {

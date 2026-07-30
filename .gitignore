@@ -2,6 +2,11 @@
 .worktrees/
 node_modules/
 
+# OS and language caches
+.DS_Store
+__pycache__/
+*.py[cod]
+
 # Build and test output
 .output/
 .wxt/
@@ -12,6 +17,13 @@ blob-report/
 
 # Benchmark reports are reproducible output. Fixtures and generated corpora are committed.
 benchmark/results/
+benchmark/models/
+training/ppocrv6-captcha/assets/
+training/ppocrv6-captcha/output/
+training/ppocrv6-captcha/.venv/
+training/ppocrv6-captcha/downloads/
+training/ppocrv6-captcha/extracted/
+training/ppocrv6-captcha/data/images/
 !benchmark/fixtures/
 !benchmark/fixtures/**
 !benchmark/corpus/
@@ -22,3 +34,9 @@ benchmark/results/
 !public/models/**
 !public/ort/
 !public/ort/**
+
+# Training documentation is source, even when a global gitignore excludes docs/.
+!docs/
+docs/*
+!docs/model-training.md
+!docs/production-model-reproduction.md

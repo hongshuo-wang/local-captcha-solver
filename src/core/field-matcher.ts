@@ -7,6 +7,7 @@ export interface FieldSnapshot {
   id: string;
   type: string;
   value: string;
+  replaceable?: boolean;
   visible: boolean;
   disabled: boolean;
   readOnly: boolean;
@@ -18,16 +19,16 @@ export interface FieldSnapshot {
 type RankedField = { field: FieldSnapshot; score: number; reasons: readonly string[] };
 
 const UNSAFE_TYPES = new Set(['hidden', 'password', 'file', 'checkbox', 'radio', 'button', 'submit', 'reset', 'image']);
-const TEXT_LIKE_TYPES = new Set(['', 'text', 'search', 'email', 'tel', 'url', 'number']);
-const CAPTCHA_LABEL_TERMS = /\b(?:captcha|verification|verify|security|code|answer|challenge)\b/i;
+const TEXT_LIKE_TYPES = new Set(['', 'text', 'search', 'email', 'tel', 'url', 'number', 'textarea']);
+const CAPTCHA_LABEL_TERMS = /(?:\b(?:captcha|verification|verify|security|code|answer|challenge)\b|验证码|校验码|验证|安全码|图形码)/i;
 
 function scoreField(field: FieldSnapshot): RankedField | undefined {
   const type = field.type.toLowerCase();
-  if (!field.visible || field.disabled || field.readOnly || UNSAFE_TYPES.has(type) || !TEXT_LIKE_TYPES.has(type) || field.value !== '') {
+  if (!field.visible || field.disabled || field.readOnly || UNSAFE_TYPES.has(type) || !TEXT_LIKE_TYPES.has(type) || (field.value !== '' && field.replaceable !== true)) {
     return undefined;
   }
 
-  const reasons = ['empty editable text-like field'];
+  const reasons = [field.value === '' ? 'empty editable text-like field' : 'non-empty replaceable field'];
   let score = 25;
   if (field.sameForm) {
     score += 20;
@@ -40,10 +41,10 @@ function scoreField(field: FieldSnapshot): RankedField | undefined {
   if (field.distance <= 50) {
     score += 25;
     reasons.push('visually adjacent to captcha');
-  } else if (field.distance <= 200) {
+  } else if (field.distance <= 300) {
     score += 15;
     reasons.push('near captcha');
-  } else if (field.distance <= 500) {
+  } else if (field.distance <= 800) {
     score += 5;
     reasons.push('within captcha area');
   }

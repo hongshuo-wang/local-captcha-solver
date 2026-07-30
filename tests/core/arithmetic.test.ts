@@ -17,6 +17,8 @@ describe('parseArithmetic', () => {
     ['8x3', '8*3', '24'],
     ['8X3', '8*3', '24'],
     ['8*3', '8*3', '24'],
+    ['7*3=?', '7*3', '21'],
+    ['12+34?=', '12+34', '46'],
   ])('evaluates %s', (source, expression, value) => {
     expect(parseArithmetic(source)).toEqual({ expression, value });
   });
@@ -44,7 +46,7 @@ describe('parseArithmetic', () => {
     '1+2answer',
     '1+2==',
     '1+2??',
-    '1+2=?',
+    '1+2=??',
   ])('rejects %j', (source) => {
     expect(parseArithmetic(source)).toBeNull();
   });

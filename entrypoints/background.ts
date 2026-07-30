@@ -7,6 +7,7 @@ import { createContentRegistration } from '../src/background/content-registratio
 import { createContextMenu } from '../src/background/context-menu';
 import { createBackgroundRuntime } from '../src/background/background-runtime';
 import { createModelStatusStore } from '../src/background/model-status';
+import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 
 interface RuntimeWithContexts {
   getContexts?: InferenceBrowser['runtime']['getContexts'];
@@ -43,7 +44,9 @@ interface BackgroundBrowser {
     setBadgeBackgroundColor(details: { color: string }): Promise<void>;
   };
   runtime: {
-    onMessage: { addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string }; url?: string }) => Promise<unknown | undefined>): void };
+    onMessage: {
+      addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string }; url?: string }, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
+    };
     onStartup: { addListener(listener: () => void): void };
     onInstalled: { addListener(listener: () => void): void };
   };
@@ -55,7 +58,7 @@ export default defineBackground(() => {
   const extensionBrowser: InferenceBrowser = {
     runtime: {
       getURL: runtime.getURL.bind(runtime),
-      sendMessage: runtime.sendMessage.bind(runtime),
+      sendMessage: (message) => sendRuntimeMessage(runtime, message),
       getContexts: runtime.getContexts?.bind(runtime),
     },
     offscreen: (browser as unknown as BrowserWithOffscreen).offscreen,
@@ -76,7 +79,8 @@ export default defineBackground(() => {
     imageFetcher: createImageFetcher({ permissions: { contains: extension.permissions.contains.bind(extension.permissions) }, fetch: globalThis.fetch.bind(globalThis) }),
     inferenceHost: host,
     modelStatus,
-    siteState: { isEnabled: settings.isEnabled, enablePage: registration.enablePage, disablePage: registration.disablePage },
+    siteState: { isEnabled: settings.isEnabled, enablePage: registration.enablePage, disablePage: registration.disablePage, reconcile: registration.reconcile },
+    settings,
     activeTab: async () => (await extension.tabs.query({ active: true, currentWindow: true }))[0],
     registration,
     contextMenu,

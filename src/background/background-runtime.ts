@@ -3,11 +3,32 @@ import type { ContentRegistration } from './content-registration';
 import type { ContextMenu } from './context-menu';
 import type { ModelStatus } from './model-status';
 
+const BACKGROUND_MESSAGE_TYPES = new Set([
+  'captcha:acquire-image',
+  'captcha:recognize',
+  'captcha:get-model-status',
+  'captcha:retry-model-warmup',
+  'captcha:get-site-state',
+  'captcha:get-status',
+  'captcha:set-site-enabled',
+  'captcha:get-preferences',
+  'captcha:set-preferences',
+  'captcha:record-activity',
+  'captcha:reconcile-access',
+]);
+
+function isBackgroundMessage(message: unknown): boolean {
+  return message !== null && typeof message === 'object' &&
+    BACKGROUND_MESSAGE_TYPES.has((message as { type?: unknown }).type as string);
+}
+
 export interface BackgroundRuntimeAdapter extends RuntimeRouterAdapter {
   registration: ContentRegistration;
   contextMenu: ContextMenu;
   runtime: {
-    onMessage: { addListener(listener: (message: unknown, sender: RuntimeSender) => Promise<unknown | undefined>): void };
+    onMessage: {
+      addListener(listener: (message: unknown, sender: RuntimeSender, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
+    };
     onStartup: { addListener(listener: () => void): void };
     onInstalled: { addListener(listener: () => void): void };
   };
@@ -48,7 +69,16 @@ export function createBackgroundRuntime(adapter: BackgroundRuntimeAdapter): Back
       if (!listenersRegistered) {
         listenersRegistered = true;
         adapter.modelStatus.subscribe((snapshot) => updateBadge(snapshot.status));
-        adapter.runtime.onMessage.addListener((message, sender) => router.handle(message, sender));
+        adapter.runtime.onMessage.addListener((message, sender, sendResponse) => {
+          if (!isBackgroundMessage(message)) return undefined;
+          const response = router.handle(message, sender);
+          if (sendResponse === undefined) return response;
+          void response.then(sendResponse, (error: unknown) => {
+            reportError(error);
+            sendResponse(undefined);
+          });
+          return true;
+        });
         adapter.runtime.onStartup.addListener(reconcile);
         adapter.runtime.onInstalled.addListener(reconcile);
         adapter.storage?.onChanged.addListener((changes, areaName) => { if (areaName === 'local' && Object.hasOwn(changes, 'captcha-settings')) reconcile(); });

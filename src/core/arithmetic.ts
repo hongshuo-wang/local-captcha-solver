@@ -10,7 +10,8 @@ export type ArithmeticAnalysis =
 
 export const MAX_OCR_TEXT_LENGTH = 64;
 
-const ARITHMETIC_PATTERN = /^\s*([0-9]+)\s*([+\-*/xX×÷])\s*([0-9]+)\s*(?:[=?]\s*)?$/;
+const ARITHMETIC_PATTERN =
+  /^\s*([0-9]+)\s*([+\-*/xX×÷])\s*([0-9]+)\s*(?:(?:[=?]|=\?|\?=)\s*)?$/;
 
 export function analyzeArithmetic(source: string): ArithmeticAnalysis {
   if (typeof source !== 'string' || source.length > MAX_OCR_TEXT_LENGTH) {

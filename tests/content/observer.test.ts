@@ -1,79 +1,103 @@
 import { describe, expect, it, vi } from 'vitest';
 import { observeCaptchaImages } from '../../src/content/observer';
 
+function captcha(id: string, extra = ''): string {
+  return `<form id="${id}-form"><img id="${id}" alt="captcha" width="120" height="40"><label for="${id}-field">Answer</label><input id="${id}-field">${extra}</form>`;
+}
+
 describe('captcha observer', () => {
-  it('scans initial and added images, debounces source/load changes, and stops after disconnect', async () => {
-    vi.useFakeTimers();
-    document.body.innerHTML = '<img id="first">';
-    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const cancelAll = vi.fn();
-    const observer = observeCaptchaImages({ run, cancelAll });
+  it('runs only the highest-scoring matching candidate', () => {
+    document.body.innerHTML = `${captcha('first')}<form><img id="best" alt="captcha" width="120" height="40"><label for="best-field">Verification code</label><input id="best-field"></form>`;
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'best' }));
+    const observer = observeCaptchaImages({ run });
+    expect(run).toHaveBeenCalledOnce();
+    expect(run).toHaveBeenCalledWith(document.querySelector('#best'), 'automatic');
+    observer.disconnect();
+  });
+
+  it('uses document order to break equal-score ties', () => {
+    document.body.innerHTML = `${captcha('first')}${captcha('second')}`;
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'first' }));
+    const observer = observeCaptchaImages({ run });
     expect(run).toHaveBeenCalledWith(document.querySelector('#first'), 'automatic');
-    const added = document.createElement('div'); added.innerHTML = '<img id="second">'; document.body.append(added);
+    expect(run).toHaveBeenCalledOnce();
+    observer.disconnect();
+  });
+
+  it('does not cascade to the second candidate after recognition fails', async () => {
+    document.body.innerHTML = `${captcha('first')}${captcha('second')}`;
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'first' }));
+    const observer = observeCaptchaImages({ run });
     await Promise.resolve();
-    const second = document.querySelector('#second') as HTMLImageElement;
-    second.setAttribute('src', 'a'); second.dispatchEvent(new Event('load')); second.setAttribute('srcset', 'b');
+    expect(run).toHaveBeenCalledOnce();
+    observer.disconnect();
+  });
+
+  it('re-evaluates when a materially stronger candidate appears later', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = captcha('first');
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'candidate' }));
+    const observer = observeCaptchaImages({ run });
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<form><img id="stronger" alt="captcha" width="120" height="40"><label for="stronger-field">Verification code</label><input id="stronger-field"></form>';
+    document.body.append(wrapper);
+    await Promise.resolve();
     await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledWith(second, 'automatic');
-    const count = run.mock.calls.length; observer.disconnect(); second.setAttribute('src', 'c'); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(count); vi.useRealTimers();
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenLastCalledWith(document.querySelector('#stronger'), 'automatic');
+    observer.disconnect();
+    vi.useRealTimers();
   });
-  it('ignores dynamically hidden images and removes its capture listener', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '';
-    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const cancelAll = vi.fn();
-    const remove = vi.spyOn(document, 'removeEventListener');
+
+  it('keeps a successfully filled candidate locked until its image changes', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = captcha('first');
+    const run = vi.fn(async () => ({ state: 'filled' as const, candidateId: 'first', fieldId: 'field', displayText: '1', fillValue: '1' }));
+    const observer = observeCaptchaImages({ run });
+    await Promise.resolve();
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<form><img id="stronger" alt="captcha" width="120" height="40"><label for="stronger-field">Verification code</label><input id="stronger-field"></form>';
+    document.body.append(wrapper);
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledOnce();
+    const first = document.querySelector('#first') as HTMLImageElement;
+    first.src = 'next.png';
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledTimes(2);
+    observer.disconnect();
+    vi.useRealTimers();
+  });
+
+  it('ignores unrelated DOM mutations and hidden images', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = captcha('first');
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'first' }));
+    const observer = observeCaptchaImages({ run });
+    document.body.append(document.createElement('span'));
+    const hidden = document.createElement('img');
+    hidden.hidden = true;
+    hidden.alt = 'captcha';
+    document.body.append(hidden);
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledOnce();
+    observer.disconnect();
+    vi.useRealTimers();
+  });
+
+  it('stops scheduled work and cancels active workflow work on disconnect', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = captcha('first');
+    const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'first' }));
+    const cancelAll = vi.fn();
     const observer = observeCaptchaImages({ run, cancelAll });
-    const hidden = document.createElement('img'); hidden.hidden = true; document.body.append(hidden); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).not.toHaveBeenCalled(); observer.disconnect();
-    expect(remove).toHaveBeenCalledWith('load', expect.any(Function), true); expect(cancelAll).toHaveBeenCalledOnce(); vi.useRealTimers();
-  });
-  it('processes src, srcset, and load revisions independently', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<img id="image">'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const image = document.querySelector('#image') as HTMLImageElement;
-    for (const change of [() => image.setAttribute('src', 'a'), () => image.setAttribute('srcset', 'b'), () => image.dispatchEvent(new Event('load'))]) { change(); await vi.advanceTimersByTimeAsync(150); }
-    expect(run).toHaveBeenCalledTimes(4); observer.disconnect(); vi.useRealTimers();
-  });
-  it('requeues an existing image when its input or ancestor visibility context changes', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<form id="wrap"><img id="image" alt="captcha" width="120" height="40"></form>';
-    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const wrap = document.querySelector('#wrap') as HTMLElement;
-    wrap.append(document.createElement('input')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    wrap.className = 'changed'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
-  });
-  it('does not requeue processed images for unrelated DOM additions', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<img><img><img>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
-    expect(run).toHaveBeenCalledTimes(3); document.body.append(document.createElement('span')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
-  });
-  it('requeues the associated image for field eligibility, label, and replacement changes', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<form id="form"><img id="image"><label id="label" for="field">Answer</label><input id="field"></form>';
-    const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const field = document.querySelector('#field') as HTMLInputElement; const label = document.querySelector('#label') as HTMLLabelElement; const form = document.querySelector('#form') as HTMLFormElement;
-    const mutate = async (change: () => void) => { change(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); };
-    await mutate(() => { field.className = 'visible-state'; }); await mutate(() => { field.style.display = 'none'; }); await mutate(() => { field.disabled = true; }); await mutate(() => { field.readOnly = true; }); await mutate(() => { label.firstChild!.textContent = 'Verification code'; }); await mutate(() => { field.remove(); }); await mutate(() => { const replacement = document.createElement('input'); replacement.id = 'field'; form.append(replacement); });
-    expect(run).toHaveBeenCalledTimes(8); observer.disconnect(); vi.useRealTimers();
-  });
-  it('requeues an image when its field is removed without replacement', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<form id="form"><img><input id="field"></form>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
-    (document.querySelector('#field') as HTMLInputElement).remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
-  });
-  it('uses a bounded visible-image fallback for a changed field outside the image container', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<section><img id="captcha"></section><div><input id="field"></div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
-    (document.querySelector('#field') as HTMLInputElement).setAttribute('aria-label', 'Verification code'); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledWith(document.querySelector('#captcha'), 'automatic'); expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
-  });
-  it('does not requeue images for unrelated observed attributes or text', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<img><img><div id="other">ordinary text</div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const other = document.querySelector('#other') as HTMLElement;
-    other.id = 'renamed'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); other.firstChild!.textContent = 'changed ordinary text'; await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
-  });
-  it('requeues the associated image when label text is removed', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<form><img><label id="label">Verification code</label><input></form>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run });
-    (document.querySelector('#label') as HTMLLabelElement).firstChild!.remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(2); observer.disconnect(); vi.useRealTimers();
-  });
-  it('requeues for nested field wrappers while keeping unrelated wrappers silent', async () => {
-    vi.useFakeTimers(); document.body.innerHTML = '<section><img></section><div id="fields"></div><div id="other"></div>'; const run = vi.fn(async () => ({ state: 'no_candidate' as const })); const observer = observeCaptchaImages({ run }); const fields = document.querySelector('#fields') as HTMLElement; const other = document.querySelector('#other') as HTMLElement;
-    const wrapper = document.createElement('div'); wrapper.innerHTML = '<div><label>Code</label><input></div>'; fields.append(wrapper); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    wrapper.remove(); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150); other.append(document.createElement('div')); await Promise.resolve(); await vi.advanceTimersByTimeAsync(150);
-    expect(run).toHaveBeenCalledTimes(3); observer.disconnect(); vi.useRealTimers();
+    (document.querySelector('#first') as HTMLImageElement).src = 'next.png';
+    observer.disconnect();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(run).toHaveBeenCalledOnce();
+    expect(cancelAll).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });

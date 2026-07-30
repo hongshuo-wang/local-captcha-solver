@@ -90,7 +90,7 @@ describe('OCR inference protocol', () => {
         type: 'ocr:result',
         requestId: 'request-1',
         imageRevision: 'revision-1',
-        results: [{ mode: 'digits', text: '42', confidence: 0.9 }],
+        results: [{ mode: 'arithmetic', text: '7*3', confidence: 0.9, requiresConfirmation: true }],
       }),
     ).toBe(true);
     expect(
@@ -113,6 +113,12 @@ describe('OCR inference protocol', () => {
       requestId: 'request-1',
       imageRevision: 'revision-1',
       results: [{ mode: 'unsupported', text: '42', confidence: 0.9 }],
+    },
+    {
+      type: 'ocr:result',
+      requestId: 'request-1',
+      imageRevision: 'revision-1',
+      results: [{ mode: 'arithmetic', text: '7*3', confidence: 0.9, requiresConfirmation: 'yes' }],
     },
   ])('rejects malformed responses', (message) => {
     expect(isInferenceResponse(message)).toBe(false);

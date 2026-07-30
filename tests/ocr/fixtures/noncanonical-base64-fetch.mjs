@@ -1,7 +1,7 @@
-const size = 13_606_051;
-const blob = '8ce4807e1e68c3fa5c1344d281cc7d1623a020cc';
-const path = 'ddddocr/common_old.onnx';
-const repo = 'sml2h3/ddddocr';
+const size = 326_866;
+const blob = '7b2bbdd2094d14e40338c7645b25a78ae8cd5364';
+const path = 'ThirdPartyNotices.txt';
+const repo = 'microsoft/onnxruntime';
 const gitUrl = `https://api.github.com/repos/${repo}/git/blobs/${blob}`;
 
 function jsonResponse(value) {
@@ -24,5 +24,5 @@ globalThis.fetch = async (input) => {
     return jsonResponse({ encoding: 'base64', sha: blob, size, content: 'AB==' });
   }
 
-  return new Promise(() => {});
+  throw new Error(`Unexpected fixture URL: ${url}`);
 };

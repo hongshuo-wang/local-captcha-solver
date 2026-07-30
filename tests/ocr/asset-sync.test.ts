@@ -17,7 +17,7 @@ function runSync(script: string, cwd: string) {
   });
 }
 
-it('validates a model-sized base64 blob without overflowing the stack', () => {
+it('validates an upstream base64 blob without overflowing the stack', () => {
   const result = spawnSync(
     process.execPath,
     [

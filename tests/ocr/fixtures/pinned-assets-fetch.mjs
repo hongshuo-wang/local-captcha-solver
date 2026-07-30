@@ -8,22 +8,6 @@ if (!sourceRoot) {
 
 const assets = [
   {
-    repo: 'sml2h3/ddddocr',
-    commit: 'c40f56f95412e10bcb9bd0bd24411e92f896d238',
-    path: 'ddddocr/common_old.onnx',
-    blob: '8ce4807e1e68c3fa5c1344d281cc7d1623a020cc',
-    size: 13_606_051,
-    source: 'public/models/common_old.onnx',
-  },
-  {
-    repo: 'renhaoyeh/ddddocr-node',
-    commit: 'f7be779568b08cbb3b12c895ce7f22fd6ccc554d',
-    path: 'onnx/common_old.json',
-    blob: 'bc50c087ee50455d364eaebd48a3a75fb58fee20',
-    size: 90_091,
-    source: 'public/models/common_old.json',
-  },
-  {
     repo: 'microsoft/onnxruntime',
     commit: 'a83fc4d58cb48eb68890dd689f94f28288cf2278',
     path: 'ThirdPartyNotices.txt',

@@ -1,3 +1,5 @@
+import { sha256 } from '@noble/hashes/sha2.js';
+
 import {
   MAX_CAPTCHA_IMAGE_DIMENSION,
   MAX_CAPTCHA_IMAGE_PIXELS,
@@ -99,15 +101,17 @@ function parseDataUrl(dataUrl: string): { bytes: Uint8Array; mimeType: string } 
 }
 
 async function revisionFor(bytes: Uint8Array, crypto: Pick<Crypto, 'subtle'> | undefined): Promise<string | undefined> {
-  if (crypto?.subtle === undefined) return undefined;
-  try {
-    const copy = new Uint8Array(bytes.length);
-    copy.set(bytes);
-    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', copy.buffer));
-    return [...digest].map((value) => value.toString(16).padStart(2, '0')).join('');
-  } catch {
-    return undefined;
+  if (crypto?.subtle !== undefined) {
+    try {
+      const copy = new Uint8Array(bytes.length);
+      copy.set(bytes);
+      const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', copy.buffer));
+      return [...digest].map((value) => value.toString(16).padStart(2, '0')).join('');
+    } catch { /* Insecure HTTP pages may expose crypto without a usable subtle implementation. */ }
   }
+  try {
+    return [...sha256(bytes)].map((value) => value.toString(16).padStart(2, '0')).join('');
+  } catch { return undefined; }
 }
 
 async function readyFromDataUrl(

@@ -4,6 +4,7 @@ export interface OcrResult {
   text: string;
   confidence: number;
   mode: RecognitionMode;
+  requiresConfirmation?: boolean;
 }
 
 export interface ImagePayload {
@@ -18,7 +19,7 @@ export interface ImageSource {
 
 export interface ModelInput {
   data: Float32Array;
-  dims: readonly [1, 1, 64, number];
+  dims: readonly [1, number, number, number];
 }
 
 export interface ImagePreprocessor {

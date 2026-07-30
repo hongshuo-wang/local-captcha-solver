@@ -17,6 +17,7 @@ import type { AtomicFileOperations } from './atomic-files';
 import type { CorpusSample } from './corpus';
 import type {
   BenchmarkEngine,
+  LegacyBenchmarkEngine,
   BenchmarkPrediction,
 } from './report';
 
@@ -30,7 +31,7 @@ export interface FootprintEntry {
 
 export function engineFootprintEntries(
   root: string,
-): Record<BenchmarkEngine, readonly FootprintEntry[]> {
+): Record<LegacyBenchmarkEngine, readonly FootprintEntry[]> {
   return {
     ddddocr: [
       { label: 'model', path: path.join(root, 'public', 'models', 'common_old.onnx') },

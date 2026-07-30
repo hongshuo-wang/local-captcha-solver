@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createModelStatusController, createPopupController, type ModelStatusView, type PopupView } from '../../src/popup/controller';
+import { createAutoFillPreferenceController, createCopyPreferenceController, createModelStatusController, createPopupController, createShortcutPreferenceController, type ModelStatusView, type PopupView } from '../../src/popup/controller';
 import type { ModelStatusSnapshot } from '../../src/background/model-status';
 
 function harness(options: { url?: string; state?: unknown; change?: unknown; permissionsGranted?: boolean; permissionRequest?: boolean } = {}) {
@@ -11,7 +11,7 @@ function harness(options: { url?: string; state?: unknown; change?: unknown; per
   const render = vi.fn();
   const view: PopupView = { render };
   const tabsQuery = vi.fn(async () => [{ url: Object.hasOwn(options, 'url') ? options.url : 'https://Portal.Example.test/login' }]);
-  const permissionsContains = vi.fn(async () => options.permissionsGranted ?? false);
+  const permissionsContains = vi.fn(async () => options.permissionsGranted ?? true);
   const permissionsRequest = vi.fn(async () => options.permissionRequest ?? true);
   const controller = createPopupController({
     tabs: { query: tabsQuery },
@@ -33,7 +33,7 @@ describe('popup controller', () => {
 
     await app.controller.start();
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: 'portal.example.test', checked: true, disabled: false, status: 'Automatic recognition is on.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: 'portal.example.test', checked: true, disabled: false, status: '此网站已开启自动识别。' }));
     expect(app.sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-site-state' });
   });
 
@@ -42,16 +42,15 @@ describe('popup controller', () => {
 
     await app.controller.start();
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: '此网站未开启自动识别。' }));
   });
 
-  it('shows a permission denial and keeps the toggle off', async () => {
-    const app = harness({ state: { enabled: false }, change: { enabled: false, reason: 'permission-denied' } });
+  it('shows the one-step access state and keeps controls disabled when global access is absent', async () => {
+    const app = harness({ permissionsGranted: false, permissionRequest: false });
     await app.controller.start();
-
-    await app.controller.setEnabled(true);
-
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: 'Permission was not granted for this site.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, accessGranted: false }));
+    await app.controller.grantAccess();
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: '需要授权后才能自动识别。' }));
   });
 
   it('treats a permission removal failure as a successful disable', async () => {
@@ -60,7 +59,7 @@ describe('popup controller', () => {
 
     await app.controller.setEnabled(false);
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off. Site permission could not be removed.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: '此网站未开启自动识别。' }));
   });
 
   it.each(['edge://extensions/', 'about:blank', 'file:///tmp/captcha.html', undefined])('does not send messages for unsupported pages (%s)', async (url) => {
@@ -68,7 +67,7 @@ describe('popup controller', () => {
 
     await app.controller.start();
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: 'Unsupported page', checked: false, disabled: true, status: 'Automatic recognition is unavailable on this page.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ hostname: '不支持的页面', checked: false, disabled: true, status: '当前页面不支持自动识别。' }));
     expect(app.sendMessage).not.toHaveBeenCalled();
     await app.controller.setEnabled(true);
     expect(app.sendMessage).not.toHaveBeenCalled();
@@ -82,7 +81,7 @@ describe('popup controller', () => {
     await app.controller.start();
 
     const changing = app.controller.setEnabled(true);
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, status: 'Updating site setting...' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, status: '正在更新网站设置…' }));
     release({ enabled: true });
     await changing;
 
@@ -95,7 +94,7 @@ describe('popup controller', () => {
 
     await app.controller.setEnabled(false);
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: true, disabled: false, error: 'Could not update this site setting.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: true, disabled: false, error: '无法更新网站设置。' }));
   });
 
   it('does not treat an incomplete enable response as a permission denial', async () => {
@@ -104,17 +103,15 @@ describe('popup controller', () => {
 
     await app.controller.setEnabled(true);
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: 'Could not update this site setting.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: '无法更新网站设置。' }));
   });
 
-  it('includes the rendered hostname in a toggle request', async () => {
-    const app = harness({ state: { enabled: false }, change: { enabled: true } });
+  it('requests all-site origins once and includes the rendered hostname in the enable request', async () => {
+    const app = harness({ permissionsGranted: false, change: { enabled: true } });
     await app.controller.start();
-
-    await app.controller.setEnabled(true);
-
-    expect(app.permissionsContains).toHaveBeenCalledWith({ origins: ['http://portal.example.test/*', 'https://portal.example.test/*'] });
-    expect(app.permissionsRequest).toHaveBeenCalledWith({ origins: ['http://portal.example.test/*', 'https://portal.example.test/*'] });
+    await app.controller.grantAccess();
+    expect(app.permissionsContains).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] });
+    expect(app.permissionsRequest).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] });
     expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: false });
   });
 
@@ -126,17 +123,17 @@ describe('popup controller', () => {
 
     expect(app.permissionsContains).toHaveBeenCalledOnce();
     expect(app.permissionsRequest).not.toHaveBeenCalled();
-    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test', permissionAlreadyGranted: true });
+    expect(app.sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-site-enabled', enabled: true, hostname: 'portal.example.test' });
   });
 
   it('does not update background state when popup permission is denied', async () => {
-    const app = harness({ state: { enabled: false }, permissionRequest: false });
+    const app = harness({ state: { enabled: false }, permissionsGranted: false, permissionRequest: false });
 
     await app.controller.start();
-    await app.controller.setEnabled(true);
+    await app.controller.grantAccess();
 
-    expect(app.sendMessage).toHaveBeenCalledOnce();
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, error: 'Permission was not granted for this site.' }));
+    expect(app.sendMessage).not.toHaveBeenCalled();
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: '需要授权后才能自动识别。' }));
   });
 
   it('refreshes the current site after the background rejects a stale hostname', async () => {
@@ -162,7 +159,7 @@ describe('popup controller', () => {
 
     await app.controller.start();
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: 'Could not load this site setting.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: '无法读取网站设置。' }));
   });
 
   it('shows a typed loading error when the initial state request rejects', async () => {
@@ -171,7 +168,7 @@ describe('popup controller', () => {
 
     await app.controller.start();
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: 'Could not load this site setting.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: true, error: '无法读取网站设置。' }));
   });
 
   it('does not mutate when the initial site state is unknown', async () => {
@@ -231,7 +228,7 @@ describe('popup controller', () => {
     firstMutation.resolve({ enabled: true });
     await first;
 
-    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: 'Automatic recognition is off.' }));
+    expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: '此网站未开启自动识别。' }));
   });
 });
 
@@ -244,6 +241,54 @@ function modelSnapshot(overrides: Partial<ModelStatusSnapshot> = {}): ModelStatu
     ...overrides,
   };
 }
+
+describe('popup copy preference controller', () => {
+  it('loads and saves the no-field copy preference', async () => {
+    const render = vi.fn();
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce({ copyOnNoField: false })
+      .mockResolvedValueOnce({ copyOnNoField: true });
+    const controller = createCopyPreferenceController({ runtime: { sendMessage } }, { renderCopyPreference: render });
+
+    await controller.start();
+    expect(render).toHaveBeenLastCalledWith(false);
+    await controller.setEnabled(true);
+    expect(sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-preferences', copyOnNoField: true });
+    expect(render).toHaveBeenLastCalledWith(true);
+  });
+});
+
+describe('popup auto-fill preference controller', () => {
+  it('loads the enabled default and saves an explicit disabled preference', async () => {
+    const render = vi.fn();
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce({ autoFill: true })
+      .mockResolvedValueOnce({ autoFill: false });
+    const controller = createAutoFillPreferenceController({ runtime: { sendMessage } }, { renderAutoFillPreference: render });
+
+    await controller.start();
+    expect(render).toHaveBeenLastCalledWith(true);
+    await controller.setEnabled(false);
+    expect(sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-preferences', autoFill: false });
+    expect(render).toHaveBeenLastCalledWith(false);
+  });
+});
+
+describe('popup shortcut preference controller', () => {
+  it('loads the middle-button default and saves a custom shortcut', async () => {
+    const render = vi.fn();
+    const sendMessage = vi.fn()
+      .mockResolvedValueOnce({ copyOnNoField: true, recognitionShortcut: 'middle' })
+      .mockResolvedValueOnce({ copyOnNoField: true, recognitionShortcut: 'alt-click' });
+    const controller = createShortcutPreferenceController({ runtime: { sendMessage } }, { renderShortcutPreference: render });
+
+    await controller.start();
+    expect(render).toHaveBeenLastCalledWith('middle');
+    await controller.setShortcut('alt-click');
+    expect(sendMessage).toHaveBeenLastCalledWith({ type: 'captcha:set-preferences', recognitionShortcut: 'alt-click' });
+    expect(render).toHaveBeenLastCalledWith('alt-click');
+  });
+});
 
 describe('popup model status controller', () => {
   it('polls a loading startup snapshot until the model is ready', async () => {

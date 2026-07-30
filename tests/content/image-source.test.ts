@@ -33,9 +33,12 @@ describe('acquireImage', () => {
   it.each([
     {} as Pick<Crypto, 'subtle'>,
     { subtle: { digest: vi.fn(async () => { throw new Error('digest failed'); }) } } as unknown as Pick<Crypto, 'subtle'>,
-  ])('fails closed when SHA-256 is unavailable', async (crypto) => {
+  ])('uses the local SHA-256 fallback when Web Crypto is unavailable', async (crypto) => {
     await expect(acquireImage(image('data:image/png;base64,AQID'), { crypto })).resolves.toEqual({
-      state: 'image_unavailable', reason: 'network',
+      state: 'ready',
+      dataUrl: 'data:image/png;base64,AQID',
+      mimeType: 'image/png',
+      revision: '039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81',
     });
   });
 

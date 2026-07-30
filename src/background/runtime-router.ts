@@ -1,11 +1,12 @@
 import type { ImageFetcher } from './image-fetch';
 import type { InferenceHost } from './inference-host';
-import { hostnameForPage, normalizeHostname } from '../platform/settings-store';
-import { originsForPage } from '../platform/permissions';
+import { hostnameForPage, isRecognitionShortcut, normalizeHostname, type RecognitionShortcut, type SettingsStore } from '../platform/settings-store';
+import { GLOBAL_HTTP_ORIGINS } from '../platform/permissions';
 import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
 import type { EnableRegistrationOptions } from './content-registration';
 import type { ModelStatusStore } from './model-status';
+import type { WorkflowActivityOutcome } from './model-status';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
 export interface RuntimeRouterAdapter {
@@ -17,7 +18,9 @@ export interface RuntimeRouterAdapter {
     isEnabled(pageUrl: string): Promise<boolean>;
     enablePage(pageUrl: string, options?: EnableRegistrationOptions): Promise<unknown>;
     disablePage(pageUrl: string): Promise<unknown>;
+    reconcile?(): Promise<void>;
   };
+  settings?: Pick<SettingsStore, 'read' | 'setCopyOnNoField' | 'setAutoFill' | 'setRecognitionShortcut'>;
   activeTab(): Promise<{ id?: number; url?: string } | undefined>;
 }
 
@@ -63,9 +66,15 @@ export interface RuntimeRouter { handle(message: unknown, sender: RuntimeSender)
 function pageOrigin(pageUrl: unknown): string | undefined {
   if (typeof pageUrl !== 'string') return undefined;
   try {
-    const hostname = hostnameForPage(pageUrl);
-    const scheme = new URL(pageUrl).protocol;
-    return `${scheme}//${hostname}/*`;
+    hostnameForPage(pageUrl);
+    return new URL(pageUrl).origin;
+  } catch { return undefined; }
+}
+
+function permissionOriginForPage(pageUrl: string): string | undefined {
+  try {
+    const url = new URL(pageUrl);
+    return `${url.protocol}//${hostnameForPage(pageUrl)}/*`;
   } catch { return undefined; }
 }
 
@@ -89,6 +98,10 @@ function recognitionError(error: unknown): { type: 'captcha:recognition-error'; 
   return { type: 'captcha:recognition-error', code: typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'model_unavailable' ? 'model_unavailable' : 'recognition_failed' };
 }
 
+function isWorkflowActivity(value: unknown): value is WorkflowActivityOutcome {
+  return value === 'filled' || value === 'confirmation' || value === 'copied' || value === 'no_field' || value === 'failed';
+}
+
 export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRouter {
   const startWarmup = (): void => {
     void runWarmup(adapter)?.catch(() => undefined);
@@ -102,10 +115,39 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   return {
     async handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined> {
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
-      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown };
+      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown };
+      if (request.type === 'captcha:get-preferences') {
+        const settings = await adapter.settings?.read();
+        return { copyOnNoField: settings?.copyOnNoField === true, autoFill: settings?.autoFill !== false, recognitionShortcut: settings?.recognitionShortcut ?? 'middle' };
+      }
+      if (request.type === 'captcha:reconcile-access') {
+        if (sender.tab !== undefined || adapter.siteState.reconcile === undefined) return { reconciled: false };
+        await adapter.siteState.reconcile();
+        return { reconciled: true };
+      }
+      if (request.type === 'captcha:set-preferences') {
+        const current = await adapter.settings?.read();
+        const copyOnNoField = current?.copyOnNoField === true;
+        const autoFill = current?.autoFill !== false;
+        const recognitionShortcut = current?.recognitionShortcut ?? 'middle';
+        const changesCopy = request.copyOnNoField !== undefined;
+        const changesAutoFill = request.autoFill !== undefined;
+        const changesShortcut = request.recognitionShortcut !== undefined;
+        if ((!changesCopy && !changesAutoFill && !changesShortcut) || (changesCopy && typeof request.copyOnNoField !== 'boolean') || (changesAutoFill && typeof request.autoFill !== 'boolean') || (changesShortcut && !isRecognitionShortcut(request.recognitionShortcut))) {
+          return { copyOnNoField, autoFill, recognitionShortcut, reason: 'invalid-request' };
+        }
+        if (adapter.settings !== undefined && changesCopy) await adapter.settings.setCopyOnNoField(request.copyOnNoField as boolean);
+        if (adapter.settings !== undefined && changesAutoFill) await adapter.settings.setAutoFill(request.autoFill as boolean);
+        if (adapter.settings !== undefined && changesShortcut) await adapter.settings.setRecognitionShortcut(request.recognitionShortcut as RecognitionShortcut);
+        return {
+          copyOnNoField: changesCopy ? request.copyOnNoField : copyOnNoField,
+          autoFill: changesAutoFill ? request.autoFill : autoFill,
+          recognitionShortcut: changesShortcut ? request.recognitionShortcut : recognitionShortcut,
+        };
+      }
       if (request.type === 'captcha:acquire-image') {
         const page = senderPage(sender);
-        const origin = page === undefined ? undefined : pageOrigin(page);
+        const origin = page === undefined ? undefined : permissionOriginForPage(page);
         let permitted = false;
         if (origin !== undefined) {
           try { permitted = await adapter.permissions.contains({ origins: [origin] }); } catch { permitted = false; }
@@ -135,6 +177,11 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
           return recognitionError(error);
         }
       }
+      if (request.type === 'captcha:record-activity') {
+        if (senderPage(sender) === undefined || !isWorkflowActivity(request.outcome)) return { recorded: false };
+        adapter.modelStatus.workflowCompleted(request.outcome);
+        return { recorded: true };
+      }
       if (request.type === 'captcha:get-model-status') return adapter.modelStatus.snapshot();
       if (request.type === 'captcha:retry-model-warmup') {
         void runWarmup(adapter, { force: true })?.catch(() => undefined);
@@ -143,7 +190,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (request.type === 'captcha:get-site-state' || request.type === 'captcha:get-status') {
         const page = await currentPage(sender);
         if (page === undefined) return { enabled: false };
-        try { const enabled = await adapter.permissions.contains({ origins: originsForPage(page) }) && await adapter.siteState.isEnabled(page); if (enabled) startWarmup(); return { enabled }; } catch { return { enabled: false }; }
+        try { const enabled = await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS }) && await adapter.siteState.isEnabled(page); if (enabled) startWarmup(); return { enabled }; } catch { return { enabled: false }; }
       }
       if (request.type === 'captcha:set-site-enabled') {
         const page = await currentPage(sender);

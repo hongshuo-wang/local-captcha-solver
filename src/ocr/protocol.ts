@@ -93,7 +93,9 @@ function isOcrResult(value: unknown): value is OcrResult {
     isRecognitionMode(value.mode) &&
     typeof value.text === 'string' &&
     typeof value.confidence === 'number' &&
-    Number.isFinite(value.confidence)
+    Number.isFinite(value.confidence) &&
+    (value.requiresConfirmation === undefined ||
+      typeof value.requiresConfirmation === 'boolean')
   );
 }
 

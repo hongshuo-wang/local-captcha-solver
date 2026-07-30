@@ -1,12 +1,15 @@
-import * as ort from 'onnxruntime-web';
+import * as ort from 'onnxruntime-web/wasm';
 
 import type { ImagePayload, ModelInput } from '../src/core/types';
-import {
-  DdddOcrEngine,
-  OcrEngineError,
-} from '../src/ocr/ddddocr-engine';
+import { OcrEngineError } from '../src/ocr/ddddocr-engine';
 import { isInferenceRequest } from '../src/ocr/protocol';
 import type { OcrSessionFactory } from '../src/ocr/ddddocr-engine';
+import { ACTIVE_OCR_ENGINE } from '../src/ocr/engine-selection';
+import {
+  BrowserPpOcrV6Preprocessor,
+  PpOcrV6Engine,
+  parsePpOcrV6RuntimeConfig,
+} from '../src/ocr/ppocrv6-engine';
 import type { InferenceErrorCode, InferenceResponse } from '../src/ocr/protocol';
 
 const getExtensionUrl = browser.runtime.getURL as (path: string) => string;
@@ -30,9 +33,11 @@ function createSessionFactory(): OcrSessionFactory {
       const session = await ort.InferenceSession.create(modelUrl);
       return {
         async run(feeds) {
-          const input = feeds.input1 as ModelInput;
+          const values = Object.values(feeds);
+          if (values.length !== 1) throw new RangeError('OCR session requires exactly one input');
+          const input = values[0] as ModelInput;
           const outputs = await session.run({
-            input1: new ort.Tensor('float32', input.data, [...input.dims]),
+            [session.inputNames[0]]: new ort.Tensor('float32', input.data, [...input.dims]),
           });
 
           return Object.fromEntries(
@@ -49,28 +54,19 @@ function createSessionFactory(): OcrSessionFactory {
   };
 }
 
-async function loadCharset(): Promise<readonly string[]> {
-  const response = await fetch(getExtensionUrl('models/common_old.json'));
-  if (!response.ok) {
-    throw new Error(`Could not load OCR charset (${response.status})`);
-  }
-
-  const charset: unknown = await response.json();
-  if (!Array.isArray(charset) || !charset.every((value) => typeof value === 'string')) {
-    throw new TypeError('OCR charset must be an array of strings');
-  }
-  return charset;
+async function loadPpOcrV6Config(assetName: 'ppocrv6-small' | 'captcha-ctc') {
+  const response = await fetch(getExtensionUrl(`models/${assetName}.json`));
+  if (!response.ok) throw new Error(`Could not load PP-OCRv6 config (${response.status})`);
+  return parsePpOcrV6RuntimeConfig(await response.json());
 }
 
-const enginePromise = loadCharset()
-  .then(
-    (charset) =>
-      new DdddOcrEngine(
-        createSessionFactory(),
-        getExtensionUrl('models/common_old.onnx'),
-        charset,
-      ),
-  )
+const ppOcrAsset = ACTIVE_OCR_ENGINE === 'captcha-ctc' ? 'captcha-ctc' : 'ppocrv6-small';
+const enginePromise = loadPpOcrV6Config(ppOcrAsset).then((config) => new PpOcrV6Engine(
+  createSessionFactory(),
+  getExtensionUrl(`models/${ppOcrAsset}.onnx`),
+  config.charset,
+  new BrowserPpOcrV6Preprocessor(config.imageShape),
+))
   .catch((cause: unknown) => {
     throw new OcrEngineError(
       'model_unavailable',
@@ -95,7 +91,7 @@ function failure(
   };
 }
 
-browser.runtime.onMessage.addListener(async (message: unknown): Promise<InferenceResponse | undefined> => {
+async function handleInferenceMessage(message: unknown): Promise<InferenceResponse | undefined> {
   if (!isInferenceRequest(message)) {
     return undefined;
   }
@@ -115,4 +111,12 @@ browser.runtime.onMessage.addListener(async (message: unknown): Promise<Inferenc
   } catch (error) {
     return failure(message.requestId, message.imageRevision, error);
   }
+}
+
+browser.runtime.onMessage.addListener((message: unknown, _sender: unknown, sendResponse?: (response: InferenceResponse | undefined) => void) => {
+  if (!isInferenceRequest(message)) return undefined;
+  const response = handleInferenceMessage(message);
+  if (sendResponse === undefined) return response;
+  void response.then(sendResponse);
+  return true;
 });

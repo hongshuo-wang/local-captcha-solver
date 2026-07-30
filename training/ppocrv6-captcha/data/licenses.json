@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "licenses": [
+    {
+      "id": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "url": "https://creativecommons.org/licenses/by/4.0/",
+      "redistribution": true
+    },
+    {
+      "id": "CC0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "redistribution": true
+    },
+    {
+      "id": "Apache-2.0",
+      "name": "Apache License 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0",
+      "redistribution": true
+    },
+    {
+      "id": "generated-project",
+      "name": "Project-generated CAPTCHA training data",
+      "url": null,
+      "redistribution": true
+    }
+  ]
+}

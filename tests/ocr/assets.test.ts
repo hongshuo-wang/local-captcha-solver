@@ -6,14 +6,14 @@ import { describe, expect, it } from 'vitest';
 
 const assets = [
   {
-    path: 'public/models/common_old.onnx',
-    size: 13_606_051,
-    gitBlobSha: '8ce4807e1e68c3fa5c1344d281cc7d1623a020cc',
+    path: 'public/models/captcha-ctc.onnx',
+    size: 2_242_324,
+    sha256: 'bce3e791636f369dd8bbac9b4eee2a0d9515f001b89b422f6d250c33ee6bbc28',
   },
   {
-    path: 'public/models/common_old.json',
-    size: 90_091,
-    gitBlobSha: 'bc50c087ee50455d364eaebd48a3a75fb58fee20',
+    path: 'public/models/captcha-ctc.json',
+    size: 768,
+    sha256: 'efebc4c5e6a9de3d3cdf0a58d482a869f801352dd2ab8da73dc6f2baa8f29a5a',
   },
   {
     path: 'public/ort/ort-wasm-simd-threaded.wasm',
@@ -62,6 +62,13 @@ describe('pinned OCR assets', () => {
     await expect(readdir(resolve('public/ort')).then((entries) => entries.sort())).resolves.toEqual([
       'ort-wasm-simd-threaded.mjs',
       'ort-wasm-simd-threaded.wasm',
+    ]);
+  });
+
+  it('contains only the selected production OCR model pair', async () => {
+    await expect(readdir(resolve('public/models')).then((entries) => entries.sort())).resolves.toEqual([
+      'captcha-ctc.json',
+      'captcha-ctc.onnx',
     ]);
   });
 });

@@ -193,6 +193,35 @@ describe('decodeArithmeticCtc', () => {
   });
 
   it.each([
+    ['equals then question mark', ['7', '*', '3', '=', '?'], '7*3=?'],
+    ['question mark then equals', ['1', '2', '+', '3', '4', '?', '='], '12+34?='],
+  ] as const)('preserves a complete %s suffix', (_name, path, expected) => {
+    const values = pathLogits(path);
+
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toMatchObject({ text: expected });
+  });
+
+  it('does not shorten a multi-digit right operand without suffix evidence', () => {
+    const path = ['1', '2', '+', '3', '4'] as const;
+    const values = pathLogits(path);
+
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toMatchObject({ text: '12+34' });
+  });
+
+  it('separates a trailing placeholder when a strong separator appears after the expression', () => {
+    const path = ['7', '*', '3', '-', '2'] as const;
+    const values = pathLogits(path);
+
+    expect(
+      decodeArithmeticCtc(values, [1, path.length, FULL_CHARSET.length], FULL_CHARSET),
+    ).toMatchObject({ text: '7*3', requiresConfirmation: true });
+  });
+
+  it.each([
     ['batch-first', [1, 3, FULL_CHARSET.length]],
     ['time-first', [3, 1, FULL_CHARSET.length]],
   ] as const)('supports the %s tensor layout', (_name, dims) => {

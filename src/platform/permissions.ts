@@ -20,24 +20,20 @@ export function originsForPage(pageUrl: string): readonly [string, string] {
   return [`http://${hostname}/*`, `https://${hostname}/*`];
 }
 
+export const GLOBAL_HTTP_ORIGINS = ['http://*/*', 'https://*/*'] as const;
+
 export function createPermissionManager(adapter: BrowserAdapter, settings: SettingsStore = createSettingsStore(adapter)): PermissionManager {
   return {
     async enablePage(pageUrl: string): Promise<EnablePageResult> {
       const hostname = hostnameForPage(pageUrl);
-      const origins = originsForPage(pageUrl);
-      if (!await adapter.requestOrigins(origins)) return { enabled: false, reason: 'permission-denied' };
+      if (!await adapter.requestOrigins(GLOBAL_HTTP_ORIGINS)) return { enabled: false, reason: 'permission-denied' };
       await settings.enable(hostname);
       return { enabled: true };
     },
     async disablePage(pageUrl: string): Promise<DisablePageResult> {
       const hostname = hostnameForPage(pageUrl);
-      const origins = originsForPage(pageUrl);
       await settings.disable(hostname);
-      try {
-        return { disabled: true, permissionRemoved: await adapter.removeOrigins(origins) };
-      } catch {
-        return { disabled: true, permissionRemoved: false };
-      }
+      return { disabled: true, permissionRemoved: false };
     },
   };
 }

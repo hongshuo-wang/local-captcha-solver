@@ -59,13 +59,17 @@ describe('originsForPage', () => {
     '\nhttps://:@example.test/',
     'https:@example.test/',
     'https:example.test/',
-    'https://example.test:8443/',
-    'https://127.0.0.1/',
-    'https://[::1]/',
-    'https://localhost/',
     'not a URL',
   ])('rejects an unsupported page URL %j', (pageUrl) => {
     expect(() => originsForPage(pageUrl)).toThrow();
+  });
+
+  it.each([
+    ['http://172.26.54.105:9000/login', ['http://172.26.54.105/*', 'https://172.26.54.105/*']],
+    ['https://[::1]:8443/login', ['http://[::1]/*', 'https://[::1]/*']],
+    ['http://localhost:3000/login', ['http://localhost/*', 'https://localhost/*']],
+  ])('supports IP, localhost, and port pages: %s', (pageUrl, expected) => {
+    expect(originsForPage(pageUrl)).toEqual(expected);
   });
 
   it('allows an at sign outside the URL authority userinfo segment', () => {
@@ -77,33 +81,33 @@ describe('originsForPage', () => {
 });
 
 describe('createPermissionManager', () => {
-  it('does not persist an allowlist entry when permission is denied', async () => {
+  it('does not change settings when global permission is denied', async () => {
     const adapter = adapterWith(false);
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: false, reason: 'permission-denied' });
     expect(adapter.calls).toEqual(['request']);
-    expect(adapter.requested).toEqual([['http://portal.example.test/*', 'https://portal.example.test/*']]);
+    expect(adapter.requested).toEqual([['http://*/*', 'https://*/*']]);
     expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toBeUndefined();
   });
 
-  it('requests exact origins before persisting a granted hostname', async () => {
+  it('requests global origins and persists the versioned default settings', async () => {
     const adapter = adapterWith(true);
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: true });
     expect(adapter.calls).toEqual(['request', 'get', 'set']);
-    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ version: 1, allowlistedHosts: ['portal.example.test'] });
+    expect(adapter.requested).toEqual([['http://*/*', 'https://*/*']]);
+    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ version: 2, disabledHosts: [], copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' });
   });
 
-  it('removes the local allowlist entry before attempting permission removal', async () => {
+  it('adds a local disabled-host entry without removing global permission', async () => {
     const adapter = adapterWith(true, false);
-    adapter.values.set(SETTINGS_STORAGE_KEY, { version: 1, allowlistedHosts: ['portal.example.test'] });
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.disablePage('https://portal.example.test/captcha')).resolves.toEqual({ disabled: true, permissionRemoved: false });
-    expect(adapter.calls).toEqual(['get', 'set', 'remove']);
-    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ version: 1, allowlistedHosts: [] });
-    expect(adapter.removed).toEqual([['http://portal.example.test/*', 'https://portal.example.test/*']]);
+    expect(adapter.calls).toEqual(['get', 'set']);
+    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ version: 2, disabledHosts: ['portal.example.test'], copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' });
+    expect(adapter.removed).toEqual([]);
   });
 });

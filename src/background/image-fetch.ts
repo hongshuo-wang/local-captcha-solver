@@ -75,7 +75,8 @@ export function createImageFetcher(adapter: ImageFetchAdapter): ImageFetcher {
       }
       if (url.protocol !== 'http:' && url.protocol !== 'https:') return unavailable('type');
 
-      const origin = `${url.protocol}//${url.host}/*`;
+      // Chromium match patterns cover every port and therefore use hostname, not host.
+      const origin = `${url.protocol}//${url.hostname}/*`;
       try {
         if (!await adapter.permissions.contains({ origins: [origin] })) return unavailable('permission');
       } catch {

@@ -101,4 +101,12 @@ describe('matchCaptchaField', () => {
     expect(UNIQUE_FIELD_MARGIN).toBe(15);
     expect(belowThreshold).toEqual({ state: 'none', candidates: [] });
   });
+
+  it('recognizes Chinese verification context and an expanded nearby range', () => {
+    const match = matchCaptchaField(image, [field({
+      id: 'textarea', type: 'textarea', distance: 240, sameForm: false, labelText: '请输入验证码',
+    })]);
+
+    expect(match).toMatchObject({ state: 'unique', winner: { id: 'textarea' } });
+  });
 });

@@ -1,8 +1,9 @@
 import { hostnameForPage, normalizeHostname, type SettingsStore } from '../platform/settings-store';
-import { originsForPage } from '../platform/permissions';
+import { GLOBAL_HTTP_ORIGINS } from '../platform/permissions';
 
 export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
 const REGISTRATION_PREFIX = 'captcha-auto-';
+export const GLOBAL_REGISTRATION_ID = `${REGISTRATION_PREFIX}global`;
 
 export interface RegisteredContentScript {
   id: string;
@@ -41,7 +42,7 @@ export interface ContentRegistration {
 }
 
 function exactOrigins(hostname: string): readonly [string, string] {
-  return originsForPage(`https://${hostname}/`);
+  return [`http://${hostname}/*`, `https://${hostname}/*`];
 }
 
 export async function contentScriptRegistrationId(hostname: string): Promise<string> {
@@ -51,8 +52,8 @@ export async function contentScriptRegistrationId(hostname: string): Promise<str
   return `${REGISTRATION_PREFIX}${hex.slice(0, 16)}`;
 }
 
-function scriptFor(hostname: string, id: string): Required<RegisteredContentScript> {
-  return { id, matches: [...exactOrigins(hostname)], js: [CONTENT_SCRIPT_FILE], persistAcrossSessions: true };
+function globalScript(): Required<RegisteredContentScript> {
+  return { id: GLOBAL_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: [CONTENT_SCRIPT_FILE], persistAcrossSessions: true };
 }
 
 function isSameScript(actual: RegisteredContentScript, expected: Required<RegisteredContentScript>): boolean {
@@ -89,12 +90,8 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
   };
 
   const reconcileInternal = async (): Promise<void> => {
-      const settings = await adapter.settings.read();
-      const expected = await Promise.all(settings.allowlistedHosts.map(async (hostname) => {
-        const origins = exactOrigins(hostname);
-        return await adapter.permissions.contains({ origins }) ? scriptFor(hostname, await contentScriptRegistrationId(hostname)) : undefined;
-      }));
-      const desired = expected.filter((script): script is Required<RegisteredContentScript> => script !== undefined);
+      const hasGlobalAccess = await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS });
+      const desired = hasGlobalAccess ? [globalScript()] : [];
       const current = await adapter.scripting.getRegisteredContentScripts();
       const kept = new Set<string>();
       const invalid = current.filter((script) => {
@@ -124,7 +121,7 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
 
   const enablePage = async (pageUrl: string, options?: EnableRegistrationOptions): Promise<EnableRegistrationResult> => {
       const hostname = hostnameForPage(pageUrl);
-      const origins = exactOrigins(hostname);
+      const origins = GLOBAL_HTTP_ORIGINS;
       let previouslyGranted: boolean;
       try { previouslyGranted = await adapter.permissions.contains({ origins }); } catch { return { enabled: false, reason: 'permission-unavailable' }; }
       let newlyGranted = !previouslyGranted;
@@ -152,13 +149,9 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
 
   const disablePage = async (pageUrl: string): Promise<DisableRegistrationResult> => {
       const hostname = hostnameForPage(pageUrl);
-      const origins = exactOrigins(hostname);
       await adapter.settings.disable(hostname);
-      const id = await contentScriptRegistrationId(hostname);
-      try { await unregister([id]); } catch { /* Registration may already have been removed. */ }
-      try { await notifyTabs(adapter, hostname, 'captcha:auto-disable'); } finally {
-        try { return { disabled: true, permissionRemoved: await adapter.permissions.remove({ origins }) }; } catch { return { disabled: true, permissionRemoved: false }; }
-      }
+      try { await notifyTabs(adapter, hostname, 'captcha:auto-disable'); } catch { /* Future automatic runs remain blocked by settings. */ }
+      return { disabled: true, permissionRemoved: false };
   };
 
   return { reconcile, enablePage: (pageUrl, options) => serialize(() => enablePage(pageUrl, options)), disablePage: (pageUrl) => serialize(() => disablePage(pageUrl)) };

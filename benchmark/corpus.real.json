@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "samples": [
+    {
+      "id": "real-bd055d362cf75d55",
+      "category": "arithmetic",
+      "image": "benchmark/fixtures/real/bd055d362cf75d551777b939e8e64614601cd5bad9c7962ae63c42eb10acaa43.png",
+      "answer": "7*3=?",
+      "fill": "21",
+      "sha256": "bd055d362cf75d551777b939e8e64614601cd5bad9c7962ae63c42eb10acaa43",
+      "provenance": "User-provided CAPTCHA screenshot recovered from prior local session artifact dated 2026-07-26",
+      "license": "User authorized local benchmark use in the 2026-07-28 project request"
+    }
+  ]
+}

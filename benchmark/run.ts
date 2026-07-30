@@ -20,9 +20,9 @@ import { evaluateHardGate, gateExitCode } from './gate';
 import type { HardGateResult } from './gate';
 import { ARITHMETIC_OPERATOR_GROUPS, buildReport } from './report';
 import type {
-  BenchmarkEngine,
   BenchmarkMetrics,
   BenchmarkPrediction,
+  LegacyBenchmarkEngine,
 } from './report';
 import {
   calculateFootprint,
@@ -317,7 +317,7 @@ export async function main(): Promise<number> {
     },
     packageFootprints,
     gates: gate,
-    engines: { ddddocr, tesseract } satisfies Record<BenchmarkEngine, EngineResult>,
+    engines: { ddddocr, tesseract } satisfies Record<LegacyBenchmarkEngine, EngineResult>,
   };
 
   await mkdir(RESULT_DIRECTORY, { recursive: true });
