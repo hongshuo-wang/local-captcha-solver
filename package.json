@@ -52,7 +52,7 @@
     "benchmark": "tsx benchmark/run.ts"
   },
   "dependencies": {
-    "@noble/hashes": "2.0.1",
+    "@noble/hashes": "2.2.0",
     "onnxruntime-web": "1.23.2"
   },
   "devDependencies": {
