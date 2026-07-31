@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@noble/hashes": "2.0.1",
-    "onnxruntime-web": "1.23.2"
+    "onnxruntime-web": "1.27.0"
   },
   "devDependencies": {
     "@fontsource/kalam": "5.2.7",
