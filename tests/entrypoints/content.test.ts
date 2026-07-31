@@ -115,6 +115,25 @@ describe('content runtime messages', () => {
     content.disable();
   });
 
+  it('captures a middle click before a page listener stops it at the window boundary', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<img id="image" alt="验证码" width="120" height="40" src="data:image/png;base64,AQ==">';
+    const blockDocument = (event: MouseEvent) => event.stopPropagation();
+    window.addEventListener('mousedown', blockDocument, true);
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize'
+      ? [{ mode: 'digits', text: '9', confidence: .9 }]
+      : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    const image = document.querySelector('#image') as HTMLImageElement;
+
+    expect(image.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 1, composed: true }))).toBe(false);
+    await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'captcha:recognize' })));
+
+    window.removeEventListener('mousedown', blockDocument, true);
+    content.disable();
+  });
+
   it('applies a custom shortcut and updates it from storage without reloading', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value);
     document.body.innerHTML = '<img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ==">';
@@ -193,6 +212,26 @@ describe('content runtime messages', () => {
 
     expect(statusText()).toContain('8642');
     expect(statusText()).toContain('自动复制失败');
+  });
+
+  it('lets the user select an otherwise unmatched safe field after recognition', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ=="><input id="target" aria-label="Account note">';
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize'
+      ? [{ mode: 'digits', text: '8642', confidence: .9 }]
+      : message.type === 'captcha:get-preferences' ? { copyOnNoField: false } : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    const content = createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    const image = document.querySelector('#image') as HTMLImageElement;
+    const target = document.querySelector('#target') as HTMLInputElement;
+
+    await expect(content.workflow.run(image, 'explicit')).resolves.toMatchObject({ state: 'no_field', fillValue: '8642' });
+    const choose = [...statusHost()!.shadowRoot!.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '选择输入框');
+    expect(choose).toBeDefined();
+    choose?.click();
+    target.click();
+    await vi.waitFor(() => expect(target.value).toBe('8642'));
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'captcha:record-activity', outcome: 'filled' }));
   });
 
   it('does not copy an older no-field result after a newer request supersedes it', async () => {

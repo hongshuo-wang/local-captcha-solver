@@ -1,0 +1,5 @@
+{
+  "extensionName": { "message": "Captcha Helper - 本地验证码助手" },
+  "extensionDescription": { "message": "离线识别常见静态文字与一步算术验证码，安全填入或由你确认操作。" },
+  "actionTitle": { "message": "Captcha Helper - 本地验证码助手" }
+}

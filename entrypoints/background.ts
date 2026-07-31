@@ -6,8 +6,9 @@ import { createExtensionBrowserAdapter } from '../src/background/extension-brows
 import { createContentRegistration } from '../src/background/content-registration';
 import { createContextMenu } from '../src/background/context-menu';
 import { createBackgroundRuntime } from '../src/background/background-runtime';
-import { createModelStatusStore } from '../src/background/model-status';
+import { createModelStatusStore, MODEL_LOGS_STORAGE_KEY } from '../src/background/model-status';
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
+import { registerInstallExperience } from '../src/background/install-experience';
 
 interface RuntimeWithContexts {
   getContexts?: InferenceBrowser['runtime']['getContexts'];
@@ -33,6 +34,7 @@ interface BackgroundBrowser {
   tabs: {
     query(details: { url?: readonly string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string }[]>;
     sendMessage(tabId: number, message: unknown, options?: { frameId: number }): Promise<unknown>;
+    create(details: { url: string }): Promise<unknown>;
   };
   contextMenus: {
     create(details: { id: string; title: string; contexts: readonly ['image'] }): unknown;
@@ -48,7 +50,8 @@ interface BackgroundBrowser {
       addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string }; url?: string }, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
     };
     onStartup: { addListener(listener: () => void): void };
-    onInstalled: { addListener(listener: () => void): void };
+    onInstalled: { addListener(listener: (details: { reason: string }) => void): void };
+    getURL(path: string): string;
   };
 }
 
@@ -73,7 +76,10 @@ export default defineBackground(() => {
   });
   const contextMenu = createContextMenu({ contextMenus: extension.contextMenus, tabs: extension.tabs, scripting: extension.scripting });
   const host = createInferenceHost(extensionBrowser);
-  const modelStatus = createModelStatusStore();
+  const modelStatus = createModelStatusStore(Date.now, {
+    async read() { return (await extension.storage.local.get(MODEL_LOGS_STORAGE_KEY))[MODEL_LOGS_STORAGE_KEY]; },
+    async write(value) { await extension.storage.local.set({ [MODEL_LOGS_STORAGE_KEY]: value }); },
+  });
   const runtimeApp = createBackgroundRuntime({
     permissions: { contains: extension.permissions.contains.bind(extension.permissions) },
     imageFetcher: createImageFetcher({ permissions: { contains: extension.permissions.contains.bind(extension.permissions) }, fetch: globalThis.fetch.bind(globalThis) }),
@@ -92,6 +98,7 @@ export default defineBackground(() => {
       setBadgeBackgroundColor: extension.action.setBadgeBackgroundColor.bind(extension.action),
     },
   });
-  void runtimeApp.start();
-  console.info('Local CAPTCHA Solver background ready');
+  registerInstallExperience(extension.runtime, extension.tabs);
+  void modelStatus.hydrate().then(() => runtimeApp.start());
+  console.info('Captcha Helper background ready');
 });

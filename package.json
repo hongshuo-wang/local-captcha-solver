@@ -1,8 +1,18 @@
 {
   "name": "local-captcha-solver",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Local, privacy-first recognition for common static CAPTCHAs.",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hongshuo-wang/local-captcha-solver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hongshuo-wang/local-captcha-solver/issues"
+  },
+  "homepage": "https://github.com/hongshuo-wang/local-captcha-solver#readme",
   "engines": {
     "node": ">=22"
   },
@@ -14,7 +24,12 @@
     "build:captcha-ctc:chrome": "tsx scripts/build-captcha-ctc.ts chrome",
     "build:captcha-ctc:edge": "tsx scripts/build-captcha-ctc.ts edge",
     "build:edge": "wxt build -b edge",
-    "zip": "wxt zip -b chrome",
+    "zip": "npm run zip:chrome",
+    "zip:chrome": "wxt zip -b chrome",
+    "zip:edge": "wxt zip -b edge",
+    "release:prepare": "node scripts/prepare-release.mjs",
+    "submit:stores": "publish-extension",
+    "store:assets": "node store-assets/render.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -53,6 +68,7 @@
     "csv-parse": "6.1.0",
     "dejavu-fonts-ttf": "2.37.3",
     "happy-dom": "20.11.1",
+    "publish-browser-extension": "3.0.3",
     "tesseract.js": "6.0.1",
     "tsx": "4.20.5",
     "typescript": "5.9.2",

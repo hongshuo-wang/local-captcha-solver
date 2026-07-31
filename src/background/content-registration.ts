@@ -1,5 +1,5 @@
-import { hostnameForPage, normalizeHostname, type SettingsStore } from '../platform/settings-store';
-import { GLOBAL_HTTP_ORIGINS } from '../platform/permissions';
+import { hostnameForPage, normalizeHostname, selectedSiteMatches, type SelectedSiteRule, type SettingsStore } from '../platform/settings-store';
+import { GLOBAL_HTTP_ORIGINS, originsForPage, originsForSelectedSite, permissionOriginsForPage } from '../platform/permissions';
 
 export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
 const REGISTRATION_PREFIX = 'captcha-auto-';
@@ -45,15 +45,25 @@ function exactOrigins(hostname: string): readonly [string, string] {
   return [`http://${hostname}/*`, `https://${hostname}/*`];
 }
 
-export async function contentScriptRegistrationId(hostname: string): Promise<string> {
+export async function contentScriptRegistrationId(hostname: string, includeSubdomains = false): Promise<string> {
   const normalized = normalizeHostname(hostname);
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized));
+  const input = includeSubdomains ? `${normalized}:subdomains` : normalized;
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
   const hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
   return `${REGISTRATION_PREFIX}${hex.slice(0, 16)}`;
 }
 
 function globalScript(): Required<RegisteredContentScript> {
   return { id: GLOBAL_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: [CONTENT_SCRIPT_FILE], persistAcrossSessions: true };
+}
+
+async function selectedScript(rule: SelectedSiteRule): Promise<Required<RegisteredContentScript>> {
+  return {
+    id: await contentScriptRegistrationId(rule.hostname, rule.includeSubdomains),
+    matches: [...originsForSelectedSite(rule)],
+    js: [CONTENT_SCRIPT_FILE],
+    persistAcrossSessions: true,
+  };
 }
 
 function isSameScript(actual: RegisteredContentScript, expected: Required<RegisteredContentScript>): boolean {
@@ -90,8 +100,16 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
   };
 
   const reconcileInternal = async (): Promise<void> => {
-      const hasGlobalAccess = await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS });
-      const desired = hasGlobalAccess ? [globalScript()] : [];
+      const settings = await adapter.settings.read();
+      const desired: Required<RegisteredContentScript>[] = [];
+      if (settings.accessMode === 'all') {
+        if (await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS })) desired.push(globalScript());
+      } else {
+        for (const rule of settings.selectedSites) {
+          const origins = originsForSelectedSite(rule);
+          if (await adapter.permissions.contains({ origins })) desired.push(await selectedScript(rule));
+        }
+      }
       const current = await adapter.scripting.getRegisteredContentScripts();
       const kept = new Set<string>();
       const invalid = current.filter((script) => {
@@ -121,7 +139,8 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
 
   const enablePage = async (pageUrl: string, options?: EnableRegistrationOptions): Promise<EnableRegistrationResult> => {
       const hostname = hostnameForPage(pageUrl);
-      const origins = GLOBAL_HTTP_ORIGINS;
+      const before = await adapter.settings.read();
+      const origins = permissionOriginsForPage(before, pageUrl);
       let previouslyGranted: boolean;
       try { previouslyGranted = await adapter.permissions.contains({ origins }); } catch { return { enabled: false, reason: 'permission-unavailable' }; }
       let newlyGranted = !previouslyGranted;
@@ -149,9 +168,18 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
 
   const disablePage = async (pageUrl: string): Promise<DisableRegistrationResult> => {
       const hostname = hostnameForPage(pageUrl);
+      const before = await adapter.settings.read();
       await adapter.settings.disable(hostname);
+      let permissionRemoved = false;
+      if (before.accessMode === 'selected') {
+        const coveredByWildcard = before.selectedSites.some((rule) => rule.includeSubdomains && selectedSiteMatches(rule, hostname));
+        if (!coveredByWildcard) {
+          try { permissionRemoved = await adapter.permissions.remove({ origins: originsForPage(pageUrl) }); } catch { permissionRemoved = false; }
+        }
+        try { await reconcileInternal(); } catch { /* Settings still prevent future automatic runs. */ }
+      }
       try { await notifyTabs(adapter, hostname, 'captcha:auto-disable'); } catch { /* Future automatic runs remain blocked by settings. */ }
-      return { disabled: true, permissionRemoved: false };
+      return { disabled: true, permissionRemoved };
   };
 
   return { reconcile, enablePage: (pageUrl, options) => serialize(() => enablePage(pageUrl, options)), disablePage: (pageUrl) => serialize(() => disablePage(pageUrl)) };

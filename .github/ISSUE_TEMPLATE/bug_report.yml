@@ -1,0 +1,89 @@
+name: Bug report
+description: Report a reproducible problem in the extension.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove passwords, tokens, private URLs, personal data, and confidential page content before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: Captcha Helper version
+      description: Find this in the extension settings or browser extension manager.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Google Chrome
+        - Microsoft Edge
+        - Other Chromium browser
+    validations:
+      required: true
+  - type: input
+    id: browser-version
+    attributes:
+      label: Browser version and operating system
+      placeholder: Chrome 149 on macOS 15
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Recognition
+        - Automatic filling
+        - Website permission
+        - Popup
+        - Onboarding
+        - Settings
+        - Diagnostics
+        - Build or installation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use a public test page or sanitized description when possible.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Paste only extension-generated diagnostics after checking that they contain no confidential information.
+      render: text
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I removed credentials, personal data, private URLs, and confidential page content.
+          required: true
+        - label: I will not attach a CAPTCHA image unless I am authorized to share it and can provide its exact label and provenance.
+          required: true

@@ -47,6 +47,36 @@ describe('scoreCaptchaCandidate', () => {
     );
   });
 
+  it.each([
+    ['a Chinese captcha alt used by the React login page', '验证码'],
+    ['a code-image class used by the Vue login page', 'login-code-img'],
+  ])('accepts %s', (_description, attrText) => {
+    const result = scoreCaptchaCandidate({
+      attrText,
+      nearbyText: '',
+      width: 120,
+      height: 38,
+      inForm: true,
+      nearShortInput: true,
+    });
+
+    expect(result.score).toBeGreaterThanOrEqual(AUTOMATIC_CANDIDATE_THRESHOLD);
+    expect(result.reasons).toContain('captcha or verification attribute');
+  });
+
+  it('does not treat a generic code icon as a captcha image signal', () => {
+    const result = scoreCaptchaCandidate({
+      attrText: 'code icon',
+      nearbyText: '',
+      width: 24,
+      height: 24,
+      inForm: true,
+      nearShortInput: true,
+    });
+
+    expect(result.score).toBeLessThan(AUTOMATIC_CANDIDATE_THRESHOLD);
+  });
+
   it('rejects large branding imagery despite descriptive text', () => {
     const result = scoreCaptchaCandidate({
       attrText: 'company logo',

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createRuntimeRouter } from '../../src/background/runtime-router';
 import { createModelStatusStore } from '../../src/background/model-status';
+import { DEFAULT_SETTINGS } from '../../src/platform/settings-store';
 
 function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } = {}) {
   const fetch = vi.fn(async () => ({ state: 'ready' as const, bytes: new Uint8Array([1]), mimeType: 'image/png' }));
@@ -14,7 +15,7 @@ function harness(options: { pagePermission?: boolean; stateEnabled?: boolean } =
   let copyOnNoField = false;
   let autoFill = true;
   let recognitionShortcut: 'middle' | 'alt-click' = 'middle';
-  const readSettings = vi.fn(async () => ({ version: 2 as const, disabledHosts: [], copyOnNoField, autoFill, recognitionShortcut }));
+  const readSettings = vi.fn(async () => ({ ...DEFAULT_SETTINGS, copyOnNoField, autoFill, recognitionShortcut }));
   const setCopyOnNoField = vi.fn(async (enabled: boolean) => { copyOnNoField = enabled; });
   const setAutoFill = vi.fn(async (enabled: boolean) => { autoFill = enabled; });
   const setRecognitionShortcut = vi.fn(async (shortcut: 'middle' | 'alt-click') => { recognitionShortcut = shortcut; });
@@ -68,6 +69,24 @@ describe('background runtime router', () => {
     expect(snapshot).toMatchObject({ logs: [expect.objectContaining({ kind: 'workflow', message: '已填入验证码' })] });
   });
 
+  it('records structured activity and only lets the extension popup clear diagnostics', async () => {
+    const app = harness();
+    await expect(app.router.handle({
+      type: 'captcha:record-activity',
+      outcome: 'confirmation',
+      diagnostic: { trigger: 'automatic', candidateId: 'image-2', width: 120, height: 40, source: 'captcha.png?token=ignored', recognizedText: '12+7=?', fillValue: '19', confidence: .97, match: 'ambiguous', reason: 'ambiguous_field' },
+    }, sender)).resolves.toEqual({ recorded: true });
+    const before = await app.router.handle({ type: 'captcha:get-model-status' }, {});
+    expect(before).toMatchObject({ logs: [expect.objectContaining({ site: 'portal.example.test', candidateId: 'image-2', source: 'captcha.png', recognizedText: '12+7=?', fillValue: '19', confidence: .97 })] });
+
+    await expect(app.router.handle({ type: 'captcha:clear-diagnostics' }, sender)).resolves.toEqual({ cleared: false });
+    await expect(app.router.handle({ type: 'captcha:clear-diagnostics' }, {
+      tab: { id: 8, url: 'chrome-extension://captcha-helper/options.html' },
+      url: 'chrome-extension://captcha-helper/options.html',
+    })).resolves.toMatchObject({ cleared: true, snapshot: { logs: [] } });
+    await expect(app.router.handle({ type: 'captcha:clear-diagnostics' }, {})).resolves.toMatchObject({ cleared: true, snapshot: { logs: [] } });
+  });
+
   it('retries model warmup without requiring a page sender', async () => {
     const app = harness();
     await expect(app.router.handle({ type: 'captcha:retry-model-warmup' }, {})).resolves.toMatchObject({ status: 'loading' });
@@ -96,6 +115,15 @@ describe('background runtime router', () => {
   it('does not report a site as enabled after global access is removed', async () => {
     const app = harness({ pagePermission: false, stateEnabled: true });
     await expect(app.router.handle({ type: 'captcha:get-site-state' }, sender)).resolves.toEqual({ enabled: false });
+  });
+
+  it('uses the active website for state reads sent by a trusted extension tab', async () => {
+    const app = harness({ pagePermission: true, stateEnabled: true });
+    await expect(app.router.handle({ type: 'captcha:get-site-state' }, {
+      tab: { id: 8, url: 'chrome-extension://captcha-helper/popup.html' },
+      url: 'chrome-extension://captcha-helper/popup.html',
+    })).resolves.toEqual({ enabled: true });
+    expect(app.activeTab).toHaveBeenCalledOnce();
   });
 
   it('starts non-blocking model warmup when an enabled site is restored or newly enabled', async () => {
@@ -200,7 +228,7 @@ describe('background runtime router', () => {
   it('reads and updates the no-field copy preference', async () => {
     const app = harness();
 
-    await expect(app.router.handle({ type: 'captcha:get-preferences' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' });
+    await expect(app.router.handle({ type: 'captcha:get-preferences' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle', accessMode: 'all', interfaceLocale: 'system' });
     await expect(app.router.handle({ type: 'captcha:set-preferences', copyOnNoField: true }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: true, recognitionShortcut: 'middle' });
     expect(app.setCopyOnNoField).toHaveBeenCalledWith(true);
     await expect(app.router.handle({ type: 'captcha:set-preferences', autoFill: false }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: false, recognitionShortcut: 'middle' });

@@ -14,8 +14,17 @@ import type { InferenceErrorCode, InferenceResponse } from '../src/ocr/protocol'
 
 const getExtensionUrl = browser.runtime.getURL as (path: string) => string;
 
+// Extension pages do not rely on cross-origin isolation. Keep the WASM runtime single-threaded
+// across Chrome and Edge. ORT also needs a per-session severity because its session default is
+// warning even when the runtime environment is configured for errors only.
+ort.env.logLevel = 'error';
 ort.env.wasm.wasmPaths = getExtensionUrl('ort/');
 ort.env.wasm.numThreads = 1;
+
+const OCR_SESSION_OPTIONS: ort.InferenceSession.SessionOptions = {
+  executionProviders: ['wasm'],
+  logSeverityLevel: 3,
+};
 
 function decodeImageDataUrl(imageDataUrl: string, revision: string): ImagePayload {
   const separator = imageDataUrl.indexOf(',');
@@ -30,7 +39,7 @@ function decodeImageDataUrl(imageDataUrl: string, revision: string): ImagePayloa
 function createSessionFactory(): OcrSessionFactory {
   return {
     async create(modelUrl) {
-      const session = await ort.InferenceSession.create(modelUrl);
+      const session = await ort.InferenceSession.create(modelUrl, OCR_SESSION_OPTIONS);
       return {
         async run(feeds) {
           const values = Object.values(feeds);

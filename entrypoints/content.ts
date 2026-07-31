@@ -1,19 +1,21 @@
 import { acquireImage } from '../src/content/image-source';
 import { imageRevision, isVisible, snapshotForImage } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
-import { clearWorkflowStatus, showRecognizing, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
+import { clearWorkflowStatus, setStatusUiLocale, showRecognizing, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
-import { fillEmptyField, replaceField, type TextFieldElement } from '../src/content/field-fill';
+import { fillEmptyField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
 import { copyText } from '../src/content/clipboard';
 import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../src/core/candidate-scorer';
 import type { OcrResult, WorkflowResult } from '../src/core/types';
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
-import { isRecognitionShortcut, SETTINGS_STORAGE_KEY, type RecognitionShortcut } from '../src/platform/settings-store';
+import { isInterfaceLocale, isRecognitionShortcut, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
+import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
 
 type Runtime = {
   sendMessage(message: unknown): Promise<unknown>;
   onMessage: { addListener(listener: (message: unknown) => unknown): void };
   settings?: { read(): Promise<unknown>; subscribe(listener: (settings: unknown) => void): () => void };
+  uiLanguage?: string;
 };
 function isOcrResults(value: unknown): value is readonly OcrResult[] { return Array.isArray(value) && value.every((item) => item && typeof item === 'object' && typeof (item as OcrResult).text === 'string' && typeof (item as OcrResult).confidence === 'number' && typeof (item as OcrResult).mode === 'string'); }
 function isRecognitionError(value: unknown): value is { type: 'captcha:recognition-error'; code: 'model_unavailable' | 'recognition_failed' } { return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'captcha:recognition-error' && ((value as { code?: unknown }).code === 'model_unavailable' || (value as { code?: unknown }).code === 'recognition_failed'); }
@@ -25,6 +27,23 @@ function shortcutFromSettings(value: unknown): RecognitionShortcut {
   const shortcut = (value as { recognitionShortcut?: unknown }).recognitionShortcut;
   return isRecognitionShortcut(shortcut) ? shortcut : 'middle';
 }
+function localeFromSettings(value: unknown, browserLanguage: string): UiLocale {
+  const preference = typeof value === 'object' && value !== null && isInterfaceLocale((value as { interfaceLocale?: unknown }).interfaceLocale)
+    ? (value as { interfaceLocale: InterfaceLocale }).interfaceLocale
+    : 'system';
+  return resolveUiLocale(preference, browserLanguage);
+}
+
+const CONTENT_TEXT = {
+  zh_CN: {
+    copy: '复制', copied: '已复制到剪贴板', copyFailed: '复制失败，请重试', replace: '替换', fill: '填入', replaced: '已替换验证码', filled: '已填入验证码',
+    fieldChanged: '输入框状态已变化', chooseField: '选择输入框', chosen: '已填入所选输入框', noSelection: '未选择输入框', retry: '重试', reloadModel: '重新加载模型',
+  },
+  en: {
+    copy: 'Copy', copied: 'Copied to the clipboard', copyFailed: 'Copy failed; try again', replace: 'Replace', fill: 'Fill', replaced: 'CAPTCHA replaced', filled: 'CAPTCHA filled',
+    fieldChanged: 'The input field changed', chooseField: 'Choose input', chosen: 'Filled the selected input', noSelection: 'No input was selected', retry: 'Retry', reloadModel: 'Reload model',
+  },
+} as const;
 function matchesShortcut(event: MouseEvent, shortcut: RecognitionShortcut): boolean {
   if (shortcut === 'middle') return event.button === 1;
   if (event.button !== 0) return false;
@@ -32,8 +51,21 @@ function matchesShortcut(event: MouseEvent, shortcut: RecognitionShortcut): bool
   if (shortcut === 'alt-click') return event.altKey;
   return event.shiftKey;
 }
+function imageSourceSummary(image: HTMLImageElement): string {
+  const source = image.currentSrc || image.getAttribute('src') || '';
+  if (source.startsWith('data:')) return '内嵌图片';
+  if (source.startsWith('blob:')) return '临时图片';
+  try {
+    const pathname = new URL(source, location.href).pathname;
+    const name = pathname.split('/').filter(Boolean).at(-1) ?? pathname;
+    return name.slice(0, 80) || '页面图片';
+  } catch { return '页面图片'; }
+}
 export function createRuntimeContent(runtime: Runtime) {
   let autoFillEnabled = true;
+  let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
+  let text = CONTENT_TEXT[uiLocale];
+  setStatusUiLocale(uiLocale);
   const workflow = createCaptchaWorkflow({
     acquire: (image) => acquireImage(image, { fetchRemote: async (url) => runtime.sendMessage({ type: 'captcha:acquire-image', url }) as Promise<{ state: 'ready'; bytes: Uint8Array; mimeType: string } | { state: 'image_unavailable'; reason: 'permission' | 'cors' | 'type' | 'size' | 'network' }> }),
     recognize: async (imageDataUrl, revision, modes) => {
@@ -89,11 +121,15 @@ export function createRuntimeContent(runtime: Runtime) {
     document.addEventListener('click', choose, true);
     document.addEventListener('keydown', cancel, true);
   });
-  const copyAction = (value: string): StatusAction => ({
-    label: '复制',
-    onClick: () => copyText(value),
-    successMessage: '已复制到剪贴板',
-    failureMessage: '复制失败，请重试',
+  const copyAction = (value: string, onCopied?: () => void): StatusAction => ({
+    label: text.copy,
+    onClick: async () => {
+      const copied = await copyText(value);
+      if (copied) onCopied?.();
+      return copied;
+    },
+    successMessage: text.copied,
+    failureMessage: text.copyFailed,
   });
   const displayed = {
     cancel: workflow.cancel,
@@ -126,8 +162,23 @@ export function createRuntimeContent(runtime: Runtime) {
           : result.state === 'no_field' ? (copyOutcome === 'copied' ? 'copied' : 'no_field')
             : result.state === 'recognition_failed' || result.state === 'image_unavailable' || result.state === 'permission_denied' || result.state === 'model_unavailable' ? 'failed'
               : undefined;
-      if (activity !== undefined) void runtime.sendMessage({ type: 'captcha:record-activity', outcome: activity }).catch(() => undefined);
       const detail = snapshotForImage(args[0]);
+      const diagnostic = {
+        trigger: args[1],
+        candidateId: 'candidateId' in result ? result.candidateId : undefined,
+        width: detail?.candidate.candidate.width,
+        height: detail?.candidate.candidate.height,
+        source: imageSourceSummary(args[0]),
+        recognizedText: 'displayText' in result ? result.displayText : undefined,
+        fillValue: 'fillValue' in result ? result.fillValue : undefined,
+        confidence: 'confidence' in result ? result.confidence : undefined,
+        match: result.state === 'filled' ? 'unique' : result.state === 'no_field' ? 'none' : result.state === 'needs_confirmation' && result.reason === 'ambiguous_field' ? 'ambiguous' : undefined,
+        reason: result.state === 'needs_confirmation' ? result.reason : result.state,
+      };
+      const recordActivity = (outcome: string, reason: string | undefined = diagnostic.reason): void => {
+        void runtime.sendMessage({ type: 'captcha:record-activity', outcome, diagnostic: { ...diagnostic, reason } }).catch(() => undefined);
+      };
+      if (activity !== undefined) recordActivity(activity);
       const field = result.state === 'filled'
         ? detail?.fields.find((item) => item.id === result.fieldId)
         : result.state === 'needs_confirmation' && result.fieldIds.length === 1
@@ -138,24 +189,32 @@ export function createRuntimeContent(runtime: Runtime) {
         if (field !== undefined) {
           const replacing = field.element.value !== '';
           actions.push({
-            label: replacing ? '替换' : '填入',
+            label: replacing ? text.replace : text.fill,
             kind: 'primary',
-            onClick: () => (replacing ? replaceField(field.element, result.fillValue!) : fillEmptyField(field.element, result.fillValue!)).state === 'filled',
-            successMessage: replacing ? '已替换验证码' : '已填入验证码',
-            failureMessage: '输入框状态已变化',
+            onClick: () => {
+              const filled = (replacing ? replaceField(field.element, result.fillValue!) : fillEmptyField(field.element, result.fillValue!)).state === 'filled';
+              if (filled) recordActivity('filled', replacing ? 'user_replaced_field' : 'user_confirmed_fill');
+              return filled;
+            },
+            successMessage: replacing ? text.replaced : text.filled,
+            failureMessage: text.fieldChanged,
           });
         } else if (result.fieldIds.length > 1) {
           const choices = detail?.fields.filter((item) => result.fieldIds.includes(item.id)).map((item) => item.element) ?? [];
-          if (choices.length > 0) actions.push({ label: '选择输入框', kind: 'primary', onClick: () => selectField(choices, result.fillValue!), successMessage: '已填入所选输入框', failureMessage: '未选择输入框' });
+          if (choices.length > 0) actions.push({ label: text.chooseField, kind: 'primary', onClick: async () => { const filled = await selectField(choices, result.fillValue!); if (filled) recordActivity('filled', 'user_selected_field'); return filled; }, successMessage: text.chosen, failureMessage: text.noSelection });
         }
-        actions.push(copyAction(result.fillValue));
+        actions.push(copyAction(result.fillValue, () => recordActivity('copied', 'user_copied_result')));
       }
-      if (result.state === 'no_field' && result.fillValue !== undefined && copyOutcome !== 'copied') actions.push(copyAction(result.fillValue));
+      if (result.state === 'no_field' && result.fillValue !== undefined) {
+        const choices = detail?.fields.map((item) => item.element).filter(isEligibleField) ?? [];
+        if (choices.length > 0) actions.push({ label: text.chooseField, kind: 'primary', onClick: async () => { const filled = await selectField(choices, result.fillValue); if (filled) recordActivity('filled', 'user_selected_field'); return filled; }, successMessage: text.chosen, failureMessage: text.noSelection });
+        if (copyOutcome !== 'copied') actions.push(copyAction(result.fillValue, () => recordActivity('copied', 'user_copied_result')));
+      }
       if (result.state === 'recognition_failed' || result.state === 'image_unavailable' || result.state === 'permission_denied') {
-        actions.push({ label: '重试', kind: 'primary', onClick: () => { setTimeout(() => { void displayed.run(args[0], 'explicit'); }, 0); } });
+        actions.push({ label: text.retry, kind: 'primary', onClick: () => { setTimeout(() => { void displayed.run(args[0], 'explicit'); }, 0); } });
       }
       if (result.state === 'model_unavailable') {
-        actions.push({ label: '重新加载模型', kind: 'primary', onClick: async () => { await runtime.sendMessage({ type: 'captcha:retry-model-warmup' }); setTimeout(() => { void displayed.run(args[0], 'explicit'); }, 0); } });
+        actions.push({ label: text.reloadModel, kind: 'primary', onClick: async () => { await runtime.sendMessage({ type: 'captcha:retry-model-warmup' }); setTimeout(() => { void displayed.run(args[0], 'explicit'); }, 0); } });
       }
       const onDismiss = () => dismissedRevisions.set(args[0], imageRevision(args[0]));
       showWorkflowStatus(result, field?.element ?? args[0], { actions, copyOutcome, onDismiss });
@@ -170,18 +229,24 @@ export function createRuntimeContent(runtime: Runtime) {
     if (shortcutGeneration === initialShortcutGeneration) {
       recognitionShortcut = shortcutFromSettings(settings);
       autoFillEnabled = autoFillFromSettings(settings);
+      uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
+      text = CONTENT_TEXT[uiLocale];
+      setStatusUiLocale(uiLocale);
     }
   }).catch(() => undefined);
   const unsubscribeSettings = runtime.settings?.subscribe((settings) => {
     shortcutGeneration += 1;
     recognitionShortcut = shortcutFromSettings(settings);
     autoFillEnabled = autoFillFromSettings(settings);
+    uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
+    text = CONTENT_TEXT[uiLocale];
+    setStatusUiLocale(uiLocale);
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
   documentWithShortcut.__localCaptchaShortcutCleanup?.();
   const shortcutImage = (event: Event): HTMLImageElement | undefined => {
     if (!(event instanceof MouseEvent) || !matchesShortcut(event, recognitionShortcut)) return undefined;
-    const target = event.target;
+    const target = event.composedPath().find((node) => node instanceof Element) ?? event.target;
     const image = target instanceof Element ? target.closest('img') : undefined;
     return image instanceof HTMLImageElement && isVisible(image) ? image : undefined;
   };
@@ -192,16 +257,22 @@ export function createRuntimeContent(runtime: Runtime) {
     void displayed.run(image, 'explicit');
   };
   const suppressShortcutDefault = (event: Event): void => { if (shortcutImage(event) !== undefined) event.preventDefault(); };
-  document.addEventListener('mousedown', onShortcutDown, true);
-  document.addEventListener('click', suppressShortcutDefault, true);
-  document.addEventListener('auxclick', suppressShortcutDefault, true);
+  window.addEventListener('mousedown', onShortcutDown, true);
+  window.addEventListener('click', suppressShortcutDefault, true);
+  window.addEventListener('auxclick', suppressShortcutDefault, true);
   documentWithShortcut.__localCaptchaShortcutCleanup = () => {
-    document.removeEventListener('mousedown', onShortcutDown, true);
-    document.removeEventListener('click', suppressShortcutDefault, true);
-    document.removeEventListener('auxclick', suppressShortcutDefault, true);
+    window.removeEventListener('mousedown', onShortcutDown, true);
+    window.removeEventListener('click', suppressShortcutDefault, true);
+    window.removeEventListener('auxclick', suppressShortcutDefault, true);
     unsubscribeSettings?.();
   };
-  const enable = () => { lifecycleGeneration += 1; automaticEnabled = true; observer ??= observeCaptchaImages(displayed); };
+  const enable = () => {
+    lifecycleGeneration += 1;
+    automaticEnabled = true;
+    observer ??= observeCaptchaImages(displayed, document, {
+      onSkip: (skip) => { void Promise.resolve(runtime.sendMessage({ type: 'captcha:record-activity', outcome: 'skipped', diagnostic: { trigger: 'automatic', ...skip } })).catch(() => undefined); },
+    });
+  };
   const disable = () => { lifecycleGeneration += 1; automaticEnabled = false; observer?.disconnect(); observer = undefined; workflow.cancelAll?.(); clearWorkflowStatus(); };
   runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
@@ -224,6 +295,7 @@ export default defineContentScript({ matches: [], registration: 'runtime', main(
   createRuntimeContent({
     sendMessage: (message) => sendRuntimeMessage(runtime, message),
     onMessage: runtime.onMessage,
+    uiLanguage: browser.i18n.getUILanguage(),
     settings: {
       async read() { return (await browser.storage.local.get(SETTINGS_STORAGE_KEY))[SETTINGS_STORAGE_KEY]; },
       subscribe(listener) {

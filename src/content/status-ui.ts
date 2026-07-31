@@ -1,4 +1,5 @@
 import type { WorkflowResult } from '../core/types';
+import type { UiLocale } from '../platform/i18n';
 
 export type CopyOutcome = 'copied' | 'disabled' | 'failed';
 export type StatusTone = 'running' | 'success' | 'warning' | 'error' | 'neutral';
@@ -25,7 +26,7 @@ const ICONS: Record<StatusTone, string> = {
   neutral: 'i',
 };
 
-const MESSAGES: Record<WorkflowResult['state'], string> = {
+const ZH_MESSAGES: Record<WorkflowResult['state'], string> = {
   filled: '验证码已识别并填入',
   needs_confirmation: '结果不够确定',
   no_candidate: '没有找到可识别的验证码',
@@ -37,6 +38,30 @@ const MESSAGES: Record<WorkflowResult['state'], string> = {
   model_unavailable: '本地识别模型不可用',
   ambiguous_image: '找到多个匹配的验证码图片',
 };
+
+const EN_MESSAGES: Record<WorkflowResult['state'], string> = {
+  filled: 'CAPTCHA recognized and filled', needs_confirmation: 'The result needs confirmation', no_candidate: 'No recognizable CAPTCHA was found',
+  no_field: 'No matching CAPTCHA input was found', image_unavailable: 'The CAPTCHA image could not be read', permission_denied: 'The browser did not allow image access',
+  recognition_failed: 'CAPTCHA recognition failed', stale: 'The CAPTCHA changed', model_unavailable: 'The local recognition model is unavailable', ambiguous_image: 'Multiple matching CAPTCHA images were found',
+};
+
+const CONFIRMATION_MESSAGES = {
+  low_confidence: '识别结果需要确认',
+  auto_fill_disabled: '自动填充已关闭',
+  ambiguous_field: '请选择要填入的输入框',
+  field_not_empty: '输入框已有内容',
+  unusable_result: '无法可靠识别',
+} as const;
+
+const EN_CONFIRMATION_MESSAGES: Record<keyof typeof CONFIRMATION_MESSAGES, string> = {
+  low_confidence: 'The recognition result needs confirmation', auto_fill_disabled: 'Automatic fill is disabled', ambiguous_field: 'Choose the input field',
+  field_not_empty: 'The input field already has a value', unusable_result: 'No reliable result was produced',
+};
+
+let statusLocale: UiLocale = 'zh_CN';
+const localized = (zh: string, en: string): string => statusLocale === 'zh_CN' ? zh : en;
+
+export function setStatusUiLocale(locale: UiLocale): void { statusLocale = locale; }
 
 let removalTimer: ReturnType<typeof setTimeout> | undefined;
 let positionCleanup: (() => void) | undefined;
@@ -123,7 +148,7 @@ function show(
     <section class="panel" data-tone="${tone}" role="status" aria-live="polite">
       <span class="icon" aria-hidden="true">${ICONS[tone]}</span>
       <div class="content"><p class="message"></p><p class="detail" hidden></p></div>
-      <button class="close" type="button" aria-label="关闭">×</button>
+      <button class="close" type="button" aria-label="${localized('关闭', 'Close')}">×</button>
       <div class="actions"></div>
     </section>`;
   const messageElement = shadow.querySelector<HTMLElement>('.message')!;
@@ -172,7 +197,7 @@ function show(
 }
 
 export function showRecognizing(anchor?: Element, stage: 'preparing' | 'recognizing' = 'recognizing'): void {
-  show(stage === 'preparing' ? '正在准备本地模型' : '正在识别验证码', anchor, 'running', [], { timeoutMs: 0 });
+  show(stage === 'preparing' ? localized('正在准备本地模型', 'Preparing the local model') : localized('正在识别验证码', 'Recognizing CAPTCHA'), anchor, 'running', [], { timeoutMs: 0 });
 }
 
 export function showWorkflowStatus(
@@ -182,26 +207,30 @@ export function showWorkflowStatus(
   legacyCopyOutcome?: CopyOutcome,
 ): void {
   const options: WorkflowStatusOptions = typeof legacyConfirmOrOptions === 'function'
-    ? { actions: [{ label: '填入', kind: 'primary', onClick: legacyConfirmOrOptions, successMessage: '已填入验证码' }], copyOutcome: legacyCopyOutcome }
+    ? { actions: [{ label: localized('填入', 'Fill'), kind: 'primary', onClick: legacyConfirmOrOptions, successMessage: localized('已填入验证码', 'CAPTCHA filled') }], copyOutcome: legacyCopyOutcome }
     : { ...(legacyConfirmOrOptions ?? {}), copyOutcome: legacyConfirmOrOptions?.copyOutcome ?? legacyCopyOutcome };
   const value = 'displayText' in result ? result.displayText || result.fillValue : '';
   if (result.state === 'filled') {
-    show('已自动填入验证码', anchor, 'success', [], { timeoutMs: 1800, detail: value });
+    show(localized('已自动填入验证码', 'CAPTCHA filled automatically'), anchor, 'success', [], { timeoutMs: 1800, detail: value });
     return;
   }
   if (result.state === 'needs_confirmation') {
-    const detail = result.fillValue === undefined ? '未得到可安全使用的结果' : value;
-    show(result.fillValue === undefined ? '无法可靠识别' : '结果不够确定', anchor, 'warning', options.actions, { detail, onDismiss: options.onDismiss });
+    const confidence = result.confidence === undefined ? '' : ` · ${localized('置信度', 'confidence')} ${(result.confidence * 100).toFixed(1)}%`;
+    const detail = result.fillValue === undefined ? localized('未得到可安全使用的结果', 'No safe result was produced') : `${value}${confidence}`;
+    const confirmations = statusLocale === 'zh_CN' ? CONFIRMATION_MESSAGES : EN_CONFIRMATION_MESSAGES;
+    show(result.reason === undefined ? localized('结果需要确认', 'The result needs confirmation') : confirmations[result.reason], anchor, 'warning', options.actions, { detail, onDismiss: options.onDismiss });
     return;
   }
   if (result.state === 'no_field') {
-    const copyDetail = options.copyOutcome === 'copied' ? '已复制到剪贴板' : options.copyOutcome === 'failed' ? '自动复制失败' : '未找到对应输入框';
-    show(options.copyOutcome === 'copied' ? '识别完成并已复制' : '识别完成', anchor, options.copyOutcome === 'failed' ? 'error' : 'neutral', options.actions, { detail: `${value} · ${copyDetail}`, onDismiss: options.onDismiss });
+    const copyDetail = options.copyOutcome === 'copied' ? localized('已复制到剪贴板', 'Copied to the clipboard') : options.copyOutcome === 'failed' ? localized('自动复制失败', 'Automatic copy failed') : localized('未找到对应输入框', 'No matching input was found');
+    const title = options.copyOutcome === 'copied' ? localized('识别完成并已复制', 'Recognized and copied') : options.actions?.length ? localized('识别完成，请选择操作', 'Recognition complete; choose an action') : localized('识别完成', 'Recognition complete');
+    const confidence = result.confidence === undefined ? '' : ` · ${localized('置信度', 'confidence')} ${(result.confidence * 100).toFixed(1)}%`;
+    show(title, anchor, options.copyOutcome === 'failed' ? 'error' : 'neutral', options.actions, { detail: `${value}${confidence} · ${copyDetail}`, onDismiss: options.onDismiss });
     return;
   }
   const retryable = result.state === 'recognition_failed' || result.state === 'image_unavailable' || result.state === 'permission_denied' || result.state === 'model_unavailable';
   const tone: StatusTone = retryable ? 'error' : result.state === 'stale' ? 'warning' : 'neutral';
-  show(MESSAGES[result.state], anchor, tone, options.actions, { timeoutMs: retryable ? 0 : 4000, onDismiss: options.onDismiss });
+  show((statusLocale === 'zh_CN' ? ZH_MESSAGES : EN_MESSAGES)[result.state], anchor, tone, options.actions, { timeoutMs: retryable ? 0 : 4000, onDismiss: options.onDismiss });
 }
 
 export function clearWorkflowStatus(): void { clearCurrent(); }

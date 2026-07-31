@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a product or workflow improvement within the documented scope.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Describe who has the problem and what they cannot do today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest user-visible behavior that solves the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy and permission impact
+      description: Explain any new data handling, browser permission, network activity, or automatic action.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This request does not silently expand the core product to sliders, puzzles, image selection, animation, behavioral challenges, niche scripts, or multi-step mathematics.
+          required: true

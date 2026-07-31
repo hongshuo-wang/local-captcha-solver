@@ -1,0 +1,5 @@
+{
+  "extensionName": { "message": "Captcha Helper" },
+  "extensionDescription": { "message": "Recognize common static text and one-step arithmetic CAPTCHAs offline, then fill safely or ask for confirmation." },
+  "actionTitle": { "message": "Captcha Helper" }
+}

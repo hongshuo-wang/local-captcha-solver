@@ -115,10 +115,62 @@ describe('offscreen OCR entrypoint', () => {
     }) })));
 
     await import('../../entrypoints/offscreen');
+    const ort = await import('onnxruntime-web/wasm');
+    expect(ort.env.logLevel).toBe('error');
+    expect(ort.env.wasm.numThreads).toBe(1);
     expect(urls).toContain('ort/');
     await vi.waitFor(() => {
       expect(urls).toContain('models/captcha-ctc.json');
       expect(urls).toContain('models/captcha-ctc.onnx');
     });
+  });
+
+  it('suppresses non-actionable native ORT warnings at the session level', async () => {
+    vi.stubGlobal('browser', {
+      runtime: {
+        getURL: (path: string) => `extension://${path}`,
+        onMessage: { addListener: listener },
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({
+      schemaVersion: 1, modelName: 'captcha_ctc_tiny_71', imageShape: [3, 48, 320], charset: ['', '0'],
+    }) })));
+    vi.stubGlobal('createImageBitmap', vi.fn(async () => ({
+      width: 1,
+      height: 1,
+      close: vi.fn(),
+    })));
+    vi.stubGlobal('OffscreenCanvas', class {
+      getContext() {
+        return {
+          fillStyle: '',
+          fillRect: vi.fn(),
+          imageSmoothingEnabled: false,
+          imageSmoothingQuality: 'low',
+          drawImage: vi.fn(),
+          getImageData: (_x: number, _y: number, width: number, height: number) => ({
+            data: new Uint8ClampedArray(width * height * 4),
+          }),
+        };
+      }
+    });
+
+    const ort = await import('onnxruntime-web/wasm');
+    vi.mocked(ort.InferenceSession.create).mockRejectedValueOnce(new Error('stop after session creation'));
+    await import('../../entrypoints/offscreen');
+
+    const handler = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+    await handler({
+      type: 'ocr:recognize',
+      requestId: 'request-1',
+      imageRevision: 'revision-1',
+      imageDataUrl: 'data:image/png;base64,AQ==',
+      modes: ['digits'],
+    });
+
+    expect(ort.InferenceSession.create).toHaveBeenCalledWith(
+      'extension://models/captcha-ctc.onnx',
+      { executionProviders: ['wasm'], logSeverityLevel: 3 },
+    );
   });
 });

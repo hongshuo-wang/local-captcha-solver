@@ -24,6 +24,46 @@ describe('captcha observer', () => {
     observer.disconnect();
   });
 
+  it('recognizes the best candidate even when no input field can be matched', () => {
+    document.body.innerHTML = '<form>Verification code<img id="captcha" alt="captcha" width="120" height="40"></form>';
+    const run = vi.fn(async () => ({ state: 'no_field' as const, candidateId: 'image-1', displayText: '8642', fillValue: '8642', confidence: .92 }));
+    const observer = observeCaptchaImages({ run });
+
+    expect(run).toHaveBeenCalledWith(document.querySelector('#captcha'), 'automatic');
+    observer.disconnect();
+  });
+
+  it('reports only near-threshold skipped candidates once per image revision', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<form>captcha<img id="candidate" width="120" height="40"></form>';
+    const run = vi.fn();
+    const onSkip = vi.fn();
+    const observer = observeCaptchaImages({ run }, document, { onSkip });
+    expect(onSkip).toHaveBeenCalledOnce();
+    expect(onSkip).toHaveBeenCalledWith(expect.objectContaining({ score: 50, reason: 'below_threshold' }));
+    document.querySelector('#candidate')?.setAttribute('class', 'changed');
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(150);
+    expect(onSkip).toHaveBeenCalledOnce();
+    observer.disconnect();
+    vi.useRealTimers();
+  });
+
+  it('retries an unchanged captcha when a field appears after a no-field result', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<form id="late-form">Verification code<img id="captcha" alt="captcha" width="120" height="40"></form>';
+    const run = vi.fn(async () => ({ state: 'no_field' as const, candidateId: 'image-1', displayText: '8642', fillValue: '8642', confidence: .92 }));
+    const observer = observeCaptchaImages({ run });
+    await Promise.resolve();
+    document.querySelector('#late-form')?.insertAdjacentHTML('beforeend', '<input aria-label="验证码">');
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(150);
+
+    expect(run).toHaveBeenCalledTimes(2);
+    observer.disconnect();
+    vi.useRealTimers();
+  });
+
   it('does not cascade to the second candidate after recognition fails', async () => {
     document.body.innerHTML = `${captcha('first')}${captcha('second')}`;
     const run = vi.fn(async () => ({ state: 'recognition_failed' as const, candidateId: 'first' }));

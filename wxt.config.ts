@@ -12,10 +12,22 @@ export default defineConfig({
     },
   },
   manifest: (env) => ({
-    name: env.mode === 'ppocrv6-small' ? '本地验证码识别器 (PP-OCRv6 small 体验版)'
-      : env.mode === 'captcha-ctc' ? '本地验证码识别器 (候选模型)'
-        : '本地验证码识别器',
-    description: '在本地识别简单验证码并填入匹配的输入框。',
+    name: env.mode === 'ppocrv6-small' ? 'Captcha Helper Preview' : '__MSG_extensionName__',
+    description: '__MSG_extensionDescription__',
+    default_locale: 'en',
+    icons: {
+      16: 'icons/icon-16.png',
+      32: 'icons/icon-32.png',
+      48: 'icons/icon-48.png',
+      128: 'icons/icon-128.png',
+    },
+    action: {
+      default_title: '__MSG_actionTitle__',
+      default_icon: {
+        16: 'icons/icon-16.png',
+        32: 'icons/icon-32.png',
+      },
+    },
     permissions: ['activeTab', 'clipboardWrite', 'contextMenus', 'storage', 'scripting', 'offscreen'],
     ...(process.env.CAPTCHA_E2E_PREGRANT === '1'
       ? { host_permissions: ['http://*/*', 'https://*/*'] }

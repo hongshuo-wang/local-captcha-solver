@@ -1,61 +1,130 @@
-# Local CAPTCHA Solver
+<div align="center">
+  <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper logo">
+  <h1>Captcha Helper</h1>
+  <p>Local, privacy-first recognition for common static CAPTCHAs.</p>
+  <p>
+    <a href="README.zh-CN.md">简体中文</a>
+    ·
+    <a href="https://linux.do">linux.do</a>
+  </p>
+  <p>
+    <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI status"></a>
+    <a href="https://github.com/hongshuo-wang/local-captcha-solver/releases"><img src="https://img.shields.io/github/v/release/hongshuo-wang/local-captcha-solver?display_name=tag&sort=semver" alt="Latest release"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/hongshuo-wang/local-captcha-solver" alt="MIT license"></a>
+    <a href="https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3"><img src="https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Manifest V3"></a>
+    <a href="https://linux.do"><img src="https://img.shields.io/badge/linux.do-community-1f1f1f" alt="linux.do community"></a>
+  </p>
+</div>
 
-Local CAPTCHA Solver is a Chromium extension that recognizes simple CAPTCHA images on your device and fills a matching empty answer field. It never submits a form.
+![Captcha Helper site-access settings](store-assets/output/screenshot-global-1280x800.png)
 
-## Requirements
+Captcha Helper is a Chromium extension for people who repeatedly encounter static text CAPTCHAs in administration panels, internal tools, and information systems. It recognizes supported images on the user's device and can fill a matching input field without clicking or submitting the form.
 
-- Node.js 22 or later
-- Microsoft Edge or Chromium
+The extension has no account system, advertising, telemetry, or remote OCR service. Users can grant access to every HTTP/HTTPS site once or authorize only the sites they regularly use.
 
-## Build and install in Edge
+## Why install it?
+
+- Reduce repeated visual inspection and typing on supported CAPTCHA styles.
+- Keep CAPTCHA images and recognition results inside the browser.
+- Choose between global access and an exact list of authorized sites.
+- Review authorized, disabled, and browser-revoked permissions from one settings page.
+- Avoid accidental submission: Captcha Helper never clicks a submit button or submits a form.
+- Abstain on uncertain arithmetic or low-confidence recognition instead of guessing.
+
+## Supported scope
+
+Captcha Helper is intentionally limited to static, single-image CAPTCHAs containing:
+
+- digits;
+- English letters;
+- alphanumeric strings; or
+- one-step integer arithmetic using `+`, `-`, `*`, `/`, `x`, `X`, `×`, or `÷`.
+
+It does not support image-selection challenges, sliders, puzzles, animation, multi-step mathematics, behavioral verification, or other interactive CAPTCHA systems. Different websites use different image and CORS policies, so no extension can guarantee recognition of every image.
+
+## Installation
+
+### Chrome Web Store
+
+The first Chrome Web Store release is currently under review. Its link will be added here after approval.
+
+### GitHub release
+
+After the first public release, download the Chrome or Edge ZIP from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases), extract it, enable developer mode on the browser's extensions page, and load the extracted directory as an unpacked extension.
+
+### Build from source
+
+Requirements: Node.js 22 or later and npm.
 
 ```sh
-npm install
-npm run build:edge
+git clone https://github.com/hongshuo-wang/local-captcha-solver.git
+cd local-captcha-solver
+npm ci
+npm run build
 ```
 
-Open `edge://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select `.output/edge-mv3`.
+Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `.output/chrome-mv3`. For Edge, run `npm run build:edge` and load `.output/edge-mv3` from `edge://extensions`.
 
-Open a supported HTTP or HTTPS page and use the extension popup to grant optional all-site access once. Recognition is enabled by default after access is granted; the current-site switch can disable individual hosts without removing the global permission. IP addresses, localhost, and pages using explicit ports are supported. You can also middle-click a CAPTCHA image or right-click it and choose **Recognize and fill CAPTCHA**. The popup lets you change the middle-click action to `Ctrl/Command`, `Alt`, or `Shift + left click`.
+## Usage
 
-## What it supports
+1. Complete the standalone onboarding page opened after installation.
+2. Choose all-site access or selected-site access.
+3. Open a supported page and initiate recognition from the popup, the image context menu, or the configured mouse shortcut.
+4. Review the result when the extension cannot identify one safe, empty input field.
 
-The current model is intended for simple digit, letter, alphanumeric, and one-operation arithmetic CAPTCHA images. Processing, model assets, and inference stay in the extension package and browser. The extension sends no CAPTCHA images, recognition results, telemetry, or browsing data to a server.
+Recognition and automatic filling are separate decisions. A valid result is filled only into a unique eligible field at the configured confidence threshold. Existing user input is never replaced without confirmation.
 
-Automatic recognition fills only an empty eligible field. If the matched field already contains text, the extension leaves it unchanged and offers explicit **Replace** and **Copy** actions. It never overwrites user input, clicks a submit button, or submits a form. Right-click recognition can use the focused empty input when a page has multiple plausible fields. Optional automatic copying applies only when no matching field is found and is disabled by default.
+## Permissions
 
-Image acquisition is limited by browser same-origin and CORS rules. A cross-origin CAPTCHA image works only when the page can read it through a CORS-enabled canvas. Credentialed background fetching is intentionally same-origin-only; an extension host permission does not make a non-CORS or credentialed cross-origin image readable.
+| Permission | Why it is needed |
+| --- | --- |
+| `activeTab` | Temporarily accesses the active page after an explicit user action. |
+| `clipboardWrite` | Copies a result only through an explicit command or an enabled optional setting. The extension does not read the clipboard. |
+| `contextMenus` | Adds the image command for user-initiated recognition. |
+| `offscreen` | Runs the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
+| `scripting` | Installs the page helper after the user grants access. |
+| `storage` | Keeps settings, permission state, model state, and sanitized diagnostics locally. |
+| Optional HTTP/HTTPS hosts | Lets the user choose global access or grant individual sites. |
 
-## Development commands
+See the full [Privacy Policy](PRIVACY.md). CAPTCHA images, recognition results, settings, and diagnostics are not sent to the developer or a third-party service.
+
+## Diagnostics
+
+The extension stores at most 20 sanitized diagnostic records locally. Records may contain OCR text, confidence, image dimensions, hostname, field-match outcome, and a bounded error message. They never contain image bytes, data URLs, full page URLs, query strings, passwords, or form submissions, and users can clear them at any time.
+
+## Model quality
+
+The bundled 2.24 MB CAPTCHA CTC model runs fully offline. On the isolated 10,000-image validation set, the configured automatic-fill policy reaches 99.587% precision at 82.38% coverage. The frozen 201-image benchmark reaches 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy.
+
+On the documented Apple M4 Pro reference machine, browser recognition measured 11.70 ms warm P95 in Chrome and 12.50 ms in Edge; Edge model warmup completed in 266 ms. These measurements describe the frozen corpus and reference environment, not every website.
+
+The approved [model card](training/ppocrv6-captcha/model-cards/paddle-ctc-v4-decoupled-320k.md) records data provenance, group isolation, licenses, Paddle/ONNX parity, thresholds, and browser verification. See [model reproduction](docs/production-model-reproduction.md) for the reproducible workflow.
+
+## Development
 
 ```sh
-npm test
+npm ci
 npm run typecheck
+npm test
 npm run build
 npm run build:edge
-npm run test:e2e
+npm run test:e2e:extension
 ```
 
-Model training and new CAPTCHA-style contributions follow the reproducible workflow in
-[`docs/production-model-reproduction.md`](docs/production-model-reproduction.md) and the scenario
-rules in [`docs/model-training.md`](docs/model-training.md). Public issue samples are not added directly
-to a model: they need labels, provenance, license metadata, isolated scenario groups, and a
-held-out benchmark before training.
+Store artwork is maintained as HTML/CSS and rendered with `npm run store:assets`.
 
-The built-extension E2E suite requires Playwright Chromium. Install it with:
+Stable releases follow [Semantic Versioning](https://semver.org/). A `vMAJOR.MINOR.PATCH` tag must match `package.json` and have a corresponding [CHANGELOG](CHANGELOG.md) section. GitHub Actions then verifies the project, builds Chrome and Edge ZIPs, generates checksums, and creates the GitHub Release. Maintainer steps and store secret names are documented in [docs/releasing.md](docs/releasing.md).
 
-```sh
-npx playwright install chromium
-```
+## Contributing
 
-The focused E2E suite runs the production extension offline and calls its Offscreen OCR path from a plain extension test page. It intentionally does not automate the browser-owned action popup. The suite runs headed Chromium; on Linux without a desktop display, run it under Xvfb:
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. New CAPTCHA styles must be submitted as reproducible, authorized scenarios with exact labels, provenance, licenses, isolated groups, and a held-out failing benchmark. Do not add benchmark fixtures to training or validation data.
 
-```sh
-xvfb-run -a npm run test:e2e
-```
+Security reports should follow [SECURITY.md](SECURITY.md). Community participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## OCR status
+## Community
 
-The bundled 2.24 MB CAPTCHA CTC model runs fully offline. On the isolated 10,000-image validation set, the configured auto-fill policy reaches 99.587% precision at 82.38% coverage. The frozen 201-image benchmark reaches 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy. The user-provided `7*3=?` sample is recognized exactly and filled as `21`.
+Project discussions and broader developer conversations are also welcome on [linux.do](https://linux.do). Please keep bug reports and reproducible project issues in this repository so they remain searchable and actionable.
 
-Recognition-only browser checks on Apple M4 Pro measured warm P95 latency of 11.70 ms in Chrome for Testing 149 and 12.50 ms in Edge 150. Model warmup completed in 266 ms in Edge. These results cover common static styles, not every CAPTCHA generator; uncertain results are deliberately left unfilled.
+## License
+
+Source code is available under the [MIT License](LICENSE). Bundled models, runtime components, datasets, fonts, and derived assets retain their respective notices and licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `third_party/`.

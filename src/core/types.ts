@@ -87,17 +87,26 @@ export interface FieldMatcher<TImage, TField> {
   match(image: TImage, fields: readonly TField[], allowReplacement: boolean): FieldMatch<TField>;
 }
 
+export type ConfirmationReason =
+  | 'low_confidence'
+  | 'auto_fill_disabled'
+  | 'ambiguous_field'
+  | 'field_not_empty'
+  | 'unusable_result';
+
 export type WorkflowResult =
-  | { state: 'filled'; candidateId: string; fieldId: string; displayText: string; fillValue: string }
+  | { state: 'filled'; candidateId: string; fieldId: string; displayText: string; fillValue: string; confidence?: number }
   | {
       state: 'needs_confirmation';
       candidateId: string;
       displayText: string;
       fillValue?: string;
+      confidence?: number;
       fieldIds: readonly string[];
+      reason?: ConfirmationReason;
     }
   | { state: 'no_candidate' }
-  | { state: 'no_field'; candidateId: string; displayText: string; fillValue: string }
+  | { state: 'no_field'; candidateId: string; displayText: string; fillValue: string; confidence?: number }
   | { state: 'image_unavailable'; candidateId: string }
   | { state: 'permission_denied'; candidateId: string }
   | { state: 'recognition_failed'; candidateId: string }

@@ -157,4 +157,14 @@ describe('InferenceHost', () => {
     expect(error).toBeInstanceOf(InferenceHostError);
     expect(error).toMatchObject({ code: 'model_unavailable', message: 'The model could not load' });
   });
+
+  it('fails a stalled offscreen response instead of loading forever', async () => {
+    const harness = createBrowserHarness({ respond: () => new Promise(() => undefined) });
+    const host = createInferenceHost(harness.browser, () => 'request', 5);
+
+    await expect(host.recognize('data:image/png;base64,AQ==', 'revision', ['digits'])).rejects.toMatchObject({
+      code: 'model_unavailable',
+      message: 'OCR inference timed out while loading the local model',
+    });
+  });
 });

@@ -1,9 +1,10 @@
-import { hostnameForPage, isRecognitionShortcut, type RecognitionShortcut } from '../platform/settings-store';
-import { GLOBAL_HTTP_ORIGINS } from '../platform/permissions';
+import { hostnameForPage, isRecognitionShortcut, type AccessMode, type RecognitionShortcut } from '../platform/settings-store';
+import { GLOBAL_HTTP_ORIGINS, originsForPage } from '../platform/permissions';
 import type { ModelLog, ModelStatusSnapshot } from '../background/model-status';
 
 export interface PopupViewState {
   hostname: string;
+  accessMode: AccessMode;
   checked: boolean;
   disabled: boolean;
   accessGranted: boolean;
@@ -22,6 +23,7 @@ export interface PopupControllerAdapter {
     contains(details: { origins: string[] }): Promise<boolean>;
     request(details: { origins: string[] }): Promise<boolean>;
   };
+  settings?: { readAccessMode(): Promise<AccessMode> };
 }
 
 export interface PopupController {
@@ -145,7 +147,7 @@ function isModelLog(value: unknown): value is ModelLog {
   const log = value as Partial<ModelLog>;
   return typeof log.at === 'number' && Number.isFinite(log.at) &&
     (log.kind === 'warmup' || log.kind === 'recognition' || log.kind === 'workflow') &&
-    (log.outcome === 'started' || log.outcome === 'success' || log.outcome === 'failure') &&
+    (log.outcome === 'started' || log.outcome === 'success' || log.outcome === 'failure' || log.outcome === 'skipped') &&
     typeof log.message === 'string' &&
     (log.durationMs === undefined || (typeof log.durationMs === 'number' && Number.isFinite(log.durationMs)));
 }
@@ -259,9 +261,31 @@ export function createModelStatusController(
 type SiteState = { enabled: boolean };
 type DisableState = { disabled: true; permissionRemoved: boolean };
 
-const OFF_STATUS = '此网站未开启自动识别。';
-const ON_STATUS = '此网站已开启自动识别。';
-const UNSUPPORTED_STATUS = '当前页面不支持自动识别。';
+export interface PopupControllerLabels {
+  loadingHostname: string;
+  loadingSite: string;
+  off: string;
+  on: string;
+  unsupported: string;
+  unsupportedHostname: string;
+  allSitesHostname: string;
+  accessNeeded(mode: AccessMode): string;
+  requestingAccess(mode: AccessMode): string;
+  accessDenied: string;
+  accessFailed: string;
+  updating: string;
+  readFailed: string;
+  updateFailed: string;
+}
+
+const DEFAULT_LABELS: PopupControllerLabels = {
+  loadingHostname: '正在读取网站…', loadingSite: '正在读取网站设置…', off: '此网站未开启自动识别。', on: '此网站已开启自动识别。',
+  unsupported: '当前页面不支持自动识别。', unsupportedHostname: '不支持的页面', allSitesHostname: '所有网站',
+  accessNeeded: (mode) => mode === 'all' ? '启用全站访问后开始自动识别。' : '允许访问此网站后开始自动识别。',
+  requestingAccess: (mode) => mode === 'all' ? '正在请求全站访问权限…' : '正在请求此网站访问权限…',
+  accessDenied: '需要授权后才能自动识别。', accessFailed: '无法完成网站授权。', updating: '正在更新网站设置…',
+  readFailed: '无法读取网站设置。', updateFailed: '无法更新网站设置。',
+};
 
 function isSiteState(value: unknown): value is SiteState {
   return typeof value === 'object' && value !== null &&
@@ -284,34 +308,38 @@ function isSiteChanged(value: unknown): boolean {
     (value as { reason?: unknown }).reason === 'site-changed';
 }
 
-export function createPopupController(adapter: PopupControllerAdapter, view: PopupView): PopupController {
-  let hostname = '正在读取网站…';
+export function createPopupController(adapter: PopupControllerAdapter, view: PopupView, labels: PopupControllerLabels = DEFAULT_LABELS): PopupController {
+  let hostname = labels.loadingHostname;
+  let pageUrl: string | undefined;
+  let accessMode: AccessMode = 'all';
   let supported = false;
   let knownEnabled = false;
   let stateKnown = false;
   let operationGeneration = 0;
 
   const isCurrent = (generation: number): boolean => generation === operationGeneration;
-  const render = (generation: number, state: Omit<PopupViewState, 'hostname'>): void => {
-    if (isCurrent(generation)) view.render({ hostname, ...state });
+  const render = (generation: number, state: Omit<PopupViewState, 'hostname' | 'accessMode'>): void => {
+    if (isCurrent(generation)) view.render({ hostname, accessMode, ...state });
   };
-  const renderKnown = (generation: number, error?: string, status = knownEnabled ? ON_STATUS : OFF_STATUS): void => render(generation, { checked: knownEnabled, disabled: false, accessGranted: true, status, error });
+  const renderKnown = (generation: number, error?: string, status = knownEnabled ? labels.on : labels.off): void => render(generation, { checked: knownEnabled, disabled: false, accessGranted: true, status, error });
 
   const start = async (): Promise<void> => {
       const generation = ++operationGeneration;
-      render(generation, { checked: false, disabled: true, accessGranted: false, status: '正在读取网站设置…' });
+      render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.loadingSite });
       stateKnown = false;
       try {
+        try { accessMode = await adapter.settings?.readAccessMode() ?? 'all'; } catch { accessMode = 'all'; }
         const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
         if (!isCurrent(generation)) return;
-        const pageUrl = tabs[0]?.url;
-        if (typeof pageUrl !== 'string') {
-          const accessGranted = await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] });
+        const activeUrl = tabs[0]?.url;
+        pageUrl = typeof activeUrl === 'string' ? activeUrl : undefined;
+        if (pageUrl === undefined) {
+          const accessGranted = accessMode === 'all' && await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] });
           if (!isCurrent(generation)) return;
           if (!accessGranted) {
-            hostname = '所有网站';
+            hostname = labels.allSitesHostname;
             supported = true;
-            render(generation, { checked: false, disabled: true, accessGranted: false, status: '启用全站访问后开始自动识别。' });
+            render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.accessNeeded(accessMode) });
             return;
           }
           throw new Error('unsupported');
@@ -320,20 +348,22 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         supported = true;
       } catch {
         if (!isCurrent(generation)) return;
-        hostname = '不支持的页面';
+        hostname = labels.unsupportedHostname;
         supported = false;
         let accessGranted = false;
-        try { accessGranted = await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] }); } catch { /* Keep the guarded unavailable state. */ }
-        if (isCurrent(generation)) render(generation, { checked: false, disabled: true, accessGranted, status: UNSUPPORTED_STATUS });
+        try { accessGranted = accessMode === 'all' && await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] }); } catch { /* Keep the guarded unavailable state. */ }
+        if (isCurrent(generation)) render(generation, { checked: false, disabled: true, accessGranted, status: labels.unsupported });
         return;
       }
 
       try {
-        const accessGranted = await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] });
+        const origins = accessMode === 'all' ? [...GLOBAL_HTTP_ORIGINS] : [...originsForPage(pageUrl!)];
+        const accessGranted = await adapter.permissions.contains({ origins });
         if (!isCurrent(generation)) return;
         if (!accessGranted) {
           knownEnabled = false;
-          render(generation, { checked: false, disabled: true, accessGranted: false, status: '启用全站访问后开始自动识别。' });
+          stateKnown = true;
+          render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.accessNeeded(accessMode) });
           return;
         }
         const response = await adapter.runtime.sendMessage({ type: 'captcha:get-site-state' });
@@ -345,7 +375,7 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
       } catch {
         if (!isCurrent(generation)) return;
         knownEnabled = false;
-        render(generation, { checked: false, disabled: true, accessGranted: false, status: OFF_STATUS, error: '无法读取网站设置。' });
+        render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.off, error: labels.readFailed });
       }
     };
 
@@ -354,19 +384,22 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
     async grantAccess(): Promise<void> {
       if (!supported) return;
       const generation = ++operationGeneration;
-      render(generation, { checked: false, disabled: true, accessGranted: false, status: '正在请求全站访问权限…' });
+      render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.requestingAccess(accessMode) });
       try {
-        const granted = await adapter.permissions.request({ origins: [...GLOBAL_HTTP_ORIGINS] });
+        if (pageUrl === undefined) throw new Error('unsupported');
+        const origins = accessMode === 'all' ? [...GLOBAL_HTTP_ORIGINS] : [...originsForPage(pageUrl)];
+        const granted = await adapter.permissions.request({ origins });
         if (!isCurrent(generation)) return;
         if (!granted) {
-          render(generation, { checked: false, disabled: true, accessGranted: false, status: '未启用全站访问。', error: '需要授权后才能自动识别。' });
+          render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.accessNeeded(accessMode), error: labels.accessDenied });
           return;
         }
         await adapter.runtime.sendMessage({ type: 'captcha:reconcile-access' });
         const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
-        const pageUrl = tabs[0]?.url;
-        if (typeof pageUrl !== 'string') throw new Error('unsupported');
-        hostname = hostnameForPage(pageUrl);
+        const currentUrl = tabs[0]?.url;
+        if (typeof currentUrl !== 'string') throw new Error('unsupported');
+        pageUrl = currentUrl;
+        hostname = hostnameForPage(currentUrl);
         supported = true;
         const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled: true, hostname, permissionAlreadyGranted: false });
         if (!isCurrent(generation)) return;
@@ -375,14 +408,14 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         stateKnown = true;
         renderKnown(generation);
       } catch {
-        if (isCurrent(generation)) render(generation, { checked: false, disabled: true, accessGranted: false, status: '未启用全站访问。', error: '无法完成全站授权。' });
+        if (isCurrent(generation)) render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.accessNeeded(accessMode), error: labels.accessFailed });
       }
     },
     async setEnabled(enabled: boolean): Promise<void> {
       if (!supported || !stateKnown) return;
       const generation = ++operationGeneration;
       const requestHostname = hostname;
-      render(generation, { checked: knownEnabled, disabled: true, accessGranted: true, status: '正在更新网站设置…' });
+      render(generation, { checked: knownEnabled, disabled: true, accessGranted: true, status: labels.updating });
       try {
         const response = await adapter.runtime.sendMessage({ type: 'captcha:set-site-enabled', enabled, hostname: requestHostname });
         if (!isCurrent(generation)) return;
@@ -392,7 +425,7 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
           return;
         }
         if (enabled && isPermissionDenied(response)) {
-          renderKnown(generation, '未获得此网站的权限。');
+          renderKnown(generation, labels.accessDenied);
           return;
         }
         if (isSiteChanged(response)) {
@@ -407,7 +440,7 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         throw new Error('malformed');
       } catch {
         if (!isCurrent(generation)) return;
-        renderKnown(generation, '无法更新网站设置。');
+        renderKnown(generation, labels.updateFailed);
       }
     },
   };

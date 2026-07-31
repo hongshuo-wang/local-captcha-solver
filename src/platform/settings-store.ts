@@ -5,16 +5,31 @@ export const SETTINGS_STORAGE_KEY = 'captcha-settings';
 export const RECOGNITION_SHORTCUTS = ['middle', 'ctrl-click', 'alt-click', 'shift-click'] as const;
 export type RecognitionShortcut = typeof RECOGNITION_SHORTCUTS[number];
 
+export const ACCESS_MODES = ['all', 'selected'] as const;
+export type AccessMode = typeof ACCESS_MODES[number];
+
+export const INTERFACE_LOCALES = ['system', 'zh_CN', 'en'] as const;
+export type InterfaceLocale = typeof INTERFACE_LOCALES[number];
+
+export interface SelectedSiteRule {
+  hostname: string;
+  includeSubdomains: boolean;
+}
+
 export function isRecognitionShortcut(value: unknown): value is RecognitionShortcut {
   return typeof value === 'string' && (RECOGNITION_SHORTCUTS as readonly string[]).includes(value);
 }
 
 export interface CaptchaSettings {
-  version: 2;
+  version: 3;
+  accessMode: AccessMode;
   disabledHosts: string[];
+  selectedSites: SelectedSiteRule[];
   copyOnNoField: boolean;
   autoFill: boolean;
   recognitionShortcut: RecognitionShortcut;
+  interfaceLocale: InterfaceLocale;
+  onboardingComplete: boolean;
 }
 
 export interface SettingsStore {
@@ -25,9 +40,24 @@ export interface SettingsStore {
   setCopyOnNoField(enabled: boolean): Promise<void>;
   setAutoFill(enabled: boolean): Promise<void>;
   setRecognitionShortcut(shortcut: RecognitionShortcut): Promise<void>;
+  setAccessMode(mode: AccessMode): Promise<void>;
+  addSelectedSite(rule: SelectedSiteRule): Promise<void>;
+  removeSelectedSite(rule: SelectedSiteRule): Promise<void>;
+  setInterfaceLocale(locale: InterfaceLocale): Promise<void>;
+  setOnboardingComplete(complete: boolean): Promise<void>;
 }
 
-const EMPTY_SETTINGS: CaptchaSettings = { version: 2, disabledHosts: [], copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' };
+export const DEFAULT_SETTINGS: CaptchaSettings = {
+  version: 3,
+  accessMode: 'all',
+  disabledHosts: [],
+  selectedSites: [],
+  copyOnNoField: false,
+  autoFill: true,
+  recognitionShortcut: 'middle',
+  interfaceLocale: 'system',
+  onboardingComplete: false,
+};
 const HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
 const mutationQueues = new WeakMap<BrowserAdapter, Promise<void>>();
 
@@ -73,29 +103,80 @@ export function hostnameForPage(pageUrl: string): string {
   return normalizeHostname(url.hostname);
 }
 
+export function isAccessMode(value: unknown): value is AccessMode {
+  return typeof value === 'string' && (ACCESS_MODES as readonly string[]).includes(value);
+}
+
+export function isInterfaceLocale(value: unknown): value is InterfaceLocale {
+  return typeof value === 'string' && (INTERFACE_LOCALES as readonly string[]).includes(value);
+}
+
+export function selectedSiteMatches(rule: SelectedSiteRule, hostname: string): boolean {
+  const normalized = normalizeHostname(hostname);
+  return normalized === rule.hostname || (rule.includeSubdomains && normalized.endsWith(`.${rule.hostname}`));
+}
+
+function normalizeSelectedSite(value: unknown): SelectedSiteRule {
+  if (typeof value !== 'object' || value === null) throw new Error('Selected site must be an object');
+  const candidate = value as { hostname?: unknown; includeSubdomains?: unknown };
+  if (typeof candidate.hostname !== 'string' || typeof candidate.includeSubdomains !== 'boolean') throw new Error('Selected site is invalid');
+  return { hostname: normalizeHostname(candidate.hostname), includeSubdomains: candidate.includeSubdomains };
+}
+
+function normalizeSelectedSites(values: readonly unknown[]): SelectedSiteRule[] {
+  const sites = new Map<string, SelectedSiteRule>();
+  for (const value of values) {
+    const rule = normalizeSelectedSite(value);
+    const key = `${rule.hostname}:${rule.includeSubdomains ? 'subdomains' : 'exact'}`;
+    sites.set(key, rule);
+  }
+  return [...sites.values()].sort((left, right) => left.hostname.localeCompare(right.hostname) || Number(left.includeSubdomains) - Number(right.includeSubdomains));
+}
+
 function parseSettings(value: unknown): CaptchaSettings {
-  if (typeof value !== 'object' || value === null) return { ...EMPTY_SETTINGS };
-  const legacy = value as { version?: unknown; allowlistedHosts?: unknown; copyOnNoField?: unknown; recognitionShortcut?: unknown };
+  if (typeof value !== 'object' || value === null) return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
+  const legacy = value as { version?: unknown; allowlistedHosts?: unknown; disabledHosts?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown };
   if (legacy.version === 1 && Array.isArray(legacy.allowlistedHosts)) {
     return {
-      ...EMPTY_SETTINGS,
+      ...DEFAULT_SETTINGS,
+      onboardingComplete: true,
       copyOnNoField: legacy.copyOnNoField === true,
       recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
     };
   }
+  if (legacy.version === 2 && Array.isArray(legacy.disabledHosts)) {
+    try {
+      return {
+        ...DEFAULT_SETTINGS,
+        onboardingComplete: true,
+        disabledHosts: [...new Set(legacy.disabledHosts.map(normalizeHostname))].sort(),
+        copyOnNoField: legacy.copyOnNoField === true,
+        autoFill: legacy.autoFill !== false,
+        recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
+      };
+    } catch {
+      return { ...DEFAULT_SETTINGS, onboardingComplete: true, selectedSites: [], disabledHosts: [] };
+    }
+  }
   const candidate = value as Partial<CaptchaSettings>;
-  if (candidate.version !== 2 || !Array.isArray(candidate.disabledHosts)) return { ...EMPTY_SETTINGS };
+  if (candidate.version !== 3 || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
+    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
+  }
 
   try {
     return {
-      version: 2,
+      version: 3,
+      accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : 'all',
       disabledHosts: [...new Set(candidate.disabledHosts.map(normalizeHostname))].sort(),
+      selectedSites: normalizeSelectedSites(candidate.selectedSites),
       copyOnNoField: candidate.copyOnNoField === true,
       autoFill: candidate.autoFill !== false,
       recognitionShortcut: isRecognitionShortcut(candidate.recognitionShortcut) ? candidate.recognitionShortcut : 'middle',
+      interfaceLocale: isInterfaceLocale(candidate.interfaceLocale) ? candidate.interfaceLocale : 'system',
+      onboardingComplete: candidate.onboardingComplete === true,
     };
   } catch {
-    return { ...EMPTY_SETTINGS };
+    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
   }
 }
 
@@ -103,11 +184,15 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
   const read = async (): Promise<CaptchaSettings> => parseSettings(await adapter.getLocal<unknown>(SETTINGS_STORAGE_KEY));
   const write = async (settings: CaptchaSettings): Promise<void> => {
     await adapter.setLocal<CaptchaSettings>(SETTINGS_STORAGE_KEY, {
-      version: 2,
+      version: 3,
+      accessMode: settings.accessMode,
       disabledHosts: [...new Set(settings.disabledHosts)].sort(),
+      selectedSites: normalizeSelectedSites(settings.selectedSites),
       copyOnNoField: settings.copyOnNoField,
       autoFill: settings.autoFill,
       recognitionShortcut: settings.recognitionShortcut,
+      interfaceLocale: settings.interfaceLocale,
+      onboardingComplete: settings.onboardingComplete,
     });
   };
   const mutate = (operation: () => Promise<void>): Promise<void> => {
@@ -120,20 +205,31 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
   return {
     read,
     async isEnabled(pageUrl: string): Promise<boolean> {
-      return !(await read()).disabledHosts.includes(hostnameForPage(pageUrl));
+      const settings = await read();
+      const hostname = hostnameForPage(pageUrl);
+      if (settings.disabledHosts.includes(hostname)) return false;
+      return settings.accessMode === 'all' || settings.selectedSites.some((rule) => selectedSiteMatches(rule, hostname));
     },
     async enable(hostname: string): Promise<void> {
       const normalized = normalizeHostname(hostname);
       await mutate(async () => {
         const settings = await read();
-        await write({ ...settings, disabledHosts: settings.disabledHosts.filter((host) => host !== normalized) });
+        const selectedSites = settings.accessMode === 'selected' && !settings.selectedSites.some((rule) => selectedSiteMatches(rule, normalized))
+          ? [...settings.selectedSites, { hostname: normalized, includeSubdomains: false }]
+          : settings.selectedSites;
+        await write({ ...settings, selectedSites, disabledHosts: settings.disabledHosts.filter((host) => host !== normalized) });
       });
     },
     async disable(hostname: string): Promise<void> {
       const normalized = normalizeHostname(hostname);
       await mutate(async () => {
         const settings = await read();
-        if (!settings.disabledHosts.includes(normalized)) await write({ ...settings, disabledHosts: [...settings.disabledHosts, normalized] });
+        const selectedSites = settings.accessMode === 'selected'
+          ? settings.selectedSites.filter((rule) => rule.hostname !== normalized || rule.includeSubdomains)
+          : settings.selectedSites;
+        if (!settings.disabledHosts.includes(normalized) || selectedSites.length !== settings.selectedSites.length) {
+          await write({ ...settings, selectedSites, disabledHosts: [...new Set([...settings.disabledHosts, normalized])] });
+        }
       });
     },
     async setCopyOnNoField(enabled: boolean): Promise<void> {
@@ -155,6 +251,43 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
       await mutate(async () => {
         const settings = await read();
         if (settings.recognitionShortcut !== shortcut) await write({ ...settings, recognitionShortcut: shortcut });
+      });
+    },
+    async setAccessMode(mode: AccessMode): Promise<void> {
+      if (!isAccessMode(mode)) throw new Error('accessMode must be supported');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.accessMode !== mode) await write({ ...settings, accessMode: mode });
+      });
+    },
+    async addSelectedSite(value: SelectedSiteRule): Promise<void> {
+      const rule = normalizeSelectedSite(value);
+      await mutate(async () => {
+        const settings = await read();
+        const selectedSites = settings.selectedSites.filter((site) => site.hostname !== rule.hostname || site.includeSubdomains !== rule.includeSubdomains);
+        await write({ ...settings, selectedSites: [...selectedSites, rule], disabledHosts: settings.disabledHosts.filter((host) => host !== rule.hostname) });
+      });
+    },
+    async removeSelectedSite(value: SelectedSiteRule): Promise<void> {
+      const rule = normalizeSelectedSite(value);
+      await mutate(async () => {
+        const settings = await read();
+        const selectedSites = settings.selectedSites.filter((site) => site.hostname !== rule.hostname || site.includeSubdomains !== rule.includeSubdomains);
+        if (selectedSites.length !== settings.selectedSites.length) await write({ ...settings, selectedSites });
+      });
+    },
+    async setInterfaceLocale(locale: InterfaceLocale): Promise<void> {
+      if (!isInterfaceLocale(locale)) throw new Error('interfaceLocale must be supported');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.interfaceLocale !== locale) await write({ ...settings, interfaceLocale: locale });
+      });
+    },
+    async setOnboardingComplete(complete: boolean): Promise<void> {
+      if (typeof complete !== 'boolean') throw new Error('onboardingComplete must be a boolean');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.onboardingComplete !== complete) await write({ ...settings, onboardingComplete: complete });
       });
     },
   };

@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Read release version
+        id: metadata
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Install Chromium for extension tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run built-extension tests
+        run: xvfb-run -a npm run test:e2e:extension
+
+      - name: Build Chrome release ZIP
+        run: npm run zip:chrome
+
+      - name: Build Edge release ZIP
+        run: npm run zip:edge
+
+      - name: Prepare changelog release notes
+        run: npm run release:prepare -- "$GITHUB_REF_NAME"
+
+      - name: Generate SHA-256 checksums
+        working-directory: .output
+        run: |
+          sha256sum \
+            "local-captcha-solver-${{ steps.metadata.outputs.version }}-chrome.zip" \
+            "local-captcha-solver-${{ steps.metadata.outputs.version }}-edge.zip" \
+            > SHA256SUMS.txt
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+        shell: bash
+        run: |
+          assets=(
+            ".output/local-captcha-solver-${VERSION}-chrome.zip"
+            ".output/local-captcha-solver-${VERSION}-edge.zip"
+            ".output/SHA256SUMS.txt"
+          )
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file .output/release-notes.md
+            gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+              --verify-tag \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file .output/release-notes.md
+          fi
+
+  publish-chrome:
+    needs: release
+    if: ${{ vars.CHROME_STORE_PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Chrome ZIP from GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .output
+          gh release download "$GITHUB_REF_NAME" \
+            --pattern "local-captcha-solver-${{ needs.release.outputs.version }}-chrome.zip" \
+            --dir .output
+
+      - name: Upload and submit Chrome update
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: >-
+          npm run submit:stores --
+          --chrome-zip ".output/local-captcha-solver-${{ needs.release.outputs.version }}-chrome.zip"
+          --chrome-publish-target default
+
+  publish-edge:
+    needs: release
+    if: ${{ vars.EDGE_STORE_PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Edge ZIP from GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .output
+          gh release download "$GITHUB_REF_NAME" \
+            --pattern "local-captcha-solver-${{ needs.release.outputs.version }}-edge.zip" \
+            --dir .output
+
+      - name: Upload and submit Edge update
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: >-
+          npm run submit:stores --
+          --edge-zip ".output/local-captcha-solver-${{ needs.release.outputs.version }}-edge.zip"

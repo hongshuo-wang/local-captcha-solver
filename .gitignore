@@ -7,6 +7,11 @@ node_modules/
 __pycache__/
 *.py[cod]
 
+# Local credentials and store submission configuration
+.env
+.env.*
+!.env.example
+
 # Build and test output
 .output/
 .wxt/
@@ -40,3 +45,4 @@ training/ppocrv6-captcha/data/images/
 docs/*
 !docs/model-training.md
 !docs/production-model-reproduction.md
+!docs/releasing.md

@@ -1,28 +1,34 @@
 import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../core/candidate-scorer';
-import { matchCaptchaField } from '../core/field-matcher';
-import { imageRevision, isVisible, noteImageLoaded, snapshotForImage, snapshotImages } from './dom-snapshot';
+import { imageRevision, isVisible, noteImageLoaded, snapshotImages } from './dom-snapshot';
 import type { CaptchaWorkflow } from './workflow';
 
 export interface CaptchaObserver { disconnect(): void }
+export interface CaptchaScanSkip {
+  candidateId: string;
+  width: number;
+  height: number;
+  score: number;
+  reason: 'below_threshold';
+}
+export interface CaptchaObserverOptions { onSkip?(skip: CaptchaScanSkip): void }
 
 const BETTER_CANDIDATE_MARGIN = 10;
+const DIAGNOSTIC_CANDIDATE_THRESHOLD = AUTOMATIC_CANDIDATE_THRESHOLD - 20;
 
-export function observeCaptchaImages(workflow: CaptchaWorkflow, root: Document = document): CaptchaObserver {
+export function observeCaptchaImages(workflow: CaptchaWorkflow, root: Document = document, options: CaptchaObserverOptions = {}): CaptchaObserver {
   let active = true;
   let scanTimer: ReturnType<typeof setTimeout> | undefined;
   let selected: { image: HTMLImageElement; revision: string; score: number } | undefined;
   let filled: { image: HTMLImageElement; revision: string } | undefined;
   const processed = new WeakMap<HTMLImageElement, string>();
+  const reportedSkips = new WeakMap<HTMLImageElement, string>();
 
-  const rankedCandidate = () => snapshotImages(root)
+  const rankedCandidates = () => snapshotImages(root)
     .map((snapshot, order) => {
-      const detail = snapshotForImage(snapshot.element, root);
       const score = scoreCaptchaCandidate(snapshot.candidate).score;
-      const match = detail === undefined ? undefined : matchCaptchaField(snapshot.element, detail.fields.map((field) => field.field));
-      return { snapshot, score, order, match };
+      return { snapshot, score, order };
     })
-    .filter((item) => item.score >= AUTOMATIC_CANDIDATE_THRESHOLD && item.match !== undefined && item.match.state !== 'none')
-    .sort((left, right) => right.score - left.score || left.order - right.order)[0];
+    .sort((left, right) => right.score - left.score || left.order - right.order);
 
   const scan = (): void => {
     if (!active) return;
@@ -31,9 +37,23 @@ export function observeCaptchaImages(workflow: CaptchaWorkflow, root: Document =
       filled = undefined;
     }
 
-    const best = rankedCandidate();
+    const best = rankedCandidates()[0];
     if (best === undefined) {
       selected = undefined;
+      return;
+    }
+    if (best.score < AUTOMATIC_CANDIDATE_THRESHOLD) {
+      selected = undefined;
+      if (best.score >= DIAGNOSTIC_CANDIDATE_THRESHOLD && reportedSkips.get(best.snapshot.element) !== best.snapshot.revision) {
+        reportedSkips.set(best.snapshot.element, best.snapshot.revision);
+        options.onSkip?.({
+          candidateId: best.snapshot.id,
+          width: best.snapshot.candidate.width,
+          height: best.snapshot.candidate.height,
+          score: best.score,
+          reason: 'below_threshold',
+        });
+      }
       return;
     }
     const image = best.snapshot.element;
@@ -46,6 +66,7 @@ export function observeCaptchaImages(workflow: CaptchaWorkflow, root: Document =
     void workflow.run(image, 'automatic').then((result) => {
       if (!active || selected?.image !== image || selected.revision !== revision) return;
       if (result.state === 'filled') filled = { image, revision };
+      if (result.state === 'no_field') processed.delete(image);
     });
   };
 

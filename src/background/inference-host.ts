@@ -47,8 +47,14 @@ export interface InferenceHost {
   warmup?(): Promise<void>;
 }
 
+const DEFAULT_INFERENCE_TIMEOUT_MS = 15_000;
+
 function createRequestId(): string {
   return globalThis.crypto.randomUUID();
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error && error.message.trim() !== '' ? error.message : String(error || 'unknown error');
 }
 
 class OffscreenInferenceHost implements InferenceHost {
@@ -58,6 +64,7 @@ class OffscreenInferenceHost implements InferenceHost {
   constructor(
     private readonly browser: InferenceBrowser,
     private readonly requestIdFactory: () => string,
+    private readonly inferenceTimeoutMs: number,
   ) {}
 
   async recognize(
@@ -80,9 +87,10 @@ class OffscreenInferenceHost implements InferenceHost {
 
     let response: unknown;
     try {
-      response = await this.browser.runtime.sendMessage(request);
+      response = await this.sendWithTimeout(request);
     } catch (cause) {
-      throw new InferenceHostError('recognition_failed', 'OCR inference message failed', cause);
+      if (cause instanceof InferenceHostError) throw cause;
+      throw new InferenceHostError('recognition_failed', `OCR inference message failed: ${errorMessage(cause)}`, cause);
     }
 
     if (
@@ -106,12 +114,25 @@ class OffscreenInferenceHost implements InferenceHost {
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
       '__local_captcha_warmup__',
       ['digits'],
-    ).then(() => undefined).catch((error: unknown) => {
-      if (this.warmupPromise === promise) this.warmupPromise = undefined;
-      throw error;
-    });
+    ).then(() => undefined);
     this.warmupPromise = promise;
+    promise.then(
+      () => { if (this.warmupPromise === promise) this.warmupPromise = undefined; },
+      () => { if (this.warmupPromise === promise) this.warmupPromise = undefined; },
+    );
     return promise;
+  }
+
+  private sendWithTimeout(request: InferenceRequest): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new InferenceHostError('model_unavailable', 'OCR inference timed out while loading the local model'));
+      }, this.inferenceTimeoutMs);
+      this.browser.runtime.sendMessage(request).then(
+        (response) => { clearTimeout(timeout); resolve(response); },
+        (cause: unknown) => { clearTimeout(timeout); reject(cause); },
+      );
+    });
   }
 
   private ensureOffscreenDocument(): Promise<void> {
@@ -123,7 +144,7 @@ class OffscreenInferenceHost implements InferenceHost {
       if (this.documentPromise === documentPromise) {
         this.documentPromise = undefined;
       }
-      throw new InferenceHostError('model_unavailable', 'Could not start OCR inference document', cause);
+      throw new InferenceHostError('model_unavailable', `Could not start OCR inference document: ${errorMessage(cause)}`, cause);
     });
     this.documentPromise = documentPromise;
     return documentPromise;
@@ -153,6 +174,7 @@ class OffscreenInferenceHost implements InferenceHost {
 export function createInferenceHost(
   browser: InferenceBrowser,
   requestIdFactory: () => string = createRequestId,
+  inferenceTimeoutMs = DEFAULT_INFERENCE_TIMEOUT_MS,
 ): InferenceHost {
-  return new OffscreenInferenceHost(browser, requestIdFactory);
+  return new OffscreenInferenceHost(browser, requestIdFactory, inferenceTimeoutMs);
 }

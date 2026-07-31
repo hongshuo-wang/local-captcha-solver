@@ -14,6 +14,7 @@ const BACKGROUND_MESSAGE_TYPES = new Set([
   'captcha:get-preferences',
   'captcha:set-preferences',
   'captcha:record-activity',
+  'captcha:clear-diagnostics',
   'captcha:reconcile-access',
 ]);
 
@@ -45,7 +46,7 @@ export interface BackgroundRuntime { start(): Promise<void>; }
 
 export function createBackgroundRuntime(adapter: BackgroundRuntimeAdapter): BackgroundRuntime {
   const router = createRuntimeRouter(adapter);
-  const reportError = adapter.reportError ?? ((error: unknown) => console.error('Local CAPTCHA Solver background initialization failed', error));
+  const reportError = adapter.reportError ?? ((error: unknown) => console.error('Captcha Helper background initialization failed', error));
   let initialized = false;
   let initializing: Promise<void> | undefined;
   let listenersRegistered = false;

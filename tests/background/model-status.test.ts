@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createModelStatusStore } from '../../src/background/model-status';
+import { createModelStatusStore, type ModelLog } from '../../src/background/model-status';
 
 describe('ModelStatusStore', () => {
   it('starts loading with no progress completed', () => {
@@ -86,29 +86,29 @@ describe('ModelStatusStore', () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
-  it('retains only the most recent 30 user-facing records', () => {
+  it('retains only the most recent 20 user-facing records', () => {
     let now = 1;
     const store = createModelStatusStore(() => now++);
     for (let index = 0; index < 35; index += 1) store.recognitionStarted();
 
     const logs = store.snapshot().logs;
-    expect(logs).toHaveLength(30);
-    expect(logs[0]?.at).toBe(6);
+    expect(logs).toHaveLength(20);
+    expect(logs[0]?.at).toBe(16);
     expect(logs.at(-1)?.at).toBe(35);
   });
 
-  it('records recognition outcomes without recognized text', () => {
+  it('records bounded recognition text and actionable errors', () => {
     const store = createModelStatusStore(() => 1000);
     store.recognitionStarted();
-    store.recognitionSucceeded(42, 0.93);
+    store.recognitionSucceeded(42, 0.93, { site: 'portal.example.test', recognizedText: '12+7=?' });
     store.recognitionFailed('captcha text SECRET123 was rejected', 55, false);
 
     const logs = store.snapshot().logs;
     expect(logs).toHaveLength(3);
-    expect(logs[1]).toMatchObject({ kind: 'recognition', outcome: 'success', durationMs: 42 });
+    expect(logs[1]).toMatchObject({ kind: 'recognition', outcome: 'success', durationMs: 42, site: 'portal.example.test', recognizedText: '12+7=?' });
     expect(logs[1]?.message).toContain('高置信度');
     expect(logs[2]).toMatchObject({ kind: 'recognition', outcome: 'failure', durationMs: 55 });
-    expect(logs.every((log) => !log.message.includes('SECRET123'))).toBe(true);
+    expect(logs[2]?.error).toContain('SECRET123');
   });
 
   it('marks the model unavailable when recognition reports that category', () => {
@@ -118,15 +118,31 @@ describe('ModelStatusStore', () => {
     expect(store.snapshot()).toMatchObject({ status: 'error', progress: 0 });
   });
 
-  it('records workflow outcomes without result text or site information', () => {
+  it('records workflow outcomes with sanitized diagnostic context', () => {
     const store = createModelStatusStore(() => 1000);
     store.workflowCompleted('filled');
-    store.workflowCompleted('confirmation');
+    store.workflowCompleted({ outcome: 'confirmation', site: 'portal.example.test', trigger: 'automatic', candidateId: 'image-2', recognizedText: '8642', fillValue: '8642', confidence: 0.91, match: 'ambiguous', reason: 'ambiguous_field' });
     store.workflowCompleted('copied');
     expect(store.snapshot().logs).toEqual([
       expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '已填入验证码' }),
-      expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '识别完成，等待确认' }),
+      expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '识别完成，等待确认', site: 'portal.example.test', candidateId: 'image-2', recognizedText: '8642' }),
       expect.objectContaining({ kind: 'workflow', outcome: 'success', message: '识别完成，已复制结果' }),
     ]);
+  });
+
+  it('hydrates, caps, persists, and clears local diagnostic records', async () => {
+    const write = vi.fn(async (_value: { version: 1; logs: readonly ModelLog[] }) => undefined);
+    const read = vi.fn(async () => ({ version: 1, logs: [{ at: 900, kind: 'workflow', outcome: 'success', message: '旧记录', site: 'saved.example' }] }));
+    const store = createModelStatusStore(() => 1000, { read, write });
+
+    await store.hydrate();
+    expect(store.snapshot().logs).toEqual([expect.objectContaining({ message: '旧记录', site: 'saved.example' })]);
+    store.workflowCompleted({ outcome: 'skipped', reason: 'below_threshold', score: 54 });
+    await vi.waitFor(() => expect(write).toHaveBeenCalled());
+    expect(write.mock.calls.at(-1)?.[0]).toMatchObject({ version: 1, logs: expect.arrayContaining([expect.objectContaining({ reason: 'below_threshold', score: 54 })]) });
+
+    store.clearLogs();
+    expect(store.snapshot().logs).toEqual([]);
+    await vi.waitFor(() => expect(write.mock.calls.at(-1)?.[0]).toEqual({ version: 1, logs: [] }));
   });
 });

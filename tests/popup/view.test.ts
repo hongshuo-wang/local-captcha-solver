@@ -1,95 +1,63 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createPopupView, startPopup } from '../../entrypoints/popup/main';
+import { createPopupView, formatDiagnosticSnapshot, startPopup } from '../../entrypoints/popup/main';
 import type { ModelStatusSnapshot } from '../../src/background/model-status';
 import type { PopupControllerAdapter } from '../../src/popup/controller';
 
 describe('popup view', () => {
-  it('renders product identity, global onboarding, site controls, preferences, and diagnostics', () => {
+  it('renders product identity, current-site controls, model state, and a settings command', () => {
     const root = document.createElement('main');
     document.body.append(root);
     const view = createPopupView(root);
-    expect(root.textContent).toContain('本地验证码识别器');
-    expect(root.textContent).toContain('启用全站访问');
-    expect(root.textContent).toContain('自动填充');
-    expect(root.textContent).toContain('自动复制');
-    expect(root.textContent).toContain('诊断信息');
-    expect(view.shortcutSelect.value).toBe('middle');
+    expect(root.textContent).toContain('Captcha Helper');
+    expect(root.textContent).toContain('本地验证码助手');
+    expect(root.textContent).toContain('当前网站');
+    expect(root.textContent).toContain('最近状态');
+    expect(root.textContent).toContain('打开设置');
+    expect(root.textContent).not.toContain('自动复制');
+    expect(root.querySelector<HTMLImageElement>('.brand-mark')?.src).toContain('/icons/icon-48.png');
     expect(view.checkbox.type).toBe('checkbox');
-    expect(view.autoFillCheckbox.type).toBe('checkbox');
-    expect(view.copyCheckbox.type).toBe('checkbox');
     expect(root.querySelector('[data-popup-status]')?.getAttribute('role')).toBe('status');
     root.remove();
   });
 
-  it('switches between the first-run access panel and enabled controls', () => {
+  it('adapts the permission action to all-site and selected-site modes', () => {
     const root = document.createElement('main');
     document.body.append(root);
     const view = createPopupView(root);
-    const access = root.querySelector<HTMLElement>('[data-access-panel]')!;
-    const controls = root.querySelectorAll<HTMLElement>('[data-controls-panel]');
-
-    view.render({ hostname: 'portal.example.test', checked: false, disabled: true, accessGranted: false, status: '启用全站访问后开始自动识别。' });
-    expect(access.hidden).toBe(false);
-    expect([...controls].every((control) => control.hidden)).toBe(true);
-
-    view.render({ hostname: 'portal.example.test', checked: true, disabled: false, accessGranted: true, status: '此网站已开启自动识别。' });
-    expect(access.hidden).toBe(true);
-    expect([...controls].every((control) => !control.hidden)).toBe(true);
-    view.checkbox.focus();
-    expect(document.activeElement).toBe(view.checkbox);
+    view.render({ hostname: 'portal.example.test', accessMode: 'all', checked: false, disabled: true, accessGranted: false, status: '启用全站访问后开始自动识别。' });
+    expect(view.accessButton.textContent).toBe('授权所有网站');
+    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: false, disabled: true, accessGranted: false, status: '允许访问此网站后开始自动识别。' });
+    expect(view.accessButton.textContent).toBe('添加网站');
+    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: true, disabled: false, accessGranted: true, status: '此网站已开启自动识别。' });
+    expect(root.querySelector<HTMLElement>('[data-access-panel]')?.hidden).toBe(true);
     expect(view.checkbox.checked).toBe(true);
     root.remove();
   });
 
-  it('renders model error, latest activity, progress, retry, and collapsed diagnostic logs', () => {
+  it('renders localized English chrome and guarded model activity', () => {
     const root = document.createElement('main');
     document.body.append(root);
-    const view = createPopupView(root);
-    view.renderModelStatus({
-      status: 'error', progress: 0, message: '本地识别模型不可用',
-      logs: [{ at: 1000, kind: 'recognition', outcome: 'success', message: '识别成功（高置信度）', durationMs: 42 }],
-    });
-
-    expect(root.querySelector('[data-model-summary]')?.textContent).toContain('本地识别模型不可用');
-    expect(root.querySelector('[data-latest-activity]')?.textContent).toContain('识别成功（高置信度）');
-    expect((root.querySelector('[data-model-progress]') as HTMLProgressElement).value).toBe(0);
-    expect((root.querySelector('[data-model-retry]') as HTMLButtonElement).hidden).toBe(false);
-    expect((root.querySelector('.diagnostics') as HTMLDetailsElement).open).toBe(true);
-    expect(root.querySelector('[data-model-logs]')?.textContent).toContain('42 ms');
+    const view = createPopupView(root, 'en');
+    view.renderModelStatus({ status: 'error', progress: 0, message: '本地识别模型不可用', logs: [{ at: 1000, kind: 'recognition', outcome: 'failure', message: '识别失败' }] });
+    expect(root.textContent).toContain('Local CAPTCHA helper');
+    expect(root.querySelector('[data-model-summary]')?.textContent).toBe('Model unavailable');
+    expect(root.querySelector('[data-latest-activity]')?.textContent).toBe('Recognition failed');
+    expect(view.modelRetry.hidden).toBe(false);
     root.remove();
   });
 
-  it('uses an empty state and keeps diagnostics closed when the model is healthy', () => {
-    const root = document.createElement('main');
-    document.body.append(root);
-    const view = createPopupView(root);
-    view.renderModelStatus({ status: 'ready', progress: 100, message: '本地识别模型已就绪', logs: [] });
-    expect(root.querySelector('[data-latest-activity]')?.textContent).toBe('暂无执行记录');
-    expect(root.querySelector('[data-model-logs]')?.textContent).toContain('暂无诊断记录');
-    expect((root.querySelector('.diagnostics') as HTMLDetailsElement).open).toBe(false);
-    root.remove();
+  it('exports diagnostics without changing stored values', () => {
+    const snapshot: ModelStatusSnapshot = { status: 'ready', progress: 100, message: 'ready', logs: [{ at: 1000, kind: 'workflow', outcome: 'success', message: 'done', site: 'portal.example.test' }] };
+    expect(JSON.parse(formatDiagnosticSnapshot(snapshot))).toEqual(snapshot);
   });
 
-  it('renders only the 10 most recent diagnostic records', () => {
-    const root = document.createElement('main');
-    document.body.append(root);
-    const view = createPopupView(root);
-    const logs = Array.from({ length: 31 }, (_, index) => ({ at: index, kind: 'recognition' as const, outcome: 'success' as const, message: `记录 ${index}` }));
-    view.renderModelStatus({ status: 'ready', progress: 100, message: '本地识别模型已就绪', logs });
-    expect(root.querySelectorAll('[data-model-logs] li')).toHaveLength(10);
-    expect(root.querySelector('[data-model-logs]')?.textContent).not.toContain('记录 20');
-    expect(root.querySelector('[data-model-logs]')?.textContent).toContain('记录 30');
-    root.remove();
-  });
-
-  it('wires model, site, preference startup, and retry through the popup runtime', async () => {
+  it('wires model retry, site state, and the options-page command', async () => {
     const root = document.createElement('main');
     document.body.append(root);
     const sendMessage = vi.fn(async (message: { type: string }) => {
-      if (message.type === 'captcha:get-model-status' || message.type === 'captcha:retry-model-warmup') return { status: 'error', progress: 0, message: '本地识别模型不可用', logs: [] } satisfies ModelStatusSnapshot;
+      if (message.type === 'captcha:get-model-status' || message.type === 'captcha:retry-model-warmup') return { status: 'error', progress: 0, message: 'model unavailable', logs: [] } satisfies ModelStatusSnapshot;
       if (message.type === 'captcha:get-site-state') return { enabled: false };
-      if (message.type === 'captcha:get-preferences') return { autoFill: true, copyOnNoField: false, recognitionShortcut: 'middle' };
       return { enabled: true };
     });
     const adapter: PopupControllerAdapter = {
@@ -97,13 +65,14 @@ describe('popup view', () => {
       runtime: { sendMessage },
       permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
     };
-    startPopup(root, adapter);
+    const openSettings = vi.fn(async () => undefined);
+    startPopup(root, adapter, 'zh_CN', openSettings);
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-model-status' }));
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-site-state' }));
-    expect((root.querySelector('#auto-fill') as HTMLInputElement).checked).toBe(true);
-    expect((root.querySelector('#copy-on-no-field') as HTMLInputElement).checked).toBe(false);
     (root.querySelector('[data-model-retry]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:retry-model-warmup' }));
+    (root.querySelector('[data-open-settings]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(openSettings).toHaveBeenCalledOnce());
     root.remove();
   });
 });

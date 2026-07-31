@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BrowserAdapter } from '../../src/platform/browser-adapter';
-import { SETTINGS_STORAGE_KEY, createSettingsStore } from '../../src/platform/settings-store';
+import { DEFAULT_SETTINGS, SETTINGS_STORAGE_KEY, createSettingsStore } from '../../src/platform/settings-store';
 
 function adapterWith(initialValue?: unknown): BrowserAdapter & { values: Map<string, unknown> } {
   const values = new Map<string, unknown>();
@@ -30,17 +30,17 @@ function adapterWithGatedReads(): BrowserAdapter & { releaseReads(): void; value
   };
 }
 
-const defaults = { version: 2 as const, disabledHosts: [], copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' as const };
+const defaults = DEFAULT_SETTINGS;
 
 describe('createSettingsStore', () => {
-  it('reads, normalizes, sorts, and deduplicates the version 2 schema', async () => {
+  it('migrates, normalizes, sorts, and deduplicates the version 2 schema', async () => {
     const store = createSettingsStore(adapterWith({ version: 2, disabledHosts: ['z.example.test', 'A.example.test', 'a.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' }));
-    await expect(store.read()).resolves.toEqual({ version: 2, disabledHosts: ['a.example.test', 'z.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' });
+    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true, disabledHosts: ['a.example.test', 'z.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' });
   });
 
   it('migrates version 1 allowlist settings without treating other sites as disabled', async () => {
     const store = createSettingsStore(adapterWith({ version: 1, allowlistedHosts: ['portal.example.test'], copyOnNoField: true, recognitionShortcut: 'shift-click' }));
-    await expect(store.read()).resolves.toEqual({ ...defaults, copyOnNoField: true, recognitionShortcut: 'shift-click' });
+    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true, copyOnNoField: true, recognitionShortcut: 'shift-click' });
   });
 
   it('recovers corrupt or absent storage with privacy-conscious defaults', async () => {
@@ -116,6 +116,25 @@ describe('createSettingsStore', () => {
 
   it('recovers malformed optional preferences with new-install defaults', async () => {
     const store = createSettingsStore(adapterWith({ version: 2, disabledHosts: [], copyOnNoField: 'yes', autoFill: 'no', recognitionShortcut: 'double-click' }));
-    await expect(store.read()).resolves.toEqual(defaults);
+    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true });
+  });
+
+  it('supports selected-site access with explicit subdomain coverage', async () => {
+    const store = createSettingsStore(adapterWith());
+    await store.setAccessMode('selected');
+    await store.addSelectedSite({ hostname: 'example.test', includeSubdomains: true });
+    await expect(store.isEnabled('https://example.test/login')).resolves.toBe(true);
+    await expect(store.isEnabled('https://account.example.test/login')).resolves.toBe(true);
+    await expect(store.isEnabled('https://other.test/login')).resolves.toBe(false);
+    await store.disable('account.example.test');
+    await expect(store.isEnabled('https://account.example.test/login')).resolves.toBe(false);
+    await expect(store.isEnabled('https://example.test/login')).resolves.toBe(true);
+  });
+
+  it('persists interface locale and onboarding completion independently', async () => {
+    const store = createSettingsStore(adapterWith());
+    await store.setInterfaceLocale('en');
+    await store.setOnboardingComplete(true);
+    await expect(store.read()).resolves.toMatchObject({ interfaceLocale: 'en', onboardingComplete: true });
   });
 });

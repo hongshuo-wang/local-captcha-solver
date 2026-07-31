@@ -1,12 +1,11 @@
 import type { ImageFetcher } from './image-fetch';
 import type { InferenceHost } from './inference-host';
 import { hostnameForPage, isRecognitionShortcut, normalizeHostname, type RecognitionShortcut, type SettingsStore } from '../platform/settings-store';
-import { GLOBAL_HTTP_ORIGINS } from '../platform/permissions';
+import { permissionOriginsForPage } from '../platform/permissions';
 import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
 import type { EnableRegistrationOptions } from './content-registration';
-import type { ModelStatusStore } from './model-status';
-import type { WorkflowActivityOutcome } from './model-status';
+import type { DiagnosticContext, ModelStatusStore, WorkflowActivity, WorkflowActivityOutcome } from './model-status';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
 export interface RuntimeRouterAdapter {
@@ -94,12 +93,47 @@ function senderPage(sender: RuntimeSender): string | undefined {
   return sender.url ?? tabPage;
 }
 
+function isExtensionDocumentUrl(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === 'chrome-extension:' || protocol === 'moz-extension:';
+  } catch { return false; }
+}
+
+function canManageDiagnostics(sender: RuntimeSender): boolean {
+  if (sender.tab === undefined) return true;
+  return isExtensionDocumentUrl(sender.url) && isExtensionDocumentUrl(sender.tab.url);
+}
+
 function recognitionError(error: unknown): { type: 'captcha:recognition-error'; code: 'model_unavailable' | 'recognition_failed' } {
   return { type: 'captcha:recognition-error', code: typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'model_unavailable' ? 'model_unavailable' : 'recognition_failed' };
 }
 
 function isWorkflowActivity(value: unknown): value is WorkflowActivityOutcome {
-  return value === 'filled' || value === 'confirmation' || value === 'copied' || value === 'no_field' || value === 'failed';
+  return value === 'filled' || value === 'confirmation' || value === 'copied' || value === 'no_field' || value === 'failed' || value === 'skipped';
+}
+
+function diagnosticContext(value: unknown): DiagnosticContext {
+  if (typeof value !== 'object' || value === null) return {};
+  const candidate = value as Record<string, unknown>;
+  const trigger = candidate.trigger === 'automatic' || candidate.trigger === 'explicit' || candidate.trigger === 'context' ? candidate.trigger : undefined;
+  const match = candidate.match === 'unique' || candidate.match === 'ambiguous' || candidate.match === 'none' ? candidate.match : undefined;
+  const text = (key: string) => typeof candidate[key] === 'string' ? candidate[key] as string : undefined;
+  const number = (key: string) => typeof candidate[key] === 'number' && Number.isFinite(candidate[key]) ? candidate[key] as number : undefined;
+  return {
+    ...(trigger === undefined ? {} : { trigger }),
+    ...(text('candidateId') === undefined ? {} : { candidateId: text('candidateId') }),
+    ...(number('width') === undefined ? {} : { width: number('width') }),
+    ...(number('height') === undefined ? {} : { height: number('height') }),
+    ...(text('source') === undefined ? {} : { source: text('source') }),
+    ...(number('score') === undefined ? {} : { score: number('score') }),
+    ...(text('recognizedText') === undefined ? {} : { recognizedText: text('recognizedText') }),
+    ...(text('fillValue') === undefined ? {} : { fillValue: text('fillValue') }),
+    ...(number('confidence') === undefined ? {} : { confidence: number('confidence') }),
+    ...(match === undefined ? {} : { match }),
+    ...(text('reason') === undefined ? {} : { reason: text('reason') }),
+  };
 }
 
 export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRouter {
@@ -107,7 +141,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
     void runWarmup(adapter)?.catch(() => undefined);
   };
   const currentPage = async (sender: RuntimeSender): Promise<string | undefined> => {
-    if (sender.tab !== undefined) return senderPage(sender);
+    if (sender.tab !== undefined && !isExtensionDocumentUrl(sender.url)) return senderPage(sender);
     const tab = await adapter.activeTab();
     return typeof tab?.url === 'string' && pageOrigin(tab.url) !== undefined ? tab.url : undefined;
   };
@@ -115,10 +149,16 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   return {
     async handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined> {
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
-      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown };
+      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown; diagnostic?: unknown };
       if (request.type === 'captcha:get-preferences') {
         const settings = await adapter.settings?.read();
-        return { copyOnNoField: settings?.copyOnNoField === true, autoFill: settings?.autoFill !== false, recognitionShortcut: settings?.recognitionShortcut ?? 'middle' };
+        return {
+          copyOnNoField: settings?.copyOnNoField === true,
+          autoFill: settings?.autoFill !== false,
+          recognitionShortcut: settings?.recognitionShortcut ?? 'middle',
+          accessMode: settings?.accessMode ?? 'all',
+          interfaceLocale: settings?.interfaceLocale ?? 'system',
+        };
       }
       if (request.type === 'captcha:reconcile-access') {
         if (sender.tab !== undefined || adapter.siteState.reconcile === undefined) return { reconciled: false };
@@ -159,28 +199,39 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       }
       if (request.type === 'captcha:recognize') {
         const startedAt = performance.now();
-        adapter.modelStatus.recognitionStarted();
+        const page = senderPage(sender);
+        const site = page === undefined ? undefined : hostnameForPage(page);
+        const context = site === undefined ? {} : { site };
+        adapter.modelStatus.recognitionStarted(context);
         const inferenceRequest = { type: 'ocr:recognize' as const, requestId: 'runtime-validation', imageRevision: request.revision, imageDataUrl: request.imageDataUrl, modes: request.modes };
         if (!isInferenceRequest(inferenceRequest)) {
-          adapter.modelStatus.recognitionFailed('invalid request', performance.now() - startedAt, false);
+          adapter.modelStatus.recognitionFailed('invalid request', performance.now() - startedAt, false, context);
           return recognitionError(undefined);
         }
         try {
           const results = await adapter.inferenceHost.recognize(inferenceRequest.imageDataUrl, inferenceRequest.imageRevision, inferenceRequest.modes);
           const confidence = results.length === 0 ? 0 : results.reduce((sum, result) => sum + result.confidence, 0) / results.length;
-          adapter.modelStatus.recognitionSucceeded(performance.now() - startedAt, confidence);
+          const best = [...results].sort((left, right) => right.confidence - left.confidence)[0];
+          adapter.modelStatus.recognitionSucceeded(performance.now() - startedAt, confidence, { ...context, recognizedText: best?.text });
           return results;
         } catch (error) {
           const durationMs = performance.now() - startedAt;
           const modelUnavailable = typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'model_unavailable';
-          adapter.modelStatus.recognitionFailed(error instanceof Error ? error.message : 'recognition failed', durationMs, modelUnavailable);
+          adapter.modelStatus.recognitionFailed(error instanceof Error ? error.message : 'recognition failed', durationMs, modelUnavailable, context);
           return recognitionError(error);
         }
       }
       if (request.type === 'captcha:record-activity') {
-        if (senderPage(sender) === undefined || !isWorkflowActivity(request.outcome)) return { recorded: false };
-        adapter.modelStatus.workflowCompleted(request.outcome);
+        const page = senderPage(sender);
+        if (page === undefined || !isWorkflowActivity(request.outcome)) return { recorded: false };
+        const activity: WorkflowActivity = { outcome: request.outcome, ...diagnosticContext(request.diagnostic), site: hostnameForPage(page) };
+        adapter.modelStatus.workflowCompleted(activity);
         return { recorded: true };
+      }
+      if (request.type === 'captcha:clear-diagnostics') {
+        if (!canManageDiagnostics(sender)) return { cleared: false };
+        adapter.modelStatus.clearLogs();
+        return { cleared: true, snapshot: adapter.modelStatus.snapshot() };
       }
       if (request.type === 'captcha:get-model-status') return adapter.modelStatus.snapshot();
       if (request.type === 'captcha:retry-model-warmup') {
@@ -190,7 +241,14 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (request.type === 'captcha:get-site-state' || request.type === 'captcha:get-status') {
         const page = await currentPage(sender);
         if (page === undefined) return { enabled: false };
-        try { const enabled = await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS }) && await adapter.siteState.isEnabled(page); if (enabled) startWarmup(); return { enabled }; } catch { return { enabled: false }; }
+        try {
+          const settings = await adapter.settings?.read();
+          const accessMode = settings?.accessMode ?? 'all';
+          const accessGranted = await adapter.permissions.contains({ origins: permissionOriginsForPage({ accessMode }, page) });
+          const enabled = accessGranted && await adapter.siteState.isEnabled(page);
+          if (enabled) startWarmup();
+          return { enabled };
+        } catch { return { enabled: false }; }
       }
       if (request.type === 'captcha:set-site-enabled') {
         const page = await currentPage(sender);

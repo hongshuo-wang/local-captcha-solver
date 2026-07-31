@@ -1,0 +1,68 @@
+name: CAPTCHA scenario contribution
+description: Propose an authorized, reproducible CAPTCHA style for benchmark and model review.
+title: "[Scenario]: "
+labels:
+  - captcha-scenario
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not upload private, confidential, or unauthorized CAPTCHA images. A single screenshot is not enough to justify a production model change.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Digits
+        - English letters
+        - Alphanumeric
+        - One-step integer arithmetic
+    validations:
+      required: true
+  - type: textarea
+    id: mechanism
+    attributes:
+      label: Missing visual mechanism
+      description: Explain the font, distortion, interference, layout, or operator style that current coverage misses.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Source, authorization, and license
+      description: State who created the samples, why you may share them, and the applicable redistribution/training license.
+    validations:
+      required: true
+  - type: textarea
+    id: labels
+    attributes:
+      label: Exact labels
+      description: Provide an exact label for every authorized sample. Do not include secrets or live challenge tokens.
+    validations:
+      required: true
+  - type: input
+    id: group
+    attributes:
+      label: Proposed scenario group
+      description: One generator or website family must remain in one isolated split group.
+      placeholder: example-family-distorted-serif-v1
+    validations:
+      required: true
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Current held-out failure
+      description: Describe the reproducible benchmark failure without adding the fixture to training or validation data.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I am authorized to share every submitted sample for the stated purpose.
+          required: true
+        - label: Every sample has an exact label, source, license or permission, SHA-256, and scenario group before dataset import.
+          required: true
+        - label: The held-out benchmark group will not be added to training or validation data.
+          required: true

@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GLOBAL_REGISTRATION_ID, contentScriptRegistrationId, createContentRegistration } from '../../src/background/content-registration';
 import { GLOBAL_HTTP_ORIGINS } from '../../src/platform/permissions';
-import { createSettingsStore, SETTINGS_STORAGE_KEY } from '../../src/platform/settings-store';
+import { createSettingsStore, DEFAULT_SETTINGS, SETTINGS_STORAGE_KEY } from '../../src/platform/settings-store';
 
-const defaults = { version: 2, disabledHosts: [], copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle' };
+const defaults = DEFAULT_SETTINGS;
 
 function harness(options: { permitted?: boolean; registrations?: readonly { id: string; matches: readonly string[]; js: readonly string[]; persistAcrossSessions?: boolean }[]; setFails?: boolean } = {}) {
   const values = new Map<string, unknown>([[SETTINGS_STORAGE_KEY, defaults]]);
@@ -109,5 +109,13 @@ describe('content registration', () => {
     app.contains.mockRejectedValueOnce(new Error('permission API unavailable'));
     await expect(app.registration.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: false, reason: 'permission-unavailable' });
     expect(app.request).not.toHaveBeenCalled();
+  });
+
+  it('registers only granted selected-site match patterns', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { ...defaults, accessMode: 'selected', selectedSites: [{ hostname: 'portal.example.test', includeSubdomains: false }] });
+    await app.registration.reconcile();
+    expect(app.registerContentScripts).toHaveBeenCalledWith([expect.objectContaining({ matches: ['http://portal.example.test/*', 'https://portal.example.test/*'] })]);
+    expect(app.registerContentScripts.mock.calls[0]?.[0]?.[0]?.id).toBe('captcha-auto-aad516fbeda76e37');
   });
 });

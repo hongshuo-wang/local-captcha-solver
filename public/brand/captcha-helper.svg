@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Captcha Helper</title>
+  <desc id="desc">A scan frame surrounding a check mark</desc>
+  <rect width="128" height="128" rx="24" fill="#17342b"/>
+  <rect x="8" y="8" width="112" height="112" rx="18" fill="#294b40"/>
+  <rect x="10" y="10" width="108" height="108" rx="16" fill="#17342b"/>
+  <rect x="27" y="27" width="29" height="8" rx="4" fill="#75c18d"/>
+  <rect x="27" y="27" width="8" height="29" rx="4" fill="#75c18d"/>
+  <rect x="72" y="27" width="29" height="8" rx="4" fill="#75c18d"/>
+  <rect x="93" y="27" width="8" height="29" rx="4" fill="#75c18d"/>
+  <rect x="27" y="93" width="29" height="8" rx="4" fill="#75c18d"/>
+  <rect x="27" y="72" width="8" height="29" rx="4" fill="#75c18d"/>
+  <rect x="72" y="93" width="29" height="8" rx="4" fill="#75c18d"/>
+  <rect x="93" y="72" width="8" height="29" rx="4" fill="#75c18d"/>
+  <polygon points="43,62 52,54 61,66 82,43 91,51 61,84" fill="#f5f8f6"/>
+</svg>
