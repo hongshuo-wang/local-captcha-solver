@@ -17,13 +17,13 @@ const assets = [
   },
   {
     path: 'public/ort/ort-wasm-simd-threaded.wasm',
-    size: 11_905_541,
-    sha256: '45eaee27761ad883742a8d4b8fce1538d60ce43b51adf1726fafccc59b8c1a15',
+    size: 13_479_978,
+    sha256: 'd1ab1b94b16a65b29d710d0b587b29e7bed336827577623913479b8afe8113e6',
   },
   {
     path: 'public/ort/ort-wasm-simd-threaded.mjs',
-    size: 20_321,
-    sha256: '90a557d15c02bac4504d95b67f431d8594635ed2a0a62a7f2cd83d090ff91d3e',
+    size: 24_180,
+    sha256: '0a1e718d99c41b22c21f2520ff4f9e883a6b5533856e398d21816ee8eb8185d3',
   },
   {
     path: 'third_party/onnxruntime-ThirdPartyNotices.txt',
