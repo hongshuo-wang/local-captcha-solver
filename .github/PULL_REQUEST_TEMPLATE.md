@@ -23,5 +23,5 @@ Describe the user-visible behavior and why this change is needed.
 
 ## Documentation
 
-- [ ] User-visible changes are added under `Unreleased` in `CHANGELOG.md`.
+- [ ] User-visible changes are added in Chinese and English under `Unreleased` in `CHANGELOG.md`.
 - [ ] English and Chinese documentation are updated when applicable.

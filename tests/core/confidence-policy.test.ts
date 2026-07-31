@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAutoFill, confidenceThresholdsForEngine } from '../../src/core/confidence-policy';
+import { AUTO_FILL_CONFIDENCE, canAutoFill } from '../../src/core/confidence-policy';
 
 describe('confidence policy', () => {
   it.each([
@@ -15,20 +15,8 @@ describe('confidence policy', () => {
     expect(canAutoFill({ kind: 'invalid', reason: 'unsupported' })).toBe(false);
   });
 
-  it('uses the requested 0.85 threshold only in the PP-OCRv6 small experience build', () => {
-    expect(confidenceThresholdsForEngine('ppocrv6-small')).toEqual({
-      digits: 0.85,
-      letters: 0.85,
-      alphanumeric: 0.85,
-      arithmetic: 0.85,
-    });
-    expect(confidenceThresholdsForEngine('ddddocr')).toEqual({
-      digits: 0.9,
-      letters: 0.95,
-      alphanumeric: 0.95,
-      arithmetic: 0.95,
-    });
-    expect(confidenceThresholdsForEngine('captcha-ctc')).toEqual({
+  it('exposes the approved production thresholds', () => {
+    expect(AUTO_FILL_CONFIDENCE).toEqual({
       digits: 0.86,
       letters: 0.984,
       alphanumeric: 0.994,

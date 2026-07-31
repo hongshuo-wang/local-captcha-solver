@@ -4,7 +4,6 @@ import {
   CAPTCHA_CTC_CANDIDATE,
   captchaCtcOutputDirectory,
 } from '../../scripts/build-captcha-ctc';
-import { ocrEngineForBuildMode } from '../../src/ocr/engine-selection';
 
 describe('CAPTCHA CTC candidate build', () => {
   it('uses isolated Chrome and Edge output directories', () => {
@@ -18,12 +17,5 @@ describe('CAPTCHA CTC candidate build', () => {
       modelBytes: 2_242_324,
       modelSha256: 'bce3e791636f369dd8bbac9b4eee2a0d9515f001b89b422f6d250c33ee6bbc28',
     });
-  });
-
-  it('selects the candidate in every production-like mode', () => {
-    expect(ocrEngineForBuildMode('captcha-ctc')).toBe('captcha-ctc');
-    expect(ocrEngineForBuildMode('production')).toBe('captcha-ctc');
-    expect(ocrEngineForBuildMode('test')).toBe('captcha-ctc');
-    expect(ocrEngineForBuildMode('ddddocr')).toBe('captcha-ctc');
   });
 });

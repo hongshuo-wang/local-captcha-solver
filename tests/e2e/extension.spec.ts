@@ -8,15 +8,10 @@ import { startFixtureServer, type FixtureServer } from './fixtures/server';
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, '../..');
-const e2eVariant = process.env.CAPTCHA_E2E_VARIANT ?? 'default';
-const usePpOcrV6Small = e2eVariant === 'ppocrv6-small';
-const useCaptchaCtc = e2eVariant === 'captcha-ctc';
 const e2eTarget = process.env.CAPTCHA_E2E_TARGET === 'edge' ? 'edge' : 'chrome';
 const extensionPath = join(
   repositoryRoot,
-  usePpOcrV6Small ? '.output/chrome-mv3-ppocrv6-small'
-    : useCaptchaCtc ? `.output/${e2eTarget}-mv3-captcha-ctc`
-      : `.output/${e2eTarget}-mv3`,
+  `.output/${e2eTarget}-mv3`,
 );
 
 interface ExtensionApi {
@@ -108,9 +103,7 @@ async function openOnboardingPage(): Promise<Page> {
 }
 
 test.beforeAll(async () => {
-  const buildScript = usePpOcrV6Small ? 'build:ppocrv6-small'
-    : useCaptchaCtc ? `build:captcha-ctc:${e2eTarget}`
-      : e2eTarget === 'edge' ? 'build:edge' : 'build';
+  const buildScript = e2eTarget === 'edge' ? 'build:edge' : 'build';
   await execFileAsync('npm', ['run', buildScript], {
     cwd: repositoryRoot,
     env: { ...process.env, CAPTCHA_E2E_PREGRANT: '1' },
@@ -136,10 +129,6 @@ test.beforeAll(async () => {
     });
   } catch (error) {
     throw new Error(`Playwright Chromium is required for extension E2E tests. Run: npx playwright install chromium. Original error: ${error instanceof Error ? error.message : String(error)}`);
-  }
-  if (usePpOcrV6Small || useCaptchaCtc) {
-    context.on('console', (entry) => console.log(`[experience browser ${entry.type()}] ${entry.text()}`));
-    context.on('weberror', (entry) => console.error('[experience browser error]', entry.error()));
   }
   server = await startFixtureServer();
   await context.route(`${server.origin}/**`, fulfillFixtureRequest);

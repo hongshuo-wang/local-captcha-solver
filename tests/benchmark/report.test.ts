@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderMarkdown } from '../../benchmark/run';
-import { ARITHMETIC_OPERATOR_GROUPS, buildReport } from '../../benchmark/report';
+import { buildReport } from '../../benchmark/report';
 import type { BenchmarkPrediction } from '../../benchmark/report';
-import type { HardGateResult } from '../../benchmark/gate';
 
 const PACKAGE_OPTIONS = {
   packageSizeBytes: 1,
@@ -15,7 +13,7 @@ function prediction(
     Pick<BenchmarkPrediction, 'category' | 'expected' | 'actual'>,
 ): BenchmarkPrediction {
   return {
-    engine: 'ddddocr',
+    engine: 'captcha-ctc',
     confidence: 0.5,
     coldInitMs: 125,
     warmLatencyMs: 20,
@@ -253,49 +251,5 @@ describe('buildReport', () => {
     expect(() => buildReport([
       prediction({ category: 'arithmetic', expected: '12=12', expectedFill: '12', actual: '12=12', actualFill: '12' }),
     ], PACKAGE_OPTIONS)).toThrow(/operator/i);
-  });
-});
-
-describe('renderMarkdown', () => {
-  it('renders both engine operator rows and scoped selective metrics with n/a precision', () => {
-    const ddddocrMetrics = buildReport(
-      [
-        prediction({ category: 'digits', expected: '1', actual: '1', confidence: 0.9 }),
-        prediction({ category: 'arithmetic', expected: '1+1', expectedFill: '2', actual: '1+1', actualFill: '2', confidence: 0.89 }),
-        prediction({ category: 'arithmetic', expected: '2-1', expectedFill: '1', actual: '2-1', actualFill: '1', confidence: 0.89 }),
-        prediction({ category: 'arithmetic', expected: '2x2', expectedFill: '4', actual: '2x2', actualFill: '4', confidence: 0.89 }),
-        prediction({ category: 'arithmetic', expected: '4/2', expectedFill: '2', actual: '4/2', actualFill: '2', confidence: 0.89 }),
-      ],
-      PACKAGE_OPTIONS,
-    );
-    const tesseractMetrics = buildReport(
-      [
-        prediction({ engine: 'tesseract', category: 'digits', expected: '1', actual: '1', confidence: 0.89 }),
-        prediction({ engine: 'tesseract', category: 'arithmetic', expected: '1+1', expectedFill: '2', actual: '1+1', actualFill: '2', confidence: 0.9 }),
-        prediction({ engine: 'tesseract', category: 'arithmetic', expected: '2-1', expectedFill: '1', actual: '2-1', actualFill: '1', confidence: 0.9 }),
-        prediction({ engine: 'tesseract', category: 'arithmetic', expected: '2x2', expectedFill: '4', actual: '2x2', actualFill: '4', confidence: 0.9 }),
-        prediction({ engine: 'tesseract', category: 'arithmetic', expected: '4/2', expectedFill: '2', actual: '4/2', actualFill: '2', confidence: 0.9 }),
-      ],
-      PACKAGE_OPTIONS,
-    );
-    const gate: HardGateResult = {
-      ordinaryWholeStringThreshold: 0.9,
-      arithmeticFillThreshold: 0.9,
-      ordinaryWholeStringAccuracy: 1,
-      arithmeticFillAccuracy: 1,
-      passed: true,
-    };
-
-    const output = renderMarkdown(10, { metrics: ddddocrMetrics }, { metrics: tesseractMetrics }, gate);
-
-    for (const engine of ['ddddocr', 'tesseract']) {
-      for (const operator of ARITHMETIC_OPERATOR_GROUPS) {
-        expect(output).toContain(`| ${engine} | ${operator} | 1 |`);
-      }
-    }
-    expect(output).toContain('| ddddocr | ordinary | 1 | 100.00% | 100.00% |');
-    expect(output).toContain('| ddddocr | arithmetic | 0 | 0.00% | n/a |');
-    expect(output).toContain('| tesseract | ordinary | 0 | 0.00% | n/a |');
-    expect(output).toContain('| tesseract | arithmetic | 4 | 100.00% | 100.00% |');
   });
 });

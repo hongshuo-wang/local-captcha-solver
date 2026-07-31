@@ -11,8 +11,8 @@ export default defineConfig({
       }
     },
   },
-  manifest: (env) => ({
-    name: env.mode === 'ppocrv6-small' ? 'Captcha Helper Preview' : '__MSG_extensionName__',
+  manifest: () => ({
+    name: '__MSG_extensionName__',
     description: '__MSG_extensionDescription__',
     default_locale: 'en',
     icons: {

@@ -6,7 +6,7 @@ import { createCanvas, loadImage } from '@napi-rs/canvas';
 import * as ort from 'onnxruntime-web';
 
 import { parseArithmetic } from '../src/core/arithmetic';
-import { confidenceThresholdsForEngine } from '../src/core/confidence-policy';
+import { AUTO_FILL_CONFIDENCE } from '../src/core/confidence-policy';
 import { interpretResult } from '../src/core/result-interpreter';
 import type { RecognitionMode } from '../src/core/types';
 import { decodePpOcrV6ForMode } from '../src/ocr/ppocrv6-engine';
@@ -247,7 +247,7 @@ export async function main(): Promise<void> {
         actualFill,
         confidence,
       }));
-    const configuredThresholds = confidenceThresholdsForEngine('captcha-ctc');
+    const configuredThresholds = AUTO_FILL_CONFIDENCE;
     const configuredAccepted = validationPredictions.filter(
       (prediction) => prediction.confidence >= configuredThresholds[prediction.mode],
     );

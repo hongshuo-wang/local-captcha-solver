@@ -1,20 +1,11 @@
 import type { RecognitionMode } from './types';
-import { ACTIVE_OCR_ENGINE } from '../ocr/engine-selection';
-import type { LocalOcrEngine } from '../ocr/engine-selection';
 
-export function confidenceThresholdsForEngine(
-  engine: LocalOcrEngine,
-): Readonly<Record<RecognitionMode, number>> {
-  if (engine === 'ppocrv6-small') {
-    return { digits: 0.85, letters: 0.85, alphanumeric: 0.85, arithmetic: 0.85 };
-  }
-  if (engine === 'captcha-ctc') {
-    return { digits: 0.86, letters: 0.984, alphanumeric: 0.994, arithmetic: 0.62 };
-  }
-  return { digits: 0.9, letters: 0.95, alphanumeric: 0.95, arithmetic: 0.95 };
-}
-
-export const AUTO_FILL_CONFIDENCE = confidenceThresholdsForEngine(ACTIVE_OCR_ENGINE);
+export const AUTO_FILL_CONFIDENCE: Readonly<Record<RecognitionMode, number>> = {
+  digits: 0.86,
+  letters: 0.984,
+  alphanumeric: 0.994,
+  arithmetic: 0.62,
+};
 
 export type ConfidenceCandidate =
   | { kind: 'invalid'; reason: string }

@@ -28,6 +28,9 @@ export function extractChangelogSection(changelog, version) {
   if (!section) {
     throw new Error(`CHANGELOG.md section for ${version} is empty`);
   }
+  if (!/^### 中文$/m.test(section) || !/^### English$/m.test(section)) {
+    throw new Error(`CHANGELOG.md section for ${version} must contain both "### 中文" and "### English"`);
+  }
   return section;
 }
 

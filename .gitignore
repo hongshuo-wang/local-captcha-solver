@@ -7,10 +7,11 @@ node_modules/
 __pycache__/
 *.py[cod]
 
-# Local credentials and store submission configuration
+# Local credentials and maintainer-only files
 .env
 .env.*
 !.env.example
+.internal/
 
 # Build and test output
 .output/
@@ -40,9 +41,10 @@ training/ppocrv6-captcha/data/images/
 !public/ort/
 !public/ort/**
 
-# Training documentation is source, even when a global gitignore excludes docs/.
+# Public project documentation is source, even when a global gitignore excludes docs/.
 !docs/
 docs/*
+!docs/assets/
+!docs/assets/**
 !docs/model-training.md
 !docs/production-model-reproduction.md
-!docs/releasing.md

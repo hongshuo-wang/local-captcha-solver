@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -64,10 +64,6 @@ export async function buildCaptchaCtcCandidate(root: string, target: ChromiumBui
   await runWxt(root, target);
   const outputModels = path.join(captchaCtcOutputDirectory(root, target), 'models');
   await mkdir(outputModels, { recursive: true });
-  await Promise.all([
-    rm(path.join(outputModels, 'common_old.onnx'), { force: true }),
-    rm(path.join(outputModels, 'common_old.json'), { force: true }),
-  ]);
   await Promise.all([
     writeFile(path.join(outputModels, 'captcha-ctc.onnx'), model),
     writeFile(path.join(outputModels, 'captcha-ctc.json'), configBytes),

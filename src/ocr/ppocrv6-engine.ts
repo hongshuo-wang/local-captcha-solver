@@ -10,8 +10,8 @@ import { decodeArithmeticCtc } from './arithmetic-ctc-decoder';
 import {
   ALLOWED_BY_MODE,
   OcrEngineError,
-} from './ddddocr-engine';
-import type { OcrSession, OcrSessionFactory } from './ddddocr-engine';
+} from './ocr-engine';
+import type { OcrSession, OcrSessionFactory } from './ocr-engine';
 
 export interface PpOcrV6RuntimeConfig {
   readonly modelName: string;
@@ -19,7 +19,7 @@ export interface PpOcrV6RuntimeConfig {
   readonly charset: readonly string[];
 }
 
-const SUPPORTED_MODEL_NAMES = new Set(['PP-OCRv6_small_rec', 'captcha_ctc_tiny_71']);
+const PRODUCTION_MODEL_NAME = 'captcha_ctc_tiny_71';
 
 function object(value: unknown, context: string): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -31,8 +31,8 @@ function object(value: unknown, context: string): Record<string, unknown> {
 export function parsePpOcrV6RuntimeConfig(value: unknown): PpOcrV6RuntimeConfig {
   const config = object(value, 'PP-OCRv6 runtime config');
   if (config.schemaVersion !== 1) throw new TypeError('PP-OCRv6 config schemaVersion must be 1');
-  if (typeof config.modelName !== 'string' || !SUPPORTED_MODEL_NAMES.has(config.modelName)) {
-    throw new TypeError('PP-OCRv6 config selects an unsupported model');
+  if (config.modelName !== PRODUCTION_MODEL_NAME) {
+    throw new TypeError('PP-OCRv6 config must select the production CAPTCHA CTC model');
   }
   if (
     !Array.isArray(config.imageShape)

@@ -2,11 +2,7 @@
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper logo">
   <h1>Captcha Helper</h1>
   <p>Local, privacy-first recognition for common static CAPTCHAs.</p>
-  <p>
-    <a href="README.zh-CN.md">简体中文</a>
-    ·
-    <a href="https://linux.do">linux.do</a>
-  </p>
+  <p><a href="README.zh-CN.md">简体中文</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI status"></a>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/releases"><img src="https://img.shields.io/github/v/release/hongshuo-wang/local-captcha-solver?display_name=tag&sort=semver" alt="Latest release"></a>
@@ -16,41 +12,28 @@
   </p>
 </div>
 
-![Captcha Helper site-access settings](store-assets/output/screenshot-global-1280x800.png)
+![Captcha Helper site-access settings](docs/assets/screenshot-global-1280x800.png)
 
-Captcha Helper is a Chromium extension for people who repeatedly encounter static text CAPTCHAs in administration panels, internal tools, and information systems. It recognizes supported images on the user's device and can fill a matching input field without clicking or submitting the form.
+Captcha Helper is an open-source Chromium extension that recognizes common static text CAPTCHAs entirely on the user's device. It can fill a reliable result into one matching empty field, but it never clicks a submit button or submits a form.
 
-The extension has no account system, advertising, telemetry, or remote OCR service. Users can grant access to every HTTP/HTTPS site once or authorize only the sites they regularly use.
-
-## Why install it?
-
-- Reduce repeated visual inspection and typing on supported CAPTCHA styles.
-- Keep CAPTCHA images and recognition results inside the browser.
-- Choose between global access and an exact list of authorized sites.
-- Review authorized, disabled, and browser-revoked permissions from one settings page.
-- Avoid accidental submission: Captcha Helper never clicks a submit button or submits a form.
-- Abstain on uncertain arithmetic or low-confidence recognition instead of guessing.
+There is no account, advertising, telemetry, remote OCR service, or runtime model download. Users can authorize every HTTP/HTTPS site or maintain an exact list of allowed sites.
 
 ## Supported scope
 
-Captcha Helper is intentionally limited to static, single-image CAPTCHAs containing:
+The project intentionally supports one static image containing:
 
 - digits;
-- English letters;
+- uppercase or lowercase English letters;
 - alphanumeric strings; or
 - one-step integer arithmetic using `+`, `-`, `*`, `/`, `x`, `X`, `×`, or `÷`.
 
-It does not support image-selection challenges, sliders, puzzles, animation, multi-step mathematics, behavioral verification, or other interactive CAPTCHA systems. Different websites use different image and CORS policies, so no extension can guarantee recognition of every image.
+Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces nonnegative answers and division must be exact. Image selection, sliders, puzzles, animation, behavioral challenges, non-Latin scripts, decimals, remainders, negative results, and multi-step mathematics are outside the project scope.
 
 ## Installation
 
-### Chrome Web Store
+### GitHub Release
 
-The first Chrome Web Store release is currently under review. Its link will be added here after approval.
-
-### GitHub release
-
-After the first public release, download the Chrome or Edge ZIP from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases), extract it, enable developer mode on the browser's extensions page, and load the extracted directory as an unpacked extension.
+Download the Chrome or Edge ZIP and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases). Verify the checksum, extract the ZIP, enable developer mode on the browser's extensions page, and load the extracted directory as an unpacked extension.
 
 ### Build from source
 
@@ -67,38 +50,118 @@ Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**,
 
 ## Usage
 
-1. Complete the standalone onboarding page opened after installation.
+1. Complete the onboarding page opened after installation.
 2. Choose all-site access or selected-site access.
-3. Open a supported page and initiate recognition from the popup, the image context menu, or the configured mouse shortcut.
+3. Start recognition from the popup, an image context menu, or the configured mouse shortcut.
 4. Review the result when the extension cannot identify one safe, empty input field.
 
-Recognition and automatic filling are separate decisions. A valid result is filled only into a unique eligible field at the configured confidence threshold. Existing user input is never replaced without confirmation.
+Recognition and automatic filling are separate decisions. Automatic filling requires a result above the category-specific confidence threshold and one unique eligible empty field. Existing input is never replaced without confirmation. Structurally ambiguous arithmetic and low-confidence results are rejected instead of guessed.
 
-## Permissions
+## Privacy and permissions
 
-| Permission | Why it is needed |
+CAPTCHA images, recognition results, settings, and sanitized diagnostics remain in the browser. See the [Privacy Policy](PRIVACY.md) for the complete data-handling description.
+
+| Permission | Purpose |
 | --- | --- |
-| `activeTab` | Temporarily accesses the active page after an explicit user action. |
-| `clipboardWrite` | Copies a result only through an explicit command or an enabled optional setting. The extension does not read the clipboard. |
-| `contextMenus` | Adds the image command for user-initiated recognition. |
-| `offscreen` | Runs the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
-| `scripting` | Installs the page helper after the user grants access. |
-| `storage` | Keeps settings, permission state, model state, and sanitized diagnostics locally. |
-| Optional HTTP/HTTPS hosts | Lets the user choose global access or grant individual sites. |
+| `activeTab` | Temporarily access the active page after an explicit user action. |
+| `clipboardWrite` | Copy a result through an explicit command or optional setting; the extension cannot read the clipboard. |
+| `contextMenus` | Add user-initiated recognition for page images. |
+| `offscreen` | Run the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
+| `scripting` | Install the page helper after the user grants access. |
+| `storage` | Store settings, permission state, model state, and up to 20 sanitized diagnostic records locally. |
+| Optional HTTP/HTTPS hosts | Let the user grant all-site or exact-site access. |
 
-See the full [Privacy Policy](PRIVACY.md). CAPTCHA images, recognition results, settings, and diagnostics are not sent to the developer or a third-party service.
+## Model
 
-## Diagnostics
+The production model is `paddle-ctc-v4-decoupled-320k`, a 2.24 MB recognition model derived from the PP-OCRv6 tiny recognition network. It uses a PPLCNetV4 tiny backbone and the CTC branch of PaddleOCR's recognition head:
 
-The extension stores at most 20 sanitized diagnostic records locally. Records may contain OCR text, confidence, image dimensions, hostname, field-match outcome, and a bounded error message. They never contain image bytes, data URLs, full page URLs, query strings, passwords, or form submissions, and users can clear them at any time.
+```text
+image -> BGR resize/pad to [3, 48, 320] -> PPLCNetV4 tiny -> CTC head
+      -> 71-class probabilities -> CTC decode -> text or arithmetic answer
+```
 
-## Model quality
+The fixed alphabet contains 70 visible characters; class 0 is the CTC blank. The exported ONNX model runs through ONNX Runtime Web using bundled WASM assets. The same model handles digits, letters, alphanumeric strings, and arithmetic; category-specific decoding and confidence thresholds determine whether to return or automatically fill a result.
 
-The bundled 2.24 MB CAPTCHA CTC model runs fully offline. On the isolated 10,000-image validation set, the configured automatic-fill policy reaches 99.587% precision at 82.38% coverage. The frozen 201-image benchmark reaches 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy.
+### Training data
 
-On the documented Apple M4 Pro reference machine, browser recognition measured 11.70 ms warm P95 in Chrome and 12.50 ms in Edge; Edge model warmup completed in 266 ms. These measurements describe the frozen corpus and reference environment, not every website.
+The approved model manifest contains 255,183 unique images:
 
-The approved [model card](training/ppocrv6-captcha/model-cards/paddle-ctc-v4-decoupled-320k.md) records data provenance, group isolation, licenses, Paddle/ONNX parity, thresholds, and browser verification. See [model reproduction](docs/production-model-reproduction.md) for the reproducible workflow.
+| Split | Source | Images | Use |
+| --- | --- | ---: | --- |
+| train | four licensed public datasets | 145,183 | Real generator distributions |
+| train | deterministic synthetic groups | 100,000 | Balanced content and visual augmentation |
+| validation | isolated synthetic groups | 10,000 | Model selection and threshold calibration |
+
+Training uses a deterministic 320,000-row balanced label list: 80,000 rows each for digits, letters, alphanumeric strings, and arithmetic. Public sources are recorded as CC-BY-4.0, CC0-1.0, or Apache-2.0 in the dataset catalog. Every sample has an exact label, SHA-256, source, license id, scenario group, and split in `training/ppocrv6-captcha/data/manifest.json`.
+
+Groups never cross splits, and frozen benchmark hashes are rejected from training and validation. The synthetic generator covers font variation, color and contrast, rotation, shear, spacing, waves, outlines, shadows, noise, interference lines, blur, resampling, and compression artifacts.
+
+### Quality
+
+| Evaluation | Result |
+| --- | ---: |
+| Automatic-fill precision on 10,000 isolated validation images | 99.587% |
+| Automatic-fill coverage on the same validation set | 82.38% |
+| Frozen 201-image whole-string/fill accuracy | 98.01% |
+| Frozen arithmetic-answer accuracy | 100% |
+| Chrome warm P95 on Apple M4 Pro | 11.70 ms |
+| Edge warm P95 on Apple M4 Pro | 12.50 ms |
+
+These figures describe the frozen corpus and documented reference environment, not every website. Full provenance, per-category/operator results, model hashes, Paddle-to-ONNX parity, and browser checks are recorded in the [model card](training/ppocrv6-captcha/model-cards/paddle-ctc-v4-decoupled-320k.md).
+
+## Retraining the model
+
+The pinned reference environment uses PaddleOCR `v3.7.0` at commit `b03f46425e8ff4442b268ce449e3eef758146cd4`, PaddlePaddle `3.2.0`, Python `3.12.11`, Node.js 22, and seed `20260728`. A GPU environment must use the matching PaddlePaddle build and record CUDA, cuDNN, driver, and package versions in a new model card.
+
+### Prepare data
+
+```sh
+npm ci
+npm run training:ppocrv6:fetch
+
+npm run training:public:fetch -- mathcaptcha10k-v6
+npm run training:public:fetch -- parsasam-captcha-v1
+npm run training:public:fetch -- huthayfahodeb-captcha-v2
+npm run training:public:fetch -- daniilnxy-math-problem-captcha-v1
+
+npm run training:public:import -- mathcaptcha10k-v6
+npm run training:public:import -- parsasam-captcha-v1
+npm run training:public:import -- huthayfahodeb-captcha-v2
+npm run training:public:import -- daniilnxy-math-problem-captcha-v1
+
+npm run training:synthetic:generate
+npm run training:labels:balance -- 80000
+npm test -- tests/training
+```
+
+Downloads, extracted datasets, generated images, checkpoints, and training output are ignored by Git. Dataset licenses and archive hashes must be reviewed before any new public source is enabled.
+
+### Train from a clean environment
+
+Clone the pinned PaddleOCR revision and install `training/ppocrv6-captcha/python-environment.txt`. Because the official model uses a different alphabet, first freeze the backbone and warm up the new head for three epochs, then fine-tune the full model for 60 epochs:
+
+```sh
+PADDLEOCR_ROOT=/absolute/path/to/PaddleOCR-v3.7.0 \
+  training/ppocrv6-captcha/.venv/bin/python \
+  training/ppocrv6-captcha/train_head_warmup.py \
+  -c training/ppocrv6-captcha/config.yml -o \
+  Global.epoch_num=3 \
+  Global.save_model_dir=./training/ppocrv6-captcha/output/clean-warmup
+
+PADDLEOCR_ROOT=/absolute/path/to/PaddleOCR-v3.7.0 \
+  training/ppocrv6-captcha/.venv/bin/python \
+  /absolute/path/to/PaddleOCR-v3.7.0/tools/train.py \
+  -c training/ppocrv6-captcha/config.yml -o \
+  Global.epoch_num=60 \
+  Global.pretrained_model=./training/ppocrv6-captcha/output/clean-warmup/latest.pdparams \
+  Global.save_model_dir=./training/ppocrv6-captcha/output/clean-full
+```
+
+To continue from the production checkpoint for a new authorized scenario, create a new candidate id, use a low learning-rate experiment, and retain the production model as the baseline. Add held-out failures before tuning; do not train on issue screenshots or benchmark fixtures.
+
+The complete commands for environment setup, continuation training, Paddle export, ONNX conversion, parity checks, threshold calibration, frozen benchmarks, and offline Chrome/Edge verification are in [Production model reproduction](docs/production-model-reproduction.md). Scenario contribution and data-isolation rules are in [Model training and scenario contributions](docs/model-training.md).
+
+A production replacement must still achieve at least 99.5% automatic-fill precision, 80% coverage, a 3-second cold start, and a 500 ms warm P95. Results must be reported by category, source, scenario group, and arithmetic symbol. A weak or missing arithmetic operator must cause abstention, never a digits fallback.
 
 ## Development
 
@@ -111,19 +174,11 @@ npm run build:edge
 npm run test:e2e:extension
 ```
 
-Store artwork is maintained as HTML/CSS and rendered with `npm run store:assets`.
-
-Stable releases follow [Semantic Versioning](https://semver.org/). A `vMAJOR.MINOR.PATCH` tag must match `package.json` and have a corresponding [CHANGELOG](CHANGELOG.md) section. GitHub Actions then verifies the project, builds Chrome and Edge ZIPs, generates checksums, and creates the GitHub Release. Maintainer steps and store secret names are documented in [docs/releasing.md](docs/releasing.md).
-
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. New CAPTCHA styles must be submitted as reproducible, authorized scenarios with exact labels, provenance, licenses, isolated groups, and a held-out failing benchmark. Do not add benchmark fixtures to training or validation data.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. New CAPTCHA styles require authorized samples, exact labels, provenance and licenses, an isolated group, a held-out failing benchmark, and a description of the missing visual mechanism. Security reports should follow [SECURITY.md](SECURITY.md).
 
-Security reports should follow [SECURITY.md](SECURITY.md). Community participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
-
-## Community
-
-Project discussions and broader developer conversations are also welcome on [linux.do](https://linux.do). Please keep bug reports and reproducible project issues in this repository so they remain searchable and actionable.
+Project discussions and broader developer conversations are welcome on [linux.do](https://linux.do). Keep reproducible bugs and scenario contributions in this repository so they remain searchable and testable.
 
 ## License
 

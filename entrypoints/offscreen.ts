@@ -1,10 +1,9 @@
 import * as ort from 'onnxruntime-web/wasm';
 
 import type { ImagePayload, ModelInput } from '../src/core/types';
-import { OcrEngineError } from '../src/ocr/ddddocr-engine';
+import { OcrEngineError } from '../src/ocr/ocr-engine';
 import { isInferenceRequest } from '../src/ocr/protocol';
-import type { OcrSessionFactory } from '../src/ocr/ddddocr-engine';
-import { ACTIVE_OCR_ENGINE } from '../src/ocr/engine-selection';
+import type { OcrSessionFactory } from '../src/ocr/ocr-engine';
 import {
   BrowserPpOcrV6Preprocessor,
   PpOcrV6Engine,
@@ -63,16 +62,15 @@ function createSessionFactory(): OcrSessionFactory {
   };
 }
 
-async function loadPpOcrV6Config(assetName: 'ppocrv6-small' | 'captcha-ctc') {
-  const response = await fetch(getExtensionUrl(`models/${assetName}.json`));
+async function loadPpOcrV6Config() {
+  const response = await fetch(getExtensionUrl('models/captcha-ctc.json'));
   if (!response.ok) throw new Error(`Could not load PP-OCRv6 config (${response.status})`);
   return parsePpOcrV6RuntimeConfig(await response.json());
 }
 
-const ppOcrAsset = ACTIVE_OCR_ENGINE === 'captcha-ctc' ? 'captcha-ctc' : 'ppocrv6-small';
-const enginePromise = loadPpOcrV6Config(ppOcrAsset).then((config) => new PpOcrV6Engine(
+const enginePromise = loadPpOcrV6Config().then((config) => new PpOcrV6Engine(
   createSessionFactory(),
-  getExtensionUrl(`models/${ppOcrAsset}.onnx`),
+  getExtensionUrl('models/captcha-ctc.onnx'),
   config.charset,
   new BrowserPpOcrV6Preprocessor(config.imageShape),
 ))

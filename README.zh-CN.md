@@ -2,11 +2,7 @@
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper 标志">
   <h1>Captcha Helper · 本地验证码助手</h1>
   <p>在浏览器本地识别常见静态验证码，授权范围始终由用户决定。</p>
-  <p>
-    <a href="README.md">English</a>
-    ·
-    <a href="https://linux.do">linux.do</a>
-  </p>
+  <p><a href="README.md">English</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI 状态"></a>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/releases"><img src="https://img.shields.io/github/v/release/hongshuo-wang/local-captcha-solver?display_name=tag&sort=semver" alt="最新版本"></a>
@@ -16,41 +12,28 @@
   </p>
 </div>
 
-![Captcha Helper 中文使用流程](store-assets/output/screenshot-zh-CN-1280x800.png)
+![Captcha Helper 网站访问设置](docs/assets/screenshot-zh-CN-1280x800.png)
 
-Captcha Helper 是一款面向 Chromium 浏览器的本地验证码识别扩展，适合经常使用管理后台、内部工具、查询平台以及其他需要反复输入静态验证码的用户。扩展在用户设备上完成识别，可以将可靠结果填入匹配的输入框，但不会点击按钮或提交表单。
+Captcha Helper 是一款开源 Chromium 浏览器扩展，完全在用户设备上识别常见静态文字验证码。它可以把可靠结果填入唯一匹配的空输入框，但不会点击提交按钮，也不会提交表单。
 
-扩展不需要账号，不包含广告，不使用遥测，也不依赖远程 OCR 服务。用户既可以一次授权所有 HTTP/HTTPS 网站，也可以只允许自己常用的几个网站运行。
-
-## 为什么安装它？
-
-- 减少对支持类型验证码的重复辨认和手动输入。
-- 验证码图片和识别结果始终留在浏览器本地。
-- 可以在全局授权和指定网站授权之间自由选择。
-- 在同一个设置页面查看已授权、已禁用和被浏览器移除权限的网站。
-- 不会误提交：扩展从不点击提交按钮，也不会自动提交表单。
-- 算式结构不明确或识别置信度不足时主动停止，不用猜测结果。
+项目不需要账号，不包含广告和遥测，不依赖远程 OCR 服务，也不会在运行时下载模型。用户可以授权所有 HTTP/HTTPS 网站，也可以只维护一个精确的网站允许列表。
 
 ## 支持范围
 
-Captcha Helper 有意将核心范围限制在以下静态单图片验证码：
+项目有意只支持包含以下内容的静态单图片验证码：
 
 - 纯数字；
-- 英文字母；
-- 字母数字组合；
+- 大写或小写英文字母；
+- 英文字母与数字组合；
 - 使用 `+`、`-`、`*`、`/`、`x`、`X`、`×` 或 `÷` 的一步整数算术。
 
-扩展不支持图片选择、滑块、拼图、动画、多步数学、行为验证或其他交互式验证码。不同网站的图片来源和 CORS 策略存在差异，因此无法保证识别每一种图片。
+算式可以使用 `=?`、`=`、`?` 或无后缀形式。减法结果必须非负，除法必须整除。图片选择、滑块、拼图、动画、行为验证、非拉丁文字、小数、余数、负数结果和多步数学不在项目范围内。
 
 ## 安装
 
-### Chrome 应用商店
-
-首个 Chrome 应用商店版本正在审核，审核通过后会在这里补充正式地址。
-
 ### GitHub Release
 
-首次公开发布后，可以从 [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases) 下载 Chrome 或 Edge ZIP。解压后打开浏览器扩展管理页、启用开发者模式，并选择解压后的目录进行加载。
+从 [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases) 下载 Chrome 或 Edge ZIP 以及 `SHA256SUMS.txt`。校验文件后解压 ZIP，打开浏览器扩展管理页、启用开发者模式，并加载解压后的目录。
 
 ### 从源码构建
 
@@ -67,38 +50,118 @@ npm run build
 
 ## 使用方法
 
-1. 安装后完成自动打开的独立引导页面。
-2. 选择全局授权或指定网站授权。
-3. 在支持的网站中，通过扩展面板、图片右键菜单或设置的鼠标快捷操作发起识别。
-4. 当扩展无法确定唯一且安全的输入框时，由用户确认结果和目标输入框。
+1. 完成安装后自动打开的引导页面。
+2. 选择所有网站授权或指定网站授权。
+3. 通过扩展面板、图片右键菜单或配置的鼠标快捷操作发起识别。
+4. 当扩展无法确定唯一且安全的空输入框时，由用户检查识别结果和目标输入框。
 
-“识别成功”和“允许自动填入”是两个独立判断。只有结果达到对应类型的置信度阈值，并且页面上存在唯一、为空且符合条件的输入框时，扩展才会自动填入。已有用户输入不会在未经确认时被替换。
+“识别成功”和“允许自动填入”是两个独立判断。自动填入要求结果达到对应类别的置信度阈值，并且页面中只有一个符合条件的空输入框。已有输入不会在未经确认时被替换。算式结构不明确或识别置信度不足时，扩展会拒绝填写而不是猜测。
 
-## 权限说明
+## 隐私与权限
 
-| 权限 | 使用原因 |
+验证码图片、识别结果、设置和经过清理的诊断记录都保留在浏览器中。完整的数据处理说明见[隐私政策](PRIVACY.md)。
+
+| 权限 | 用途 |
 | --- | --- |
-| `activeTab` | 用户主动操作后临时访问当前页面。 |
-| `clipboardWrite` | 用户明确复制结果或启用可选复制设置时写入剪贴板；扩展不会读取剪贴板。 |
-| `contextMenus` | 为网页图片添加用户主动触发的识别命令。 |
-| `offscreen` | 在 Manifest V3 离屏文档中运行扩展自带的 ONNX/WebAssembly 模型。 |
-| `scripting` | 用户授权后安装网页识别辅助脚本。 |
-| `storage` | 在本地保存设置、权限状态、模型状态和经过清理的诊断记录。 |
-| 可选 HTTP/HTTPS 网站权限 | 允许用户选择全局授权或逐个网站授权。 |
+| `activeTab` | 用户明确操作后临时访问当前页面。 |
+| `clipboardWrite` | 通过明确命令或可选设置复制结果；扩展不能读取剪贴板。 |
+| `contextMenus` | 为网页图片添加由用户主动触发的识别命令。 |
+| `offscreen` | 在 Manifest V3 离屏文档中运行内置 ONNX/WebAssembly 模型。 |
+| `scripting` | 用户授权后安装页面辅助脚本。 |
+| `storage` | 在本地保存设置、权限状态、模型状态和最多 20 条经过清理的诊断记录。 |
+| 可选 HTTP/HTTPS 网站权限 | 让用户选择所有网站授权或精确网站授权。 |
 
-完整说明见[隐私政策](PRIVACY.md)。验证码图片、识别结果、设置和诊断记录都不会发送给开发者或第三方服务。
+## 模型
 
-## 诊断记录
+生产模型为 `paddle-ctc-v4-decoupled-320k`，大小 2.24 MB，由 PP-OCRv6 tiny 文字识别网络派生。模型使用 PPLCNetV4 tiny 主干和 PaddleOCR 识别头中的 CTC 分支：
 
-扩展最多在本地保存 20 条经过清理的诊断记录。记录可能包含 OCR 文本、置信度、图片尺寸、网站主机名、输入框匹配结果和长度受限的错误信息，但不会包含图片字节、Data URL、完整网页地址、查询参数、密码或表单提交内容。用户可以随时清除这些记录。
+```text
+图片 -> BGR 缩放/补边至 [3, 48, 320] -> PPLCNetV4 tiny -> CTC head
+     -> 71 类概率 -> CTC 解码 -> 普通文本或算术答案
+```
 
-## 模型质量
+固定字符表包含 70 个可见字符，第 0 类是 CTC blank。导出的 ONNX 模型通过 ONNX Runtime Web 和扩展内置的 WASM 资源运行。同一个模型处理数字、字母、英数字和算术，再由分类解码与置信度阈值决定是否返回结果或自动填入。
 
-扩展内置的 CAPTCHA CTC 模型大小为 2.24 MB，全程离线运行。在隔离的 10,000 张验证集中，当前自动填入策略达到 99.587% 精确率和 82.38% 覆盖率；冻结的 201 张基准集达到 98.01% 整串/填入准确率和 100% 算术答案准确率。
+### 训练数据
 
-在文档记录的 Apple M4 Pro 参考环境中，Chrome 热启动 P95 识别耗时为 11.70 ms，Edge 为 12.50 ms，Edge 模型预热为 266 ms。这些结果仅代表冻结基准和参考环境，不代表所有网站样式。
+已批准模型的数据清单包含 255,183 张唯一图片：
 
-已批准的[模型卡](training/ppocrv6-captcha/model-cards/paddle-ctc-v4-decoupled-320k.md)记录了数据来源、分组隔离、许可证、Paddle/ONNX 一致性、阈值和浏览器验证。复现流程见[生产模型复现文档](docs/production-model-reproduction.md)。
+| 划分 | 来源 | 图片数 | 用途 |
+| --- | --- | ---: | --- |
+| 训练 | 四个已记录许可证的公开数据集 | 145,183 | 补充真实生成器分布 |
+| 训练 | 确定性合成分组 | 100,000 | 平衡内容与视觉增强 |
+| 验证 | 完全隔离的合成分组 | 10,000 | 模型选择与阈值校准 |
+
+实际训练使用确定性的 320,000 行平衡标签清单：数字、字母、英数字和算术各 80,000 行。公开来源的许可证为 CC-BY-4.0、CC0-1.0 或 Apache-2.0，并记录在数据源目录中。`training/ppocrv6-captcha/data/manifest.json` 为每张图片保存精确标签、SHA-256、来源、许可证 id、场景分组和数据划分。
+
+任何 `group` 都不能跨越数据划分，冻结基准图片的哈希会被训练与验证预检拒绝。合成生成器覆盖字体、颜色和对比度、旋转、错切、字符间距、波形、描边、阴影、噪点、干扰线、模糊、重采样和压缩退化。
+
+### 模型质量
+
+| 评估项 | 结果 |
+| --- | ---: |
+| 10,000 张隔离验证集上的自动填入精确率 | 99.587% |
+| 同一验证集上的自动填入覆盖率 | 82.38% |
+| 冻结 201 张基准集整串/填入准确率 | 98.01% |
+| 冻结算术答案准确率 | 100% |
+| Apple M4 Pro 上 Chrome 热启动 P95 | 11.70 ms |
+| Apple M4 Pro 上 Edge 热启动 P95 | 12.50 ms |
+
+这些数据只代表冻结语料和文档记录的参考环境，不代表所有网站。完整的数据来源、分类与运算符结果、模型哈希、Paddle-to-ONNX 一致性和浏览器验证见[模型卡](training/ppocrv6-captcha/model-cards/paddle-ctc-v4-decoupled-320k.md)。
+
+## 重新训练模型
+
+固定参考环境使用 PaddleOCR `v3.7.0`（commit `b03f46425e8ff4442b268ce449e3eef758146cd4`）、PaddlePaddle `3.2.0`、Python `3.12.11`、Node.js 22 和随机种子 `20260728`。GPU 环境必须安装匹配的 PaddlePaddle 构建，并在新模型卡中记录 CUDA、cuDNN、驱动和软件包版本。
+
+### 准备数据
+
+```sh
+npm ci
+npm run training:ppocrv6:fetch
+
+npm run training:public:fetch -- mathcaptcha10k-v6
+npm run training:public:fetch -- parsasam-captcha-v1
+npm run training:public:fetch -- huthayfahodeb-captcha-v2
+npm run training:public:fetch -- daniilnxy-math-problem-captcha-v1
+
+npm run training:public:import -- mathcaptcha10k-v6
+npm run training:public:import -- parsasam-captcha-v1
+npm run training:public:import -- huthayfahodeb-captcha-v2
+npm run training:public:import -- daniilnxy-math-problem-captcha-v1
+
+npm run training:synthetic:generate
+npm run training:labels:balance -- 80000
+npm test -- tests/training
+```
+
+下载文件、解压后的数据集、生成图片、checkpoint 和训练输出都被 Git 忽略。启用任何新的公开数据源前，必须先审核许可证、版本与压缩包哈希。
+
+### 在全新环境中训练
+
+克隆固定版本的 PaddleOCR，并安装 `training/ppocrv6-captcha/python-environment.txt`。官方模型使用的字符集与本项目不同，因此先冻结主干网络并用 3 个 epoch 预热新识别头，再用 60 个 epoch 微调整个模型：
+
+```sh
+PADDLEOCR_ROOT=/absolute/path/to/PaddleOCR-v3.7.0 \
+  training/ppocrv6-captcha/.venv/bin/python \
+  training/ppocrv6-captcha/train_head_warmup.py \
+  -c training/ppocrv6-captcha/config.yml -o \
+  Global.epoch_num=3 \
+  Global.save_model_dir=./training/ppocrv6-captcha/output/clean-warmup
+
+PADDLEOCR_ROOT=/absolute/path/to/PaddleOCR-v3.7.0 \
+  training/ppocrv6-captcha/.venv/bin/python \
+  /absolute/path/to/PaddleOCR-v3.7.0/tools/train.py \
+  -c training/ppocrv6-captcha/config.yml -o \
+  Global.epoch_num=60 \
+  Global.pretrained_model=./training/ppocrv6-captcha/output/clean-warmup/latest.pdparams \
+  Global.save_model_dir=./training/ppocrv6-captcha/output/clean-full
+```
+
+如果要针对新的授权场景继续训练，应创建新的 candidate id，以较低学习率从生产 checkpoint 开始实验，并保留生产模型作为基线。调参前先加入隔离的失败样本；禁止使用 issue 截图或基准样本训练。
+
+环境安装、续训、Paddle 导出、ONNX 转换、一致性检查、阈值校准、冻结基准以及 Chrome/Edge 离线验证的完整命令见[生产模型复现手册](docs/production-model-reproduction.md)。场景贡献和数据隔离规则见[模型训练与场景贡献](docs/model-training.md)。
+
+生产模型替换仍必须达到至少 99.5% 自动填入精确率、80% 覆盖率、3 秒冷启动和 500 ms 热启动 P95。结果必须按类别、来源、场景分组和算术符号分别报告。算术运算符缺失或证据不足时必须拒绝填写，不能回退成纯数字结果。
 
 ## 开发
 
@@ -111,19 +174,11 @@ npm run build:edge
 npm run test:e2e:extension
 ```
 
-商店宣传图使用 HTML/CSS 维护，可以通过 `npm run store:assets` 重新导出。
-
-稳定版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。`v主版本.次版本.修订号` 标签必须与 `package.json` 一致，并在 [CHANGELOG](CHANGELOG.md) 中存在对应章节。GitHub Actions 随后会验证项目、构建 Chrome/Edge ZIP、生成校验和并创建 GitHub Release。维护者操作步骤和商店密钥名称见[发布指南](docs/releasing.md)。
-
 ## 参与贡献
 
-提交 Pull Request 前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。新的验证码样式必须作为可复现且得到授权的场景提交，并提供精确标签、来源、许可证、隔离分组和失败的留出基准。禁止将基准样本加入训练集或验证集。
+提交 Pull Request 前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。新的验证码样式必须提供已授权样本、精确标签、来源与许可证、隔离分组、失败的留出基准，以及当前覆盖缺失的视觉机制说明。安全问题请按照 [SECURITY.md](SECURITY.md) 私下报告。
 
-安全问题请按照 [SECURITY.md](SECURITY.md) 私下报告。社区参与遵循[行为准则](CODE_OF_CONDUCT.md)。
-
-## 社区
-
-也欢迎在 [linux.do](https://linux.do) 参与项目和开发相关交流。为了让问题可以被检索、复现和跟踪，请仍然将 Bug 与可复现场景提交到本仓库。
+项目讨论和开发交流也欢迎前往 [linux.do](https://linux.do)。可复现的 Bug 和场景贡献仍应提交到本仓库，以便检索、测试和跟踪。
 
 ## 许可证
 

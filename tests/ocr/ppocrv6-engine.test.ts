@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ImagePayload, ImagePreprocessor, ModelInput } from '../../src/core/types';
-import type { OcrSession, OcrSessionFactory } from '../../src/ocr/ddddocr-engine';
+import type { OcrSession, OcrSessionFactory } from '../../src/ocr/ocr-engine';
 import {
   BrowserPpOcrV6Preprocessor,
   PpOcrV6Engine,
@@ -46,11 +46,11 @@ describe('PP-OCRv6 runtime config', () => {
   it('validates the generated browser config and blank-prefixed charset', () => {
     expect(parsePpOcrV6RuntimeConfig({
       schemaVersion: 1,
-      modelName: 'PP-OCRv6_small_rec',
+      modelName: 'captcha_ctc_tiny_71',
       imageShape: [3, 48, 320],
       charset: CHARSET,
     })).toEqual({
-      modelName: 'PP-OCRv6_small_rec',
+      modelName: 'captcha_ctc_tiny_71',
       imageShape: [3, 48, 320],
       charset: CHARSET,
     });
@@ -59,7 +59,7 @@ describe('PP-OCRv6 runtime config', () => {
       modelName: 'PP-OCRv6_small_rec',
       imageShape: [3, 48, 320],
       charset: ['7', ''],
-    })).toThrow(/blank/i);
+    })).toThrow(/production/i);
     expect(parsePpOcrV6RuntimeConfig({
       schemaVersion: 1,
       modelName: 'captcha_ctc_tiny_71',

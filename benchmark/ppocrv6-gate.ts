@@ -1,5 +1,5 @@
 export const PPOCRV6_THRESHOLDS = Object.freeze({
-  ddddocrOrdinaryBaseline: 0.6466666666666666,
+  legacyOrdinaryBaseline: 0.6466666666666666,
   maximumOrdinaryRegression: 0.005,
   arithmeticFillAccuracy: 0.99,
   modelSizeTargetBytes: 5 * 1024 * 1024,
@@ -32,7 +32,7 @@ export function evaluatePpOcrV6Gate(input: PpOcrV6GateInput): PpOcrV6GateResult 
   }
   if (
     input.ordinaryWholeStringAccuracy
-    < PPOCRV6_THRESHOLDS.ddddocrOrdinaryBaseline - PPOCRV6_THRESHOLDS.maximumOrdinaryRegression
+    < PPOCRV6_THRESHOLDS.legacyOrdinaryBaseline - PPOCRV6_THRESHOLDS.maximumOrdinaryRegression
   ) failedChecks.push('ordinary-regression');
   if (input.arithmeticFillAccuracy < PPOCRV6_THRESHOLDS.arithmeticFillAccuracy) {
     failedChecks.push('arithmetic-fill-accuracy');

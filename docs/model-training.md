@@ -1,11 +1,8 @@
 # Model Training and Scenario Contributions
 
 当前生产模型的实际数据、训练谱系、精确导出命令和浏览器验收步骤见
-[`production-model-reproduction.md`](production-model-reproduction.md)。本文继续负责场景贡献规则和发布门槛。
-
-> Status: maintained skeleton. TODO after the first production-quality model: add issue templates,
-> scenario-package automation, end-to-end importer examples, and contributor CI. Current model
-> accuracy and reproducible training data remain the priority.
+[`production-model-reproduction.md`](production-model-reproduction.md)。本文负责场景贡献规则、
+数据隔离要求和生产模型门槛；新数据导入器和自动化必须遵循同一套 manifest 合约。
 
 This document is the reproducible path for improving the offline CAPTCHA model. It applies both to maintainers and to contributors proposing support for a CAPTCHA style reported in an issue.
 
