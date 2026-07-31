@@ -49,26 +49,26 @@
     "benchmark:production": "tsx benchmark/run-captcha-ctc.ts"
   },
   "dependencies": {
-    "@noble/hashes": "2.0.1",
-    "onnxruntime-web": "1.23.2"
+    "@noble/hashes": "2.2.0",
+    "onnxruntime-web": "1.27.0"
   },
   "devDependencies": {
-    "@fontsource/kalam": "5.2.7",
-    "@fontsource/patrick-hand": "5.2.8",
-    "@fontsource/special-elite": "5.2.8",
-    "@napi-rs/canvas": "0.1.80",
-    "@playwright/test": "1.61.1",
-    "@types/adm-zip": "0.5.7",
-    "@vitest/coverage-v8": "3.2.7",
+    "@fontsource/kalam": "5.3.0",
+    "@fontsource/patrick-hand": "5.3.0",
+    "@fontsource/special-elite": "5.3.0",
+    "@napi-rs/canvas": "1.0.2",
+    "@playwright/test": "1.62.0",
+    "@types/adm-zip": "0.5.8",
+    "@vitest/coverage-v8": "4.1.10",
     "adm-zip": "0.6.0",
-    "csv-parse": "6.1.0",
+    "csv-parse": "7.0.1",
     "dejavu-fonts-ttf": "2.37.3",
     "happy-dom": "20.11.1",
-    "tsx": "4.20.5",
-    "typescript": "5.9.2",
-    "vitest": "3.2.7",
-    "wxt": "0.20.27",
-    "yaml": "^2.8.1"
+    "tsx": "4.23.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wxt": "0.21.1",
+    "yaml": "^2.9.0"
   },
   "overrides": {
     "adm-zip": "0.6.0",
