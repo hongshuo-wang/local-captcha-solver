@@ -129,8 +129,15 @@ test.beforeAll(async () => {
   await extensionPage.goto(`chrome-extension://${extensionId}/${harnessName}`);
   let modelStatus: ModelStatusSnapshot | undefined;
   await expect.poll(async () => {
-    modelStatus = await extensionMessage({ type: 'captcha:get-model-status' }) as ModelStatusSnapshot;
-    return modelStatus;
+    try {
+      modelStatus = await extensionMessage({ type: 'captcha:get-model-status' }) as ModelStatusSnapshot;
+      return modelStatus;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Receiving end does not exist')) {
+        return undefined;
+      }
+      throw error;
+    }
   }, {
     timeout: 30_000,
   }).toMatchObject({ status: 'ready' });
