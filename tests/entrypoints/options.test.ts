@@ -36,13 +36,18 @@ function harness() {
 }
 
 describe('options entrypoint', () => {
-  it('renders the access workspace and switches to selected-site mode', async () => {
+  it('renders the privacy-first selected-site default and can switch access modes', async () => {
     const app = harness();
     const root = document.createElement('div');
     document.body.append(root);
     await startOptions(root, app.extension);
     expect(root.textContent).toContain('网站访问');
     expect(root.textContent).toContain('网站与权限');
+    expect(root.querySelector('[data-mode="selected"]')?.getAttribute('aria-pressed')).toBe('true');
+    (root.querySelector('[data-mode="all"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(app.request).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
+    await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ accessMode: 'all' }));
+    await vi.waitFor(() => expect(root.querySelector('[data-mode="selected"]')).not.toBeNull());
     (root.querySelector('[data-mode="selected"]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(app.remove).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
     expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ accessMode: 'selected' });

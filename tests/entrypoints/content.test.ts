@@ -20,6 +20,19 @@ describe('content runtime messages', () => {
     const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
     await expect(handle({ type: 'captcha:context-image', srcUrl: 'data:image/png;base64,AQ==' })).resolves.toMatchObject({ state: 'no_field' });
   });
+  it('recognizes the best page candidate from the popup command without enabling automation', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<form><img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ=="><input id="answer" aria-label="captcha"></form>';
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize'
+      ? [{ mode: 'digits', text: '2468', confidence: .9 }]
+      : message.type === 'captcha:get-model-status' ? { status: 'ready' } : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({ sendMessage, onMessage: { addListener: listener } });
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+
+    await expect(handle({ type: 'captcha:recognize-page' })).resolves.toMatchObject({ state: 'filled', fillValue: '2468' });
+    expect((document.querySelector('#answer') as HTMLInputElement).value).toBe('2468');
+  });
   it('starts automatic observation only after an explicit enable message and stops it on disable', async () => {
     vi.useFakeTimers(); vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<img alt="captcha" width="120" height="40">';
     const { createRuntimeContent } = await import('../../entrypoints/content'); createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } }); const handle = listener.mock.calls[0]?.[0] as (message: unknown) => unknown;

@@ -81,33 +81,33 @@ describe('originsForPage', () => {
 });
 
 describe('createPermissionManager', () => {
-  it('does not change settings when global permission is denied', async () => {
+  it('does not change settings when selected-site permission is denied', async () => {
     const adapter = adapterWith(false);
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: false, reason: 'permission-denied' });
     expect(adapter.calls).toEqual(['get', 'request']);
-    expect(adapter.requested).toEqual([['http://*/*', 'https://*/*']]);
+    expect(adapter.requested).toEqual([['http://portal.example.test/*', 'https://portal.example.test/*']]);
     expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toBeUndefined();
   });
 
-  it('requests global origins and persists the versioned default settings', async () => {
+  it('requests exact origins and adds the site under the selected-site default', async () => {
     const adapter = adapterWith(true);
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.enablePage('https://portal.example.test/login')).resolves.toEqual({ enabled: true });
     expect(adapter.calls).toEqual(['get', 'request', 'get', 'set']);
-    expect(adapter.requested).toEqual([['http://*/*', 'https://*/*']]);
-    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual(DEFAULT_SETTINGS);
+    expect(adapter.requested).toEqual([['http://portal.example.test/*', 'https://portal.example.test/*']]);
+    expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ ...DEFAULT_SETTINGS, selectedSites: [{ hostname: 'portal.example.test', includeSubdomains: false }] });
   });
 
-  it('adds a local disabled-host entry without removing global permission', async () => {
+  it('adds a disabled-host entry and attempts to remove exact permission', async () => {
     const adapter = adapterWith(true, false);
     const manager = createPermissionManager(adapter, createSettingsStore(adapter));
 
     await expect(manager.disablePage('https://portal.example.test/captcha')).resolves.toEqual({ disabled: true, permissionRemoved: false });
-    expect(adapter.calls).toEqual(['get', 'get', 'set']);
+    expect(adapter.calls).toEqual(['get', 'get', 'set', 'remove']);
     expect(adapter.values.get(SETTINGS_STORAGE_KEY)).toEqual({ ...DEFAULT_SETTINGS, disabledHosts: ['portal.example.test'] });
-    expect(adapter.removed).toEqual([]);
+    expect(adapter.removed).toEqual([['http://portal.example.test/*', 'https://portal.example.test/*']]);
   });
 });

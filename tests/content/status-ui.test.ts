@@ -7,14 +7,14 @@ const shadow = () => host()?.shadowRoot;
 afterEach(() => { clearWorkflowStatus(); vi.useRealTimers(); });
 
 describe('status UI', () => {
-  it('isolates an accessible live region in shadow DOM and removes transient states', async () => {
+  it('isolates an accessible live region and keeps ambiguous states until dismissed', async () => {
     vi.useFakeTimers();
     showWorkflowStatus({ state: 'ambiguous_image', candidateIds: ['a', 'b'] });
     expect(host()?.style.pointerEvents).toBe('none');
     expect(shadow()?.querySelector('[role="status"]')?.getAttribute('aria-live')).toBe('polite');
     expect(shadow()?.textContent).toContain('找到多个匹配的验证码图片');
     await vi.advanceTimersByTimeAsync(4000);
-    expect(host()).toBeNull();
+    expect(host()).not.toBeNull();
   });
 
   it('anchors an actionable result and keeps it until the user acts', async () => {
@@ -26,7 +26,7 @@ describe('status UI', () => {
     showWorkflowStatus({ state: 'needs_confirmation', candidateId: 'image-1', displayText: 'A8K2', fillValue: 'A8K2', fieldIds: ['field-1'] }, field, onConfirm);
     expect(shadow()?.textContent).toContain('A8K2');
     expect(shadow()?.textContent).toContain('填入');
-    expect(host()?.style.left).toBe('40px');
+    expect(Number.parseInt(host()?.style.left ?? '0', 10)).toBeGreaterThanOrEqual(12);
     await vi.advanceTimersByTimeAsync(20000);
     expect(host()).not.toBeNull();
     (shadow()?.querySelector('button.action') as HTMLButtonElement).click();
@@ -48,6 +48,14 @@ describe('status UI', () => {
     expect(shadow()?.textContent).toContain('识别完成并已复制');
     expect(shadow()?.textContent).toContain('A8K2');
     expect(shadow()?.textContent).toContain('已复制到剪贴板');
+    expect(host()?.dataset.presentation).toBe('toast');
+  });
+
+  it('keeps raw confidence out of normal confirmation UI', () => {
+    showWorkflowStatus({ state: 'needs_confirmation', candidateId: 'image-1', displayText: 'A8K2', fillValue: 'A8K2', confidence: .923, fieldIds: ['field-1'] });
+    expect(shadow()?.textContent).toContain('A8K2');
+    expect(shadow()?.textContent).not.toContain('92.3%');
+    expect(shadow()?.textContent).not.toContain('置信度');
   });
 
   it('runs dismiss callbacks from the close control', () => {

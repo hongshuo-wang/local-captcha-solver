@@ -3,7 +3,7 @@ import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../core/ca
 import { matchCaptchaField } from '../core/field-matcher';
 import { resultInterpreter } from '../core/result-interpreter';
 import type { OcrResult, RecognitionMode, WorkflowResult } from '../core/types';
-import { fillEmptyField } from './field-fill';
+import { fillEmptyField, fillPlaceholderField } from './field-fill';
 import type { ImageAcquisitionResult } from './image-source';
 import { snapshotForImage, type ImageDetailSnapshot } from './dom-snapshot';
 
@@ -85,8 +85,11 @@ export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaW
     }
     if (match.state === 'ambiguous') return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence, fieldIds: match.candidates.map((item) => item.field.id), reason: 'ambiguous_field' };
     const target = current.fields.find((field) => field.id === match.winner.id); if (!target || !valid(image, record)) return stale(candidateId);
-    if (target.element.value !== '') return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence, fieldIds: [target.id], reason: 'field_not_empty' };
-    const fill = fillEmptyField(target.element, selected.fillValue);
+    const placeholderValue = target.field.placeholderValue;
+    if (target.element.value !== '' && target.element.value !== placeholderValue) return { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence, fieldIds: [target.id], reason: 'field_not_empty' };
+    const fill = target.element.value === ''
+      ? fillEmptyField(target.element, selected.fillValue)
+      : fillPlaceholderField(target.element, selected.fillValue, placeholderValue!);
     return fill.state === 'filled' ? { state: 'filled', candidateId, fieldId: target.id, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence } : fill.state === 'stale' ? stale(candidateId) : fill.state === 'not_empty' ? { state: 'needs_confirmation', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence, fieldIds: [target.id], reason: 'field_not_empty' } : { state: 'no_field', candidateId, displayText: selected.displayText, fillValue: selected.fillValue, confidence: selected.confidence };
   }
   return { cancel(image) { const record = records.get(image); if (record) records.delete(image); }, invalidate(image) { records.delete(image); }, cancelAll() { generation += 1; }, run(image, trigger) { const first = snapshot(image); if (!first || (trigger === 'automatic' && scoreCaptchaCandidate(first.candidate.candidate).score < AUTOMATIC_CANDIDATE_THRESHOLD)) return Promise.resolve({ state: 'no_candidate' }); const current = records.get(image); const requestPriority = priority(trigger); if (current && !current.settled && current.generation === generation && current.revision === first.candidate.revision && current.priority >= requestPriority) return current.promise; const record = { revision: first.candidate.revision, priority: requestPriority, token: ++sequence, generation, settled: false, promise: Promise.resolve<WorkflowResult>({ state: 'stale', candidateId: first.candidate.id }) }; record.promise = execute(image, first, record, trigger); record.promise.then(() => { record.settled = true; }, () => { record.settled = true; }); records.set(image, record); return record.promise; } };

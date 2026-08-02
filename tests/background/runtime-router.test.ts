@@ -228,7 +228,7 @@ describe('background runtime router', () => {
   it('reads and updates the no-field copy preference', async () => {
     const app = harness();
 
-    await expect(app.router.handle({ type: 'captcha:get-preferences' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle', accessMode: 'all', interfaceLocale: 'system' });
+    await expect(app.router.handle({ type: 'captcha:get-preferences' }, sender)).resolves.toEqual({ copyOnNoField: false, autoFill: true, recognitionShortcut: 'middle', accessMode: 'selected', interfaceLocale: 'system' });
     await expect(app.router.handle({ type: 'captcha:set-preferences', copyOnNoField: true }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: true, recognitionShortcut: 'middle' });
     expect(app.setCopyOnNoField).toHaveBeenCalledWith(true);
     await expect(app.router.handle({ type: 'captcha:set-preferences', autoFill: false }, sender)).resolves.toEqual({ copyOnNoField: true, autoFill: false, recognitionShortcut: 'middle' });

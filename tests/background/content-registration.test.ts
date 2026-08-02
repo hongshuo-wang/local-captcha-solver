@@ -4,7 +4,7 @@ import { GLOBAL_REGISTRATION_ID, contentScriptRegistrationId, createContentRegis
 import { GLOBAL_HTTP_ORIGINS } from '../../src/platform/permissions';
 import { createSettingsStore, DEFAULT_SETTINGS, SETTINGS_STORAGE_KEY } from '../../src/platform/settings-store';
 
-const defaults = DEFAULT_SETTINGS;
+const defaults = { ...DEFAULT_SETTINGS, accessMode: 'all' as const };
 
 function harness(options: { permitted?: boolean; registrations?: readonly { id: string; matches: readonly string[]; js: readonly string[]; persistAcrossSessions?: boolean }[]; setFails?: boolean } = {}) {
   const values = new Map<string, unknown>([[SETTINGS_STORAGE_KEY, defaults]]);

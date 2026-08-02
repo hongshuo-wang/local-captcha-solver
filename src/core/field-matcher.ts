@@ -14,6 +14,7 @@ export interface FieldSnapshot {
   distance: number;
   sameForm: boolean;
   labelText: string;
+  placeholderValue?: string;
 }
 
 type RankedField = { field: FieldSnapshot; score: number; reasons: readonly string[] };
@@ -21,6 +22,11 @@ type RankedField = { field: FieldSnapshot; score: number; reasons: readonly stri
 const UNSAFE_TYPES = new Set(['hidden', 'password', 'file', 'checkbox', 'radio', 'button', 'submit', 'reset', 'image']);
 const TEXT_LIKE_TYPES = new Set(['', 'text', 'search', 'email', 'tel', 'url', 'number', 'textarea']);
 const CAPTCHA_LABEL_TERMS = /(?:\b(?:captcha|verification|verify|security|code|answer|challenge)\b|验证码|校验码|验证|安全码|图形码)/i;
+const LEGACY_CAPTCHA_LABEL = /(?:^|[\s_-])(?:(?:verify|verification|validate|validation|vaildata|check|auth|security|rand)[\s_-]*code|yzm)(?=$|[\s_-])/i;
+
+export function hasCaptchaFieldSemantics(text: string): boolean {
+  return CAPTCHA_LABEL_TERMS.test(text) || LEGACY_CAPTCHA_LABEL.test(text);
+}
 
 function scoreField(field: FieldSnapshot): RankedField | undefined {
   const type = field.type.toLowerCase();
@@ -28,13 +34,17 @@ function scoreField(field: FieldSnapshot): RankedField | undefined {
     return undefined;
   }
 
-  const reasons = [field.value === '' ? 'empty editable text-like field' : 'non-empty replaceable field'];
+  const reasons = [field.value === ''
+    ? 'empty editable text-like field'
+    : field.placeholderValue === field.value
+      ? 'legacy placeholder value'
+      : 'non-empty replaceable field'];
   let score = 25;
   if (field.sameForm) {
     score += 20;
     reasons.push('same form as captcha');
   }
-  if (CAPTCHA_LABEL_TERMS.test(field.labelText)) {
+  if (hasCaptchaFieldSemantics(field.labelText)) {
     score += 25;
     reasons.push('captcha-relevant label');
   }

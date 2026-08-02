@@ -50,6 +50,8 @@ describe('scoreCaptchaCandidate', () => {
   it.each([
     ['a Chinese captcha alt used by the React login page', '验证码'],
     ['a code-image class used by the Vue login page', 'login-code-img'],
+    ['a concatenated validation-code id used by legacy pages', 'vaildataCode'],
+    ['a yzm abbreviation used by Chinese legacy pages', 'hj-hy-yzm-img'],
   ])('accepts %s', (_description, attrText) => {
     const result = scoreCaptchaCandidate({
       attrText,

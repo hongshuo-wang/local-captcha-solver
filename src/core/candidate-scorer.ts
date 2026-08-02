@@ -13,13 +13,14 @@ export interface CandidateSnapshot {
 
 const CAPTCHA_TERMS = /(?:\b(?:captcha|verification|verify|security\s*code|challenge)\b|验证码|校验码|图形码)/i;
 const CODE_IMAGE_ATTRIBUTE = /(?:^|[\s_-])code[\s_-]*(?:img|image)(?:$|[\s_-])/i;
+const LEGACY_CAPTCHA_ATTRIBUTE = /(?:^|[\s_-])(?:(?:verify|verification|validate|validation|vaildata|check|auth|security|rand)[\s_-]*code|yzm)(?=$|[\s_-]|img|image)/i;
 const NEGATIVE_TERMS = /\b(?:logo|avatar|icon|profile|banner|hero)\b/i;
 
 export function scoreCaptchaCandidate(candidate: CandidateSnapshot): ScoreResult {
   const reasons: string[] = [];
   let score = 0;
 
-  if (CAPTCHA_TERMS.test(candidate.attrText) || CODE_IMAGE_ATTRIBUTE.test(candidate.attrText)) {
+  if (CAPTCHA_TERMS.test(candidate.attrText) || CODE_IMAGE_ATTRIBUTE.test(candidate.attrText) || LEGACY_CAPTCHA_ATTRIBUTE.test(candidate.attrText)) {
     score += 35;
     reasons.push('captcha or verification attribute');
   }

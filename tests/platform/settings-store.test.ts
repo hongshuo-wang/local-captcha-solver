@@ -35,12 +35,12 @@ const defaults = DEFAULT_SETTINGS;
 describe('createSettingsStore', () => {
   it('migrates, normalizes, sorts, and deduplicates the version 2 schema', async () => {
     const store = createSettingsStore(adapterWith({ version: 2, disabledHosts: ['z.example.test', 'A.example.test', 'a.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' }));
-    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true, disabledHosts: ['a.example.test', 'z.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' });
+    await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all', onboardingComplete: true, disabledHosts: ['a.example.test', 'z.example.test'], copyOnNoField: true, autoFill: false, recognitionShortcut: 'alt-click' });
   });
 
   it('migrates version 1 allowlist settings without treating other sites as disabled', async () => {
     const store = createSettingsStore(adapterWith({ version: 1, allowlistedHosts: ['portal.example.test'], copyOnNoField: true, recognitionShortcut: 'shift-click' }));
-    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true, copyOnNoField: true, recognitionShortcut: 'shift-click' });
+    await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all', onboardingComplete: true, copyOnNoField: true, recognitionShortcut: 'shift-click' });
   });
 
   it('recovers corrupt or absent storage with privacy-conscious defaults', async () => {
@@ -48,21 +48,21 @@ describe('createSettingsStore', () => {
     await expect(createSettingsStore(adapterWith()).read()).resolves.toEqual(defaults);
   });
 
-  it('enables sites by default and keeps disabled hosts separate from subdomains', async () => {
-    const store = createSettingsStore(adapterWith());
+  it('keeps disabled hosts separate from subdomains in all-sites mode', async () => {
+    const store = createSettingsStore(adapterWith({ ...defaults, accessMode: 'all' }));
     await store.disable('example.test');
     await expect(store.isEnabled('https://example.test/any/path')).resolves.toBe(false);
     await expect(store.isEnabled('https://sub.example.test/any/path')).resolves.toBe(true);
   });
 
   it('makes disabling and enabling a hostname idempotent', async () => {
-    const adapter = adapterWith();
+    const adapter = adapterWith({ ...defaults, accessMode: 'all' });
     const store = createSettingsStore(adapter);
     await store.disable('example.test');
     await store.disable('example.test');
     await store.enable('example.test');
     await store.enable('example.test');
-    await expect(store.read()).resolves.toEqual(defaults);
+    await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all' });
   });
 
   it('serializes concurrent disables so neither hostname is lost', async () => {
@@ -77,12 +77,13 @@ describe('createSettingsStore', () => {
 
   it('serializes disable then enable so the final site state wins', async () => {
     const adapter = adapterWithGatedReads();
+    adapter.values.set(SETTINGS_STORAGE_KEY, { ...defaults, accessMode: 'all' });
     const store = createSettingsStore(adapter);
     const disable = store.disable('a.example.test');
     const enable = store.enable('a.example.test');
     adapter.releaseReads();
     await Promise.all([disable, enable]);
-    await expect(store.read()).resolves.toEqual(defaults);
+    await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all' });
   });
 
   it.each(['https://example.test', 'example.test/path', 'example.test:8443', '*.example.test', 'example test', 'example.test\n', '127.1', '127.0.0', '2130706433', ''])('rejects unsupported hostname input %j', async (host) => {
@@ -116,7 +117,7 @@ describe('createSettingsStore', () => {
 
   it('recovers malformed optional preferences with new-install defaults', async () => {
     const store = createSettingsStore(adapterWith({ version: 2, disabledHosts: [], copyOnNoField: 'yes', autoFill: 'no', recognitionShortcut: 'double-click' }));
-    await expect(store.read()).resolves.toEqual({ ...defaults, onboardingComplete: true });
+    await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all', onboardingComplete: true });
   });
 
   it('supports selected-site access with explicit subdomain coverage', async () => {

@@ -1,9 +1,9 @@
 import { acquireImage } from '../src/content/image-source';
-import { imageRevision, isVisible, snapshotForImage } from '../src/content/dom-snapshot';
+import { imageRevision, isVisible, snapshotForImage, snapshotImages } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
 import { clearWorkflowStatus, setStatusUiLocale, showRecognizing, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
-import { fillEmptyField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
+import { fillEmptyField, fillPlaceholderField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
 import { copyText } from '../src/content/clipboard';
 import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../src/core/candidate-scorer';
 import type { OcrResult, WorkflowResult } from '../src/core/types';
@@ -187,12 +187,18 @@ export function createRuntimeContent(runtime: Runtime) {
       const actions: StatusAction[] = [];
       if (result.state === 'needs_confirmation' && result.fillValue !== undefined) {
         if (field !== undefined) {
-          const replacing = field.element.value !== '';
+          const placeholderValue = field.field.placeholderValue;
+          const placeholderPresent = placeholderValue !== undefined && field.element.value === placeholderValue;
+          const replacing = field.element.value !== '' && !placeholderPresent;
           actions.push({
             label: replacing ? text.replace : text.fill,
             kind: 'primary',
             onClick: () => {
-              const filled = (replacing ? replaceField(field.element, result.fillValue!) : fillEmptyField(field.element, result.fillValue!)).state === 'filled';
+              const filled = (replacing
+                ? replaceField(field.element, result.fillValue!)
+                : placeholderPresent
+                  ? fillPlaceholderField(field.element, result.fillValue!, placeholderValue)
+                  : fillEmptyField(field.element, result.fillValue!)).state === 'filled';
               if (filled) recordActivity('filled', replacing ? 'user_replaced_field' : 'user_confirmed_fill');
               return filled;
             },
@@ -281,6 +287,19 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:auto-enable') { enable(); return Promise.resolve({ enabled: true }); }
     if (type === 'captcha:auto-disable') { disable(); return Promise.resolve({ enabled: false }); }
     if (type === 'captcha:scan') { enable(); return Promise.resolve({ queued: true }); }
+    if (type === 'captcha:recognize-page') {
+      const best = snapshotImages(document)
+        .map((snapshot, order) => ({ snapshot, order, score: scoreCaptchaCandidate(snapshot.candidate).score }))
+        .filter((candidate) => candidate.score >= AUTOMATIC_CANDIDATE_THRESHOLD - 20)
+        .sort((left, right) => right.score - left.score || left.order - right.order)[0];
+      if (best === undefined) {
+        lifecycleGeneration += 1;
+        const result = { state: 'no_candidate' as const };
+        showWorkflowStatus(result);
+        return Promise.resolve(result);
+      }
+      return displayed.run(best.snapshot.element, 'explicit');
+    }
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
     return undefined;

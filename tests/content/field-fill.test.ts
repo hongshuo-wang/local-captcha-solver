@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { fillEmptyField, replaceField } from '../../src/content/field-fill';
+import { fillEmptyField, fillPlaceholderField, replaceField } from '../../src/content/field-fill';
 
 function input(type = 'text'): HTMLInputElement {
   const element = document.createElement('input');
@@ -62,6 +62,19 @@ describe('fillEmptyField', () => {
     expect(fillEmptyField(field, '1742')).toEqual({ state: 'filled' });
     expect(fillEmptyField(field, '8391')).toEqual({ state: 'not_empty' });
     expect(field.value).toBe('1742');
+  });
+
+  it('fills an unchanged legacy placeholder without allowing a different non-empty value', () => {
+    const field = input();
+    field.defaultValue = '验证码';
+    field.value = '验证码';
+
+    expect(fillPlaceholderField(field, '1742', '验证码')).toEqual({ state: 'filled' });
+    expect(field.value).toBe('1742');
+
+    field.value = '用户输入';
+    expect(fillPlaceholderField(field, '8391', '验证码')).toEqual({ state: 'not_empty' });
+    expect(field.value).toBe('用户输入');
   });
 
   it('replaces a non-empty value only through the explicit replacement function', () => {

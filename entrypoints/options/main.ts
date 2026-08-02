@@ -73,10 +73,10 @@ function shell(t: Translator): string {
         <span><strong>Captcha Helper</strong><small>${t('productSubtitle')}</small></span>
       </a>
       <nav class="settings-nav" aria-label="Primary">
-        <button type="button" data-nav="access"><span aria-hidden="true">01</span>${t('navAccess')}</button>
-        <button type="button" data-nav="behavior"><span aria-hidden="true">02</span>${t('navBehavior')}</button>
-        <button type="button" data-nav="diagnostics"><span aria-hidden="true">03</span>${t('navDiagnostics')}</button>
-        <button type="button" data-nav="about"><span aria-hidden="true">04</span>${t('navAbout')}</button>
+        <button type="button" data-nav="access">${t('navAccess')}</button>
+        <button type="button" data-nav="behavior">${t('navBehavior')}</button>
+        <button type="button" data-nav="diagnostics">${t('navDiagnostics')}</button>
+        <button type="button" data-nav="about">${t('navAbout')}</button>
       </nav>
       <div class="sidebar-footer"><button type="button" data-open-guide>${t('reopenGuide')}</button><p>${t('footerPrivacy')}</p></div>
     </aside>
@@ -90,7 +90,7 @@ function shell(t: Translator): string {
 }
 
 function pageHeading(eyebrow: string, title: string, body: string): string {
-  return `<header class="page-heading"><p>${eyebrow}</p><h1>${title}</h1><span>${body}</span></header>`;
+  return `<header class="page-heading" aria-label="${eyebrow}"><h1>${title}</h1><span>${body}</span></header>`;
 }
 
 function siteList(sites: readonly SelectedSiteAccess[], t: Translator): string {
@@ -224,7 +224,7 @@ export async function startOptions(
       await settingsStore.setAccessMode('all');
     } else {
       await settingsStore.setAccessMode('selected');
-      await extension.permissions.remove({ origins: [...GLOBAL_HTTP_ORIGINS] });
+      await extension.permissions.remove({ origins: [...GLOBAL_HTTP_ORIGINS] }).catch(() => false);
       const origins = uniqueOrigins((await settingsStore.read()).selectedSites);
       if (origins.length > 0) await extension.permissions.request({ origins });
     }

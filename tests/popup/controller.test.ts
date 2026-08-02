@@ -10,15 +10,18 @@ function harness(options: { url?: string; state?: unknown; change?: unknown; per
   });
   const render = vi.fn();
   const view: PopupView = { render };
-  const tabsQuery = vi.fn(async () => [{ url: Object.hasOwn(options, 'url') ? options.url : 'https://Portal.Example.test/login' }]);
+  const tabsQuery = vi.fn(async () => [{ id: 7, url: Object.hasOwn(options, 'url') ? options.url : 'https://Portal.Example.test/login' }]);
+  const tabSendMessage = vi.fn(async () => ({ state: 'filled' }));
+  const executeScript = vi.fn(async () => undefined);
   const permissionsContains = vi.fn(async () => options.permissionsGranted ?? true);
   const permissionsRequest = vi.fn(async () => options.permissionRequest ?? true);
   const controller = createPopupController({
-    tabs: { query: tabsQuery },
+    tabs: { query: tabsQuery, sendMessage: tabSendMessage },
+    scripting: { executeScript },
     runtime: { sendMessage },
     permissions: { contains: permissionsContains, request: permissionsRequest },
   }, view);
-  return { controller, render, sendMessage, tabsQuery, permissionsContains, permissionsRequest };
+  return { controller, render, sendMessage, tabSendMessage, executeScript, tabsQuery, permissionsContains, permissionsRequest };
 }
 
 function deferred<T>() {
@@ -43,6 +46,27 @@ describe('popup controller', () => {
     await app.controller.start();
 
     expect(app.render).toHaveBeenLastCalledWith(expect.objectContaining({ checked: false, disabled: false, status: '此网站未开启自动识别。' }));
+  });
+
+  it('recognizes the current page independently of automatic site enablement', async () => {
+    const app = harness({ state: { enabled: false }, permissionsGranted: false });
+    await app.controller.start();
+
+    await expect(app.controller.recognizeCurrentPage()).resolves.toBe(true);
+
+    expect(app.tabSendMessage).toHaveBeenCalledWith(7, { type: 'captcha:recognize-page' });
+    expect(app.permissionsRequest).not.toHaveBeenCalled();
+  });
+
+  it('temporarily injects the content script when the page has no receiver', async () => {
+    const app = harness({ state: { enabled: false } });
+    app.tabSendMessage.mockRejectedValueOnce(new Error('no receiver')).mockResolvedValueOnce({ state: 'no_candidate' });
+    await app.controller.start();
+
+    await expect(app.controller.recognizeCurrentPage()).resolves.toBe(true);
+
+    expect(app.executeScript).toHaveBeenCalledWith({ target: { tabId: 7 }, files: ['content-scripts/content.js'] });
+    expect(app.tabSendMessage).toHaveBeenCalledTimes(2);
   });
 
   it('shows the one-step access state and keeps controls disabled when global access is absent', async () => {
@@ -142,7 +166,7 @@ describe('popup controller', () => {
       ? { enabled: false, reason: 'site-changed' }
       : { enabled: false });
     await app.controller.start();
-    app.tabsQuery.mockResolvedValueOnce([{ url: 'https://other.example.test/login' }]);
+    app.tabsQuery.mockResolvedValueOnce([{ id: 8, url: 'https://other.example.test/login' }]);
 
     await app.controller.setEnabled(true);
 

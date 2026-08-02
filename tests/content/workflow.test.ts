@@ -17,6 +17,19 @@ describe('captcha workflow', () => {
     expect(result).toMatchObject({ state: 'filled', fieldId: 'field-1', fillValue: '1234' });
     expect(base.recognize).toHaveBeenCalledWith('data:image/png;base64,AQ==', 'bytes', ['digits', 'letters', 'alphanumeric', 'arithmetic']);
   });
+  it('fills a uniquely matched legacy captcha placeholder without treating it as user input', async () => {
+    field.defaultValue = '验证码';
+    field.value = '验证码';
+    const snapshot = () => ({ ...base.snapshot(), fields: [{
+      id: 'field-1',
+      element: field,
+      field: { ...base.snapshot().fields[0]!.field, value: '验证码', replaceable: true, placeholderValue: '验证码' },
+    }] });
+    const instance = createCaptchaWorkflow({ ...base, snapshot });
+
+    await expect(instance.run(image, 'automatic')).resolves.toMatchObject({ state: 'filled', fillValue: '1234' });
+    expect(field.value).toBe('1234');
+  });
   it('rejects automatic candidates below the scorer threshold', async () => {
     const snapshot = vi.fn(() => ({ ...base.snapshot(), candidate: { ...base.snapshot().candidate, candidate: { ...base.snapshot().candidate.candidate, attrText: '', width: 1, height: 1, inForm: false, nearShortInput: false } } }));
     await expect(workflow({ snapshot }).run(image, 'automatic')).resolves.toEqual({ state: 'no_candidate' });

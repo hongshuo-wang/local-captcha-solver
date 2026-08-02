@@ -15,7 +15,13 @@ const extensionPath = join(
 );
 
 interface ExtensionApi {
-  runtime: { getManifest(): { options_ui?: { open_in_tab?: boolean } } };
+  runtime: {
+    getManifest(): { options_ui?: { open_in_tab?: boolean } };
+    sendMessage(message: unknown): Promise<unknown>;
+  };
+  storage: {
+    local: { set(values: Record<string, unknown>): Promise<void> };
+  };
   scripting: { getRegisteredContentScripts(): Promise<readonly { id: string }[]> };
   tabs: {
     query(query: { url?: string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string }[]>;
@@ -145,12 +151,39 @@ test.afterAll(async () => {
   if (profileDirectory !== undefined) await rm(profileDirectory, { recursive: true, force: true });
 });
 
-test('registers one global content script and automatically fills after access is granted', async () => {
+test('registers globally and automatically fills after all-site access is explicitly selected', async () => {
+  await worker.evaluate(async () => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    await api.storage.local.set({
+      'captcha-settings': {
+        version: 3,
+        accessMode: 'all',
+        disabledHosts: [],
+        selectedSites: [],
+        copyOnNoField: false,
+        autoFill: true,
+        recognitionShortcut: 'middle',
+        interfaceLocale: 'system',
+        onboardingComplete: false,
+      },
+    });
+  });
+  await expect.poll(() => worker.evaluate(async () => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    try {
+      await api.runtime.sendMessage({ type: 'captcha:reconcile-access' });
+      return true;
+    } catch {
+      return false;
+    }
+  })).toBe(true);
   await expect.poll(() => worker.evaluate(async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     return (await api.scripting.getRegisteredContentScripts()).map((script) => script.id);
-  })).toContain('captcha-auto-global');
+  }), { timeout: 15_000 }).toContain('captcha-auto-global');
   const page = await open('/automatic.html');
   await expect(page.locator('#captcha-answer')).toHaveValue('14975', { timeout: 30_000 });
   await page.close();
@@ -228,6 +261,7 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   const onboarding = await openOnboardingPage();
   await expect(onboarding).toHaveURL(/onboarding\.html/);
   await expect(onboarding.locator('[data-step="1"] h1')).toHaveText(/选择网站访问范围|Choose site access/);
+  await expect(onboarding.locator('[data-next]')).toBeDisabled();
   expect(await onboarding.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-access.png'), fullPage: true });
 
@@ -236,6 +270,11 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-access-mobile.png'), fullPage: true });
   await onboarding.setViewportSize({ width: 1280, height: 720 });
 
+  await onboarding.locator('[data-language]').selectOption('zh_CN');
+  await expect(onboarding.locator('[data-step="1"] h1')).toHaveText('选择网站访问范围');
+
+  await onboarding.locator('[data-onboarding-mode="selected"]').click();
+  await expect(onboarding.locator('[data-next]')).toBeEnabled();
   await onboarding.locator('[data-next]').click();
   await expect(onboarding.locator('[data-step="2"]')).toBeVisible();
   await onboarding.locator('[data-next]').click();
@@ -252,8 +291,13 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   })).toBeGreaterThan(100);
   await onboarding.locator('[data-run-demo]').click();
   await expect(onboarding.locator('[data-demo-status]')).toHaveAttribute('data-state', 'success', { timeout: 30_000 });
-  await expect(onboarding.locator('[data-demo-status]')).toContainText(/识别结果：|Result:/);
-  await onboarding.close();
+  await expect(onboarding.locator('[data-demo-status]')).toContainText('识别结果：');
+  await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-complete-zh.png'), fullPage: true });
+  await onboarding.locator('[data-language]').selectOption('en');
+  await expect(onboarding.locator('[data-finish-guide]')).toHaveText('Finish setup and close');
+  const onboardingClosed = onboarding.waitForEvent('close');
+  await onboarding.locator('[data-finish-guide]').click();
+  await onboardingClosed;
 
   const options = await openOptionsPage();
   await expect(options.locator('[data-view="access"]')).toBeVisible();
@@ -279,28 +323,27 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await expect(statusPopup.locator('[data-latest-activity]')).toHaveText(/暂无执行记录|No activity yet/);
   await statusPopup.close();
 
-  const authorizedPage = await open('/automatic.html');
-  await waitForContent(authorizedPage);
-  const authorizedPopup = await openActionPopup(authorizedPage);
-  await expect.poll(() => authorizedPopup.evaluate(() => ({
+  const manualPage = await open('/automatic.html');
+  const manualPopup = await openActionPopup(manualPage);
+  await expect.poll(() => manualPopup.evaluate(() => ({
     hostname: document.querySelector<HTMLElement>('[data-popup-hostname]')?.textContent,
     accessHidden: (document.querySelector<HTMLElement>('[data-access-panel]'))?.hidden,
-    checked: document.querySelector<HTMLInputElement>('#site-enabled')?.checked,
-    disabled: document.querySelector<HTMLInputElement>('#site-enabled')?.disabled,
-    status: document.querySelector<HTMLElement>('[data-popup-status]')?.textContent,
+    recognizeDisabled: document.querySelector<HTMLButtonElement>('[data-recognize-page]')?.disabled,
   }))).toEqual({
     hostname: 'captcha.e2e.test',
     accessHidden: true,
-    checked: true,
-    disabled: false,
-    status: expect.stringMatching(/此网站已开启自动识别。|Automatic recognition is enabled on this site\./),
+    recognizeDisabled: false,
   });
-  await authorizedPopup.close();
-  await authorizedPage.close();
+  await manualPopup.screenshot({ path: testInfo.outputPath('captcha-helper-popup-manual.png'), fullPage: true });
+  await manualPopup.locator('[data-recognize-page]').click();
+  await expect(manualPage.locator('#captcha-answer')).toHaveValue('14975', { timeout: 30_000 });
+  expect(await submitCount(manualPage)).toBe(0);
+  if (!manualPopup.isClosed()) await manualPopup.close();
+  await manualPage.close();
 
   await options.bringToFront();
   await options.locator('.settings-nav [data-nav="access"]').click();
-  await expect(options.locator('.status-dot')).toHaveAttribute('data-granted', 'true');
+  await expect(options.locator('.status-dot')).toHaveAttribute('data-granted', 'false');
 
   await options.locator('[data-nav="behavior"]').click();
   await expect(options.locator('[data-view="behavior"]')).toBeVisible();

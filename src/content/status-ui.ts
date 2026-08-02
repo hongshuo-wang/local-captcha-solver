@@ -65,6 +65,7 @@ export function setStatusUiLocale(locale: UiLocale): void { statusLocale = local
 
 let removalTimer: ReturnType<typeof setTimeout> | undefined;
 let positionCleanup: (() => void) | undefined;
+type StatusPresentation = 'toast' | 'panel';
 
 function clearCurrent(): void {
   if (removalTimer !== undefined) clearTimeout(removalTimer);
@@ -74,19 +75,64 @@ function clearCurrent(): void {
   document.querySelector('[data-local-captcha-status]')?.remove();
 }
 
-function position(host: HTMLElement, anchor?: Element): void {
+interface Point { left: number; top: number }
+
+function overlapArea(left: number, top: number, width: number, height: number, rect: DOMRect): number {
+  const overlapWidth = Math.max(0, Math.min(left + width, rect.right) - Math.max(left, rect.left));
+  const overlapHeight = Math.max(0, Math.min(top + height, rect.bottom) - Math.max(top, rect.top));
+  return overlapWidth * overlapHeight;
+}
+
+function position(host: HTMLElement, anchor: Element | undefined, presentation: StatusPresentation): void {
   const width = Math.min(304, Math.max(240, globalThis.innerWidth - 24));
-  const fallbackLeft = Math.max(12, globalThis.innerWidth - width - 12);
+  const height = Math.min(220, host.getBoundingClientRect().height || 112);
+  Object.assign(host.style, { width: `${width}px`, right: 'auto', bottom: 'auto' });
+  if (presentation === 'toast') {
+    Object.assign(host.style, { left: `${Math.max(12, globalThis.innerWidth - width - 12)}px`, top: '12px' });
+    return;
+  }
+  if (globalThis.innerWidth <= 600) {
+    Object.assign(host.style, { left: '12px', top: 'auto', bottom: '12px' });
+    return;
+  }
+
   const rect = anchor?.isConnected ? anchor.getBoundingClientRect() : undefined;
-  const left = rect === undefined ? fallbackLeft : Math.min(Math.max(12, rect.left), fallbackLeft);
-  const estimatedHeight = Math.min(176, host.getBoundingClientRect().height || 112);
-  const below = rect === undefined ? globalThis.innerHeight - estimatedHeight - 12 : rect.bottom + 10;
-  const top = rect === undefined
-    ? Math.max(12, below)
-    : below + estimatedHeight <= globalThis.innerHeight - 12
-      ? below
-      : Math.max(12, rect.top - estimatedHeight - 10);
-  Object.assign(host.style, { width: `${width}px`, left: `${left}px`, top: `${top}px` });
+  const fallback: Point = { left: Math.max(12, globalThis.innerWidth - width - 12), top: Math.max(12, globalThis.innerHeight - height - 12) };
+  if (rect === undefined) {
+    Object.assign(host.style, { left: `${fallback.left}px`, top: `${fallback.top}px` });
+    return;
+  }
+  const clampLeft = (value: number) => Math.min(Math.max(12, value), Math.max(12, globalThis.innerWidth - width - 12));
+  const clampTop = (value: number) => Math.min(Math.max(12, value), Math.max(12, globalThis.innerHeight - height - 12));
+  const candidates: Point[] = [
+    { left: rect.right + 10, top: rect.top },
+    { left: rect.left - width - 10, top: rect.top },
+    { left: rect.left, top: rect.bottom + 10 },
+    { left: rect.left, top: rect.top - height - 10 },
+  ];
+  const form = anchor?.closest('form') ?? null;
+  if (form !== null) {
+    const formRect = form.getBoundingClientRect();
+    candidates.push(
+      { left: formRect.right + 12, top: formRect.top },
+      { left: formRect.left - width - 12, top: formRect.top },
+      { left: formRect.left, top: formRect.bottom + 12 },
+      { left: formRect.left, top: formRect.top - height - 12 },
+    );
+  }
+  candidates.push(fallback);
+  const blockers = Array.from(document.querySelectorAll<HTMLElement>('button, [role="button"], input[type="button"], input[type="submit"], input[type="image"]'))
+    .filter((element) => element.isConnected && element.getClientRects().length > 0)
+    .map((element) => element.getBoundingClientRect());
+  const ranked = candidates.map((candidate, index) => {
+    const left = clampLeft(candidate.left);
+    const top = clampTop(candidate.top);
+    const displacement = Math.abs(left - candidate.left) + Math.abs(top - candidate.top);
+    const overlap = blockers.reduce((total, blocker) => total + overlapArea(left, top, width, height, blocker), 0);
+    return { left, top, score: overlap * 100 + displacement * 10 + index };
+  }).sort((left, right) => left.score - right.score);
+  const best = ranked[0] ?? fallback;
+  Object.assign(host.style, { left: `${best.left}px`, top: `${best.top}px` });
 }
 
 function show(
@@ -94,7 +140,7 @@ function show(
   anchor: Element | undefined,
   tone: StatusTone,
   actions: readonly StatusAction[] = [],
-  options: { timeoutMs?: number; onDismiss?: () => void; detail?: string } = {},
+  options: { timeoutMs?: number; onDismiss?: () => void; detail?: string; presentation?: StatusPresentation } = {},
 ): void {
   clearCurrent();
   const host = document.createElement('div');
@@ -102,12 +148,17 @@ function show(
   host.style.position = 'fixed';
   host.style.zIndex = '2147483000';
   host.style.pointerEvents = 'none';
+  const presentation = options.presentation ?? 'panel';
+  host.dataset.presentation = presentation;
   if (anchor?.isConnected) host.dataset.anchor = 'candidate';
   const shadow = host.attachShadow({ mode: 'open' });
   shadow.innerHTML = `
     <style>
       :host { color-scheme: light dark; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: 0; }
       .panel { pointer-events: auto; display: grid; grid-template-columns: 28px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 12px; color: #202522; background: rgba(252,253,252,.98); border: 1px solid #d9dedb; border-radius: 8px; box-shadow: 0 12px 32px rgba(31,44,36,.16), 0 2px 8px rgba(31,44,36,.08); animation: enter .18s ease-out; }
+      .panel[data-presentation="toast"] { grid-template-columns: 24px minmax(0,1fr); align-items: center; padding: 10px 12px; box-shadow: 0 8px 24px rgba(31,44,36,.14); }
+      .panel[data-presentation="toast"] .icon { width: 24px; height: 24px; border-radius: 6px; font-size: 13px; }
+      .panel[data-presentation="toast"] .content { padding-top: 0; }
       .icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; color: #3f5f4b; background: #eaf0ec; font: 600 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
       .panel[data-tone="success"] .icon { color: #21623b; background: #e3f2e8; }
       .panel[data-tone="warning"] .icon { color: #765512; background: #f8edcf; }
@@ -145,7 +196,7 @@ function show(
       }
       @media (prefers-reduced-motion: reduce) { .panel, .icon { animation: none !important; } }
     </style>
-    <section class="panel" data-tone="${tone}" role="status" aria-live="polite">
+    <section class="panel" data-tone="${tone}" data-presentation="${presentation}" role="status" aria-live="polite">
       <span class="icon" aria-hidden="true">${ICONS[tone]}</span>
       <div class="content"><p class="message"></p><p class="detail" hidden></p></div>
       <button class="close" type="button" aria-label="${localized('关闭', 'Close')}">×</button>
@@ -176,14 +227,14 @@ function show(
       try { succeeded = await action.onClick() !== false; } catch { succeeded = false; }
       const nextMessage = succeeded ? action.successMessage : action.failureMessage;
       clearCurrent();
-      if (nextMessage) show(nextMessage, anchor, succeeded ? 'success' : 'error', [], { timeoutMs: 1800 });
+      if (nextMessage) show(nextMessage, anchor, succeeded ? 'success' : 'error', [], { timeoutMs: 1800, presentation: 'toast' });
     });
     actionsElement.append(button);
   }
   if (actions.length === 0) actionsElement.remove();
-  if (actions.length === 0 && options.onDismiss === undefined && (options.timeoutMs ?? 0) > 0) close.hidden = true;
+  if (presentation === 'toast' || (actions.length === 0 && options.onDismiss === undefined && (options.timeoutMs ?? 0) > 0)) close.hidden = true;
   document.body.append(host);
-  const updatePosition = () => position(host, anchor);
+  const updatePosition = () => position(host, anchor, presentation);
   updatePosition();
   requestAnimationFrame(updatePosition);
   globalThis.addEventListener('scroll', updatePosition, true);
@@ -192,7 +243,7 @@ function show(
     globalThis.removeEventListener('scroll', updatePosition, true);
     globalThis.removeEventListener('resize', updatePosition);
   };
-  const timeoutMs = options.timeoutMs ?? (actions.length > 0 ? 0 : 4000);
+  const timeoutMs = options.timeoutMs ?? (presentation === 'toast' ? 2400 : 0);
   if (timeoutMs > 0) removalTimer = setTimeout(clearCurrent, timeoutMs);
 }
 
@@ -211,12 +262,11 @@ export function showWorkflowStatus(
     : { ...(legacyConfirmOrOptions ?? {}), copyOutcome: legacyConfirmOrOptions?.copyOutcome ?? legacyCopyOutcome };
   const value = 'displayText' in result ? result.displayText || result.fillValue : '';
   if (result.state === 'filled') {
-    show(localized('已自动填入验证码', 'CAPTCHA filled automatically'), anchor, 'success', [], { timeoutMs: 1800, detail: value });
+    show(localized('已自动填入验证码', 'CAPTCHA filled automatically'), anchor, 'success', [], { timeoutMs: 1800, detail: value, presentation: 'toast' });
     return;
   }
   if (result.state === 'needs_confirmation') {
-    const confidence = result.confidence === undefined ? '' : ` · ${localized('置信度', 'confidence')} ${(result.confidence * 100).toFixed(1)}%`;
-    const detail = result.fillValue === undefined ? localized('未得到可安全使用的结果', 'No safe result was produced') : `${value}${confidence}`;
+    const detail = result.fillValue === undefined ? localized('未得到可安全使用的结果', 'No safe result was produced') : value;
     const confirmations = statusLocale === 'zh_CN' ? CONFIRMATION_MESSAGES : EN_CONFIRMATION_MESSAGES;
     show(result.reason === undefined ? localized('结果需要确认', 'The result needs confirmation') : confirmations[result.reason], anchor, 'warning', options.actions, { detail, onDismiss: options.onDismiss });
     return;
@@ -224,13 +274,18 @@ export function showWorkflowStatus(
   if (result.state === 'no_field') {
     const copyDetail = options.copyOutcome === 'copied' ? localized('已复制到剪贴板', 'Copied to the clipboard') : options.copyOutcome === 'failed' ? localized('自动复制失败', 'Automatic copy failed') : localized('未找到对应输入框', 'No matching input was found');
     const title = options.copyOutcome === 'copied' ? localized('识别完成并已复制', 'Recognized and copied') : options.actions?.length ? localized('识别完成，请选择操作', 'Recognition complete; choose an action') : localized('识别完成', 'Recognition complete');
-    const confidence = result.confidence === undefined ? '' : ` · ${localized('置信度', 'confidence')} ${(result.confidence * 100).toFixed(1)}%`;
-    show(title, anchor, options.copyOutcome === 'failed' ? 'error' : 'neutral', options.actions, { detail: `${value}${confidence} · ${copyDetail}`, onDismiss: options.onDismiss });
+    const presentation: StatusPresentation = options.copyOutcome === 'copied' && (options.actions?.length ?? 0) === 0 ? 'toast' : 'panel';
+    show(title, anchor, options.copyOutcome === 'failed' ? 'error' : options.copyOutcome === 'copied' ? 'success' : 'neutral', options.actions, { detail: `${value} · ${copyDetail}`, onDismiss: options.onDismiss, presentation });
     return;
   }
   const retryable = result.state === 'recognition_failed' || result.state === 'image_unavailable' || result.state === 'permission_denied' || result.state === 'model_unavailable';
   const tone: StatusTone = retryable ? 'error' : result.state === 'stale' ? 'warning' : 'neutral';
-  show((statusLocale === 'zh_CN' ? ZH_MESSAGES : EN_MESSAGES)[result.state], anchor, tone, options.actions, { timeoutMs: retryable ? 0 : 4000, onDismiss: options.onDismiss });
+  const persistent = retryable || result.state === 'ambiguous_image';
+  show((statusLocale === 'zh_CN' ? ZH_MESSAGES : EN_MESSAGES)[result.state], anchor, tone, options.actions, {
+    timeoutMs: persistent ? 0 : 3200,
+    onDismiss: options.onDismiss,
+    presentation: persistent ? 'panel' : 'toast',
+  });
 }
 
 export function clearWorkflowStatus(): void { clearCurrent(); }

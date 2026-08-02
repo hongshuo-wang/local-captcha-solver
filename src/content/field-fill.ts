@@ -48,6 +48,19 @@ export function fillEmptyField(field: TextFieldElement, value: string): FieldFil
   return writeField(field, value);
 }
 
+/** Fill a legacy field that uses its initial value as placeholder text. */
+export function fillPlaceholderField(field: TextFieldElement, value: string, placeholderValue: string): FieldFillResult {
+  if (!field.isConnected) return { state: 'stale' };
+  if (!isEligibleField(field)) return { state: 'not_eligible' };
+  if (field.value !== placeholderValue) return { state: 'not_empty' };
+
+  if (!field.isConnected) return { state: 'stale' };
+  if (!isEligibleField(field)) return { state: 'not_eligible' };
+  if (field.value !== placeholderValue) return { state: 'not_empty' };
+
+  return writeField(field, value);
+}
+
 /** Replace a field only after an explicit user confirmation. */
 export function replaceField(field: TextFieldElement, value: string): FieldFillResult {
   return writeField(field, value);

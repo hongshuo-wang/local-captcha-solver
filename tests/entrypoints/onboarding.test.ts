@@ -24,19 +24,22 @@ function harness() {
 }
 
 describe('onboarding entrypoint', () => {
-  it('runs the standalone setup flow and opens settings when complete', async () => {
+  it('requires an explicit access choice and closes when setup is complete', async () => {
     const app = harness();
-    const navigate = vi.fn();
+    const closeGuide = vi.fn();
     const root = document.createElement('div');
     document.body.append(root);
 
-    await startOnboarding(root, app.extension, navigate);
+    await startOnboarding(root, app.extension, closeGuide);
     expect(root.textContent).toContain('先用一分钟完成本地识别设置');
     expect(root.textContent).toContain('选择网站访问范围');
+    expect(root.querySelector('[data-onboarding-mode="selected"]')?.getAttribute('aria-checked')).toBe('false');
+    expect(root.querySelector('[data-onboarding-mode="all"]')?.getAttribute('aria-checked')).toBe('false');
+    expect((root.querySelector('[data-next]') as HTMLButtonElement).disabled).toBe(true);
 
     (root.querySelector('[data-onboarding-mode="selected"]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(app.remove).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
-    await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ accessMode: 'selected' }));
+    await vi.waitFor(() => expect(root.querySelector('[data-onboarding-mode="selected"]')?.getAttribute('aria-checked')).toBe('true'));
 
     (root.querySelector('[data-next]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(root.textContent).toContain('设置识别行为'));
@@ -47,8 +50,8 @@ describe('onboarding entrypoint', () => {
     expect(app.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'captcha:recognize', modes: ['arithmetic'] }));
     (root.querySelector('[data-finish-guide]') as HTMLButtonElement).click();
 
-    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('chrome-extension://test/options.html'));
-    expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ onboardingComplete: true });
+    await vi.waitFor(() => expect(closeGuide).toHaveBeenCalledOnce());
+    expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ accessMode: 'selected', onboardingComplete: true });
     root.remove();
   });
 });

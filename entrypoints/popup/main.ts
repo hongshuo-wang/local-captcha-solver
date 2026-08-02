@@ -9,6 +9,7 @@ export interface PopupViewElements extends PopupView {
   checkbox: HTMLInputElement;
   accessButton: HTMLButtonElement;
   modelRetry: HTMLButtonElement;
+  recognizeButton: HTMLButtonElement;
   settingsButton: HTMLButtonElement;
   renderModelStatus(snapshot: ModelStatusSnapshot): void;
 }
@@ -41,22 +42,26 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
       <p data-model-summary>${t('modelLoading')}</p>
       <button type="button" class="text-command" data-model-retry hidden>${t('retryModel')}</button>
     </section>
+    <section class="recognition-panel">
+      <button type="button" class="recognize-command" data-recognize-page>${t('recognizePage')}</button>
+      <p>${t('recognizePageBody')}</p>
+    </section>
     <section class="access-panel" data-access-panel hidden>
       <div><p class="section-kicker">${t('currentSite')}</p><h2 data-access-title>${t('accessChoice')}</h2><p data-access-copy></p></div>
       <button type="button" class="primary-command" data-access-button>${t('grantAll')}</button>
     </section>
     <section class="site-panel" data-controls-panel aria-label="${t('currentSite')}">
       <div class="site-heading">
-        <div><p class="section-kicker">${t('currentSite')}</p><h2 class="hostname" data-popup-hostname></h2></div>
+        <div><p class="section-kicker">${t('siteControl')}</p><h2 class="hostname" data-popup-hostname></h2></div>
         <label class="switch" aria-label="${t('autoFill')}"><input id="site-enabled" type="checkbox" aria-describedby="site-status" /><span aria-hidden="true"></span></label>
       </div>
       <p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p>
     </section>
-    <section class="activity-panel" data-controls-panel>
+    <section class="activity-panel">
       <div class="section-heading"><p class="section-kicker">${t('recentStatus')}</p><time data-latest-time></time></div>
       <p class="latest-activity" data-latest-activity>${t('noActivity')}</p>
     </section>
-    <footer class="popup-footer"><p>${t('footerPrivacy')}</p><button type="button" class="text-command" data-open-settings-footer>${t('openSettings')}</button></footer>`;
+    <footer class="popup-footer"><p>${t('footerPrivacy')}</p></footer>`;
 
   const hostname = required<HTMLElement>(root, '[data-popup-hostname]');
   const checkbox = required<HTMLInputElement>(root, '#site-enabled');
@@ -72,16 +77,20 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const latestActivity = required<HTMLElement>(root, '[data-latest-activity]');
   const latestTime = required<HTMLTimeElement>(root, '[data-latest-time]');
   const settingsButton = required<HTMLButtonElement>(root, '[data-open-settings]');
+  const recognizeButton = required<HTMLButtonElement>(root, '[data-recognize-page]');
 
   return {
     checkbox,
     accessButton,
     modelRetry,
+    recognizeButton,
     settingsButton,
     render(state: PopupViewState): void {
       hostname.textContent = state.hostname;
       checkbox.checked = state.checked;
       checkbox.disabled = state.disabled;
+      recognizeButton.disabled = !state.recognitionAvailable;
+      recognizeButton.title = state.recognitionAvailable ? '' : t('recognizeUnavailable');
       accessPanel.hidden = state.accessGranted;
       controls.forEach((element) => { element.hidden = !state.accessGranted; });
       accessTitle.textContent = state.accessMode === 'all' ? t('allSites') : state.hostname;
@@ -112,6 +121,7 @@ function labels(locale: UiLocale): PopupControllerLabels {
       accessNeeded: (mode) => mode === 'all' ? '启用全站访问后开始自动识别。' : '允许访问此网站后开始自动识别。',
       requestingAccess: (mode) => mode === 'all' ? '正在请求全站访问权限…' : '正在请求此网站访问权限…',
       accessDenied: '需要授权后才能自动识别。', accessFailed: '无法完成网站授权。', updating: '正在更新网站设置…', readFailed: '无法读取网站设置。', updateFailed: '无法更新网站设置。',
+      pageRecognitionFailed: '无法在当前页面启动识别。',
     };
   }
   return {
@@ -120,6 +130,7 @@ function labels(locale: UiLocale): PopupControllerLabels {
     accessNeeded: (mode) => mode === 'all' ? 'Allow all sites to start automatic recognition.' : 'Allow this site to start automatic recognition.',
     requestingAccess: (mode) => mode === 'all' ? 'Requesting access to all sites...' : 'Requesting access to this site...',
     accessDenied: 'Site access is required for automatic recognition.', accessFailed: 'Could not complete site authorization.', updating: 'Updating site settings...', readFailed: 'Could not read site settings.', updateFailed: 'Could not update site settings.',
+    pageRecognitionFailed: 'Could not start recognition on this page.',
   };
 }
 
@@ -127,14 +138,34 @@ export function formatDiagnosticSnapshot(snapshot: ModelStatusSnapshot): string 
   return JSON.stringify(snapshot, null, 2);
 }
 
-export function startPopup(root: HTMLElement, adapter: PopupControllerAdapter, locale: UiLocale = 'zh_CN', openSettings: () => Promise<void> = async () => undefined): void {
+export function startPopup(
+  root: HTMLElement,
+  adapter: PopupControllerAdapter,
+  locale: UiLocale = 'zh_CN',
+  openSettings: () => Promise<void> = async () => undefined,
+  closePopup: () => void = () => window.close(),
+): void {
   const view = createPopupView(root, locale);
+  const t = createTranslator(locale);
   const controller = createPopupController(adapter, view, labels(locale));
   const modelController = createModelStatusController(adapter, view);
   view.accessButton.addEventListener('click', () => { void controller.grantAccess(); });
   view.checkbox.addEventListener('change', () => { void controller.setEnabled(view.checkbox.checked); });
   view.modelRetry.addEventListener('click', () => { void modelController.retry(); });
-  root.querySelectorAll<HTMLButtonElement>('[data-open-settings], [data-open-settings-footer]').forEach((button) => button.addEventListener('click', () => { void openSettings(); }));
+  view.recognizeButton.addEventListener('click', () => {
+    void (async () => {
+      const original = view.recognizeButton.textContent;
+      view.recognizeButton.disabled = true;
+      view.recognizeButton.textContent = t('recognizingPage');
+      const started = await controller.recognizeCurrentPage();
+      if (started) closePopup();
+      else {
+        view.recognizeButton.disabled = false;
+        view.recognizeButton.textContent = original;
+      }
+    })();
+  });
+  view.settingsButton.addEventListener('click', () => { void openSettings(); });
   void controller.start();
   void modelController.start();
 }
@@ -145,7 +176,13 @@ if (root !== null && typeof browser !== 'undefined') {
   void settingsStore.read().then((settings) => {
     const locale = resolveUiLocale(settings.interfaceLocale, browser.i18n.getUILanguage());
     startPopup(root, {
-      tabs: browser.tabs,
+      tabs: {
+        query: (queryInfo) => browser.tabs.query(queryInfo),
+        sendMessage: (tabId, message) => browser.tabs.sendMessage(tabId, message),
+      },
+      scripting: {
+        executeScript: (details) => browser.scripting.executeScript({ target: details.target, files: ['/content-scripts/content.js'] }),
+      },
       runtime: { sendMessage: (message) => sendRuntimeMessage(browser.runtime, message) },
       permissions: browser.permissions,
       settings: { readAccessMode: async () => (await settingsStore.read()).accessMode },

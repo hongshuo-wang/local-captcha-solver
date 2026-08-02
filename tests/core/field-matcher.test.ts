@@ -109,4 +109,26 @@ describe('matchCaptchaField', () => {
 
     expect(match).toMatchObject({ state: 'unique', winner: { id: 'textarea' } });
   });
+
+  it('prefers a legacy captcha placeholder over another nearby initialized field', () => {
+    const match = matchCaptchaField(image, [
+      field({
+        id: 'validatecode',
+        value: '验证码',
+        replaceable: true,
+        placeholderValue: '验证码',
+        distance: 97,
+        labelText: 'validatecode hj-hy-yzm 验证码',
+      }),
+      field({
+        id: 'appdate',
+        value: '2026-07-31',
+        replaceable: true,
+        distance: 76,
+        labelText: '业务日期',
+      }),
+    ]);
+
+    expect(match).toMatchObject({ state: 'unique', winner: { id: 'validatecode' } });
+  });
 });

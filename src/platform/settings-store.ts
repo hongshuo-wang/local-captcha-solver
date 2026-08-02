@@ -49,7 +49,7 @@ export interface SettingsStore {
 
 export const DEFAULT_SETTINGS: CaptchaSettings = {
   version: 3,
-  accessMode: 'all',
+  accessMode: 'selected',
   disabledHosts: [],
   selectedSites: [],
   copyOnNoField: false,
@@ -139,6 +139,7 @@ function parseSettings(value: unknown): CaptchaSettings {
   if (legacy.version === 1 && Array.isArray(legacy.allowlistedHosts)) {
     return {
       ...DEFAULT_SETTINGS,
+      accessMode: 'all',
       onboardingComplete: true,
       copyOnNoField: legacy.copyOnNoField === true,
       recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
@@ -148,6 +149,7 @@ function parseSettings(value: unknown): CaptchaSettings {
     try {
       return {
         ...DEFAULT_SETTINGS,
+        accessMode: 'all',
         onboardingComplete: true,
         disabledHosts: [...new Set(legacy.disabledHosts.map(normalizeHostname))].sort(),
         copyOnNoField: legacy.copyOnNoField === true,
@@ -155,7 +157,7 @@ function parseSettings(value: unknown): CaptchaSettings {
         recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
       };
     } catch {
-      return { ...DEFAULT_SETTINGS, onboardingComplete: true, selectedSites: [], disabledHosts: [] };
+      return { ...DEFAULT_SETTINGS, accessMode: 'all', onboardingComplete: true, selectedSites: [], disabledHosts: [] };
     }
   }
   const candidate = value as Partial<CaptchaSettings>;
@@ -166,7 +168,7 @@ function parseSettings(value: unknown): CaptchaSettings {
   try {
     return {
       version: 3,
-      accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : 'all',
+      accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : DEFAULT_SETTINGS.accessMode,
       disabledHosts: [...new Set(candidate.disabledHosts.map(normalizeHostname))].sort(),
       selectedSites: normalizeSelectedSites(candidate.selectedSites),
       copyOnNoField: candidate.copyOnNoField === true,

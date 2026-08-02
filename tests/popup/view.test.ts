@@ -13,7 +13,8 @@ describe('popup view', () => {
     expect(root.textContent).toContain('本地验证码助手');
     expect(root.textContent).toContain('当前网站');
     expect(root.textContent).toContain('最近状态');
-    expect(root.textContent).toContain('打开设置');
+    expect(root.textContent).toContain('立即识别当前页');
+    expect(root.textContent).toContain('设置');
     expect(root.textContent).not.toContain('自动复制');
     expect(root.querySelector<HTMLImageElement>('.brand-mark')?.src).toContain('/icons/icon-48.png');
     expect(view.checkbox.type).toBe('checkbox');
@@ -25,11 +26,11 @@ describe('popup view', () => {
     const root = document.createElement('main');
     document.body.append(root);
     const view = createPopupView(root);
-    view.render({ hostname: 'portal.example.test', accessMode: 'all', checked: false, disabled: true, accessGranted: false, status: '启用全站访问后开始自动识别。' });
+    view.render({ hostname: 'portal.example.test', accessMode: 'all', checked: false, disabled: true, accessGranted: false, recognitionAvailable: true, status: '启用全站访问后开始自动识别。' });
     expect(view.accessButton.textContent).toBe('授权所有网站');
-    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: false, disabled: true, accessGranted: false, status: '允许访问此网站后开始自动识别。' });
+    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: false, disabled: true, accessGranted: false, recognitionAvailable: true, status: '允许访问此网站后开始自动识别。' });
     expect(view.accessButton.textContent).toBe('添加网站');
-    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: true, disabled: false, accessGranted: true, status: '此网站已开启自动识别。' });
+    view.render({ hostname: 'portal.example.test', accessMode: 'selected', checked: true, disabled: false, accessGranted: true, recognitionAvailable: true, status: '此网站已开启自动识别。' });
     expect(root.querySelector<HTMLElement>('[data-access-panel]')?.hidden).toBe(true);
     expect(view.checkbox.checked).toBe(true);
     root.remove();
@@ -61,18 +62,25 @@ describe('popup view', () => {
       return { enabled: true };
     });
     const adapter: PopupControllerAdapter = {
-      tabs: { query: vi.fn(async () => [{ url: 'https://portal.example.test/login' }]) },
+      tabs: {
+        query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]),
+        sendMessage: vi.fn(async () => ({ state: 'no_candidate' })),
+      },
       runtime: { sendMessage },
       permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
     };
     const openSettings = vi.fn(async () => undefined);
-    startPopup(root, adapter, 'zh_CN', openSettings);
+    const closePopup = vi.fn();
+    startPopup(root, adapter, 'zh_CN', openSettings, closePopup);
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-model-status' }));
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-site-state' }));
     (root.querySelector('[data-model-retry]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:retry-model-warmup' }));
     (root.querySelector('[data-open-settings]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(openSettings).toHaveBeenCalledOnce());
+    (root.querySelector('[data-recognize-page]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(adapter.tabs.sendMessage).toHaveBeenCalledWith(7, { type: 'captcha:recognize-page' }));
+    await vi.waitFor(() => expect(closePopup).toHaveBeenCalledOnce());
     root.remove();
   });
 });

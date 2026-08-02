@@ -8,6 +8,7 @@ export interface PopupViewState {
   checked: boolean;
   disabled: boolean;
   accessGranted: boolean;
+  recognitionAvailable: boolean;
   status: string;
   error?: string;
 }
@@ -17,7 +18,13 @@ export interface PopupView {
 }
 
 export interface PopupControllerAdapter {
-  tabs: { query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<readonly { url?: unknown }[]> };
+  tabs: {
+    query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<readonly { id?: unknown; url?: unknown }[]>;
+    sendMessage?(tabId: number, message: unknown): Promise<unknown>;
+  };
+  scripting?: {
+    executeScript(details: { target: { tabId: number }; files: readonly string[] }): Promise<unknown>;
+  };
   runtime: { sendMessage(message: unknown): Promise<unknown> };
   permissions: {
     contains(details: { origins: string[] }): Promise<boolean>;
@@ -30,6 +37,7 @@ export interface PopupController {
   start(): Promise<void>;
   grantAccess(): Promise<void>;
   setEnabled(enabled: boolean): Promise<void>;
+  recognizeCurrentPage(): Promise<boolean>;
 }
 
 export interface CopyPreferenceView { renderCopyPreference(enabled: boolean): void; }
@@ -276,6 +284,7 @@ export interface PopupControllerLabels {
   updating: string;
   readFailed: string;
   updateFailed: string;
+  pageRecognitionFailed: string;
 }
 
 const DEFAULT_LABELS: PopupControllerLabels = {
@@ -285,6 +294,7 @@ const DEFAULT_LABELS: PopupControllerLabels = {
   requestingAccess: (mode) => mode === 'all' ? '正在请求全站访问权限…' : '正在请求此网站访问权限…',
   accessDenied: '需要授权后才能自动识别。', accessFailed: '无法完成网站授权。', updating: '正在更新网站设置…',
   readFailed: '无法读取网站设置。', updateFailed: '无法更新网站设置。',
+  pageRecognitionFailed: '无法在当前页面启动识别。',
 };
 
 function isSiteState(value: unknown): value is SiteState {
@@ -311,6 +321,7 @@ function isSiteChanged(value: unknown): boolean {
 export function createPopupController(adapter: PopupControllerAdapter, view: PopupView, labels: PopupControllerLabels = DEFAULT_LABELS): PopupController {
   let hostname = labels.loadingHostname;
   let pageUrl: string | undefined;
+  let tabId: number | undefined;
   let accessMode: AccessMode = 'all';
   let supported = false;
   let knownEnabled = false;
@@ -318,8 +329,8 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
   let operationGeneration = 0;
 
   const isCurrent = (generation: number): boolean => generation === operationGeneration;
-  const render = (generation: number, state: Omit<PopupViewState, 'hostname' | 'accessMode'>): void => {
-    if (isCurrent(generation)) view.render({ hostname, accessMode, ...state });
+  const render = (generation: number, state: Omit<PopupViewState, 'hostname' | 'accessMode' | 'recognitionAvailable'>): void => {
+    if (isCurrent(generation)) view.render({ hostname, accessMode, recognitionAvailable: supported && tabId !== undefined, ...state });
   };
   const renderKnown = (generation: number, error?: string, status = knownEnabled ? labels.on : labels.off): void => render(generation, { checked: knownEnabled, disabled: false, accessGranted: true, status, error });
 
@@ -332,6 +343,7 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
         const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
         if (!isCurrent(generation)) return;
         const activeUrl = tabs[0]?.url;
+        tabId = typeof tabs[0]?.id === 'number' ? tabs[0].id : undefined;
         pageUrl = typeof activeUrl === 'string' ? activeUrl : undefined;
         if (pageUrl === undefined) {
           const accessGranted = accessMode === 'all' && await adapter.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] });
@@ -381,6 +393,26 @@ export function createPopupController(adapter: PopupControllerAdapter, view: Pop
 
   return {
     start,
+    async recognizeCurrentPage(): Promise<boolean> {
+      if (!supported || tabId === undefined || adapter.tabs.sendMessage === undefined) return false;
+      const targetTabId = tabId;
+      try {
+        let response: unknown;
+        try {
+          response = await adapter.tabs.sendMessage(targetTabId, { type: 'captcha:recognize-page' });
+        } catch {
+          if (adapter.scripting === undefined) throw new Error('content unavailable');
+          await adapter.scripting.executeScript({ target: { tabId: targetTabId }, files: ['content-scripts/content.js'] });
+          response = await adapter.tabs.sendMessage(targetTabId, { type: 'captcha:recognize-page' });
+        }
+        return typeof response === 'object' && response !== null;
+      } catch {
+        const generation = ++operationGeneration;
+        if (stateKnown) renderKnown(generation, labels.pageRecognitionFailed);
+        else render(generation, { checked: false, disabled: true, accessGranted: false, status: labels.pageRecognitionFailed, error: labels.pageRecognitionFailed });
+        return false;
+      }
+    },
     async grantAccess(): Promise<void> {
       if (!supported) return;
       const generation = ++operationGeneration;

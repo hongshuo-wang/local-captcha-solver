@@ -5,6 +5,7 @@ import {
   createSettingsStore,
   isInterfaceLocale,
   isRecognitionShortcut,
+  type AccessMode,
   type CaptchaSettings,
 } from '../../src/platform/settings-store';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
@@ -51,15 +52,15 @@ function stepNavigation(step: number, t: Translator): string {
   }).join('')}</ol>`;
 }
 
-function accessStep(settings: CaptchaSettings, globalGranted: boolean, t: Translator): string {
+function accessStep(choice: AccessMode | undefined, globalGranted: boolean, t: Translator): string {
   return `<section class="wizard-step" data-step="1">
     <header class="step-copy"><p>${t('setupProgress', { current: 1 })}</p><h1>${t('accessChoice')}</h1><span>${t('accessChoiceBody')}</span></header>
     <div class="access-options" role="radiogroup" aria-label="${t('modeLabel')}">
-      <button type="button" class="access-option" data-onboarding-mode="all" role="radio" aria-checked="${settings.accessMode === 'all'}">
-        <span class="choice-radio" aria-hidden="true"></span><span><strong>${t('allSites')}</strong><small>${t('allSitesBody')}</small></span><b>${settings.accessMode === 'all' && globalGranted ? t('accessGranted') : t('grantAll')}</b>
-      </button>
-      <button type="button" class="access-option" data-onboarding-mode="selected" role="radio" aria-checked="${settings.accessMode === 'selected'}">
+      <button type="button" class="access-option" data-onboarding-mode="selected" role="radio" aria-checked="${choice === 'selected'}">
         <span class="choice-radio" aria-hidden="true"></span><span><strong>${t('selectedSites')}</strong><small>${t('selectedSitesBody')}</small></span><b>${t('useSelected')}</b>
+      </button>
+      <button type="button" class="access-option" data-onboarding-mode="all" role="radio" aria-checked="${choice === 'all'}">
+        <span class="choice-radio" aria-hidden="true"></span><span><strong>${t('allSites')}</strong><small>${t('allSitesBody')}</small></span><b>${choice === 'all' && globalGranted ? t('accessGranted') : t('grantAll')}</b>
       </button>
     </div>
     <p class="inline-status" data-onboarding-status role="status"></p>
@@ -116,11 +117,12 @@ function drawDemo(canvas: HTMLCanvasElement): void {
 export async function startOnboarding(
   root: HTMLElement,
   extension: OnboardingBrowser,
-  navigate: (url: string) => void = (url) => window.location.assign(url),
+  closeGuide: () => void | Promise<void> = () => window.close(),
 ): Promise<void> {
   const settingsStore = createSettingsStore(createExtensionBrowserAdapter(extension));
   let step = 1;
   let settings = await settingsStore.read();
+  let accessChoice: AccessMode | undefined = settings.onboardingComplete ? settings.accessMode : undefined;
   let locale: UiLocale = resolveUiLocale(settings.interfaceLocale, extension.i18n?.getUILanguage() ?? navigator.language);
   let t = createTranslator(locale);
 
@@ -132,8 +134,8 @@ export async function startOnboarding(
     t = createTranslator(locale);
     document.documentElement.lang = locale === 'zh_CN' ? 'zh-CN' : 'en';
     const globalGranted = await extension.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] }).catch(() => false);
-    const content = step === 1 ? accessStep(settings, globalGranted, t) : step === 2 ? behaviorStep(settings, t) : demoStep(t);
-    const continueDisabled = step === 1 && settings.accessMode === 'all' && !globalGranted;
+    const content = step === 1 ? accessStep(accessChoice, globalGranted, t) : step === 2 ? behaviorStep(settings, t) : demoStep(t);
+    const continueDisabled = step === 1 && (accessChoice === undefined || (accessChoice === 'all' && !globalGranted));
     root.innerHTML = `<div class="setup-page">
       <header class="setup-header">
         <a class="setup-brand" href="#" aria-label="Captcha Helper"><img src="/icons/icon-48.png" width="40" height="40" alt="" /><span><strong>Captcha Helper</strong><small>${t('productSubtitle')}</small></span></a>
@@ -145,7 +147,7 @@ export async function startOnboarding(
           <footer class="wizard-actions">
             <button type="button" class="text-button" data-back ${step === 1 ? 'disabled' : ''}>${t('back')}</button>
             <span>${t('setupProgress', { current: step })}</span>
-            <button type="button" class="primary-button" ${step === 3 ? 'data-finish-guide' : 'data-next'} ${continueDisabled ? 'disabled' : ''}>${step === 3 ? t('openConfiguration') : t('continueSetup')}</button>
+            <button type="button" class="primary-button" ${step === 3 ? 'data-finish-guide' : 'data-next'} ${continueDisabled ? 'disabled' : ''}>${step === 3 ? t('finishSetup') : t('continueSetup')}</button>
           </footer>
         </section>
       </div>
@@ -171,8 +173,9 @@ export async function startOnboarding(
             return;
           }
         } else {
-          await extension.permissions.remove({ origins: [...GLOBAL_HTTP_ORIGINS] });
+          await extension.permissions.remove({ origins: [...GLOBAL_HTTP_ORIGINS] }).catch(() => false);
         }
+        accessChoice = mode;
         await settingsStore.setAccessMode(mode);
         await reconcile();
         await render();
@@ -206,7 +209,7 @@ export async function startOnboarding(
       })();
     });
     root.querySelector<HTMLButtonElement>('[data-finish-guide]')?.addEventListener('click', () => {
-      void settingsStore.setOnboardingComplete(true).then(() => navigate(extension.runtime.getURL('options.html')));
+      void settingsStore.setOnboardingComplete(true).then(closeGuide);
     });
   };
 

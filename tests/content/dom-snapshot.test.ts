@@ -61,4 +61,18 @@ describe('DOM snapshots', () => {
     field.value = 'user edited';
     expect(snapshotForImage(image, document)?.fields[0]?.field).toMatchObject({ value: 'user edited', replaceable: true });
   });
+
+  it('detects a legacy captcha placeholder only while its initial semantic value is unchanged', () => {
+    document.body.innerHTML = '<form><input name="validatecode" class="hj-hy-yzm" title="验证码" value="验证码"><img id="vaildataCode" class="hj-hy-yzm-img" src="x" width="84" height="25"></form>';
+    const image = document.querySelector('#vaildataCode') as HTMLImageElement;
+    const field = document.querySelector('input') as HTMLInputElement;
+
+    expect(snapshotForImage(image, document)?.fields[0]?.field).toMatchObject({
+      labelText: expect.stringContaining('验证码'),
+      placeholderValue: '验证码',
+    });
+
+    field.value = '用户输入';
+    expect(snapshotForImage(image, document)?.fields[0]?.field.placeholderValue).toBeUndefined();
+  });
 });
