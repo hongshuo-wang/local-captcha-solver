@@ -7,6 +7,7 @@ import {
   isRecognitionShortcut,
   normalizeHostname,
   type CaptchaSettings,
+  type SiteRecognitionMode,
   type SelectedSiteRule,
   SETTINGS_STORAGE_KEY,
 } from '../../src/platform/settings-store';
@@ -135,11 +136,28 @@ function shortcutOptions(value: string, t: Translator): string {
   return options.map(([key, label]) => `<option value="${key}" ${value === key ? 'selected' : ''}>${label}</option>`).join('');
 }
 
+function recognitionModeLabel(mode: SiteRecognitionMode, t: Translator): string {
+  return mode === 'auto' ? t('modeAuto')
+    : mode === 'digits' ? t('modeDigits')
+      : mode === 'letters' ? t('modeLetters')
+        : mode === 'alphanumeric' ? t('modeAlphanumeric')
+          : t('modeArithmetic');
+}
+
+function siteModeOverrides(overrides: CaptchaSettings['siteRecognitionModes'], t: Translator): string {
+  if (overrides.length === 0) return `<p class="empty-state">${t('noSiteModeOverrides')}</p>`;
+  return `<ul class="site-list">${overrides.map((entry) => `<li><div><strong>${entry.hostname}</strong><small>${recognitionModeLabel(entry.mode, t)}</small></div><button type="button" class="text-button" data-restore-mode="${entry.hostname}">${t('restoreAutomatic')}</button></li>`).join('')}</ul>`;
+}
+
 function behaviorMarkup(settings: CaptchaSettings, t: Translator): string {
   return `${pageHeading(t('navSettings'), t('recognitionHeading'), t('behaviorDescription'))}
     <section class="content-section behavior-section">
       <div class="section-heading compact"><h2>${t('recognitionHeading')}</h2></div>
       <div class="setting-list">${switchControl('settings-auto-fill', settings.autoFill, t('autoFill'), t('autoFillBody'))}${switchControl('settings-copy', settings.copyOnNoField, t('copyOnNoField'), t('copyOnNoFieldBody'))}<label class="setting-row select-row" for="settings-shortcut"><span><strong>${t('shortcut')}</strong><small>${t('setupLater')}</small></span><select id="settings-shortcut">${shortcutOptions(settings.recognitionShortcut, t)}</select></label></div>
+    </section>
+    <section class="content-section site-mode-section">
+      <div class="section-heading compact"><h2>${t('siteModeOverrides')}</h2><span class="count">${settings.siteRecognitionModes.length}</span></div>
+      ${siteModeOverrides(settings.siteRecognitionModes, t)}
     </section>
     <section class="content-section language-section">
       <div class="section-heading compact"><h2>${t('languageHeading')}</h2></div>
@@ -249,6 +267,9 @@ export async function startOptions(
       const value = (event.currentTarget as HTMLSelectElement).value;
       if (isRecognitionShortcut(value)) void settingsStore.setRecognitionShortcut(value);
     });
+    root.querySelectorAll<HTMLButtonElement>('[data-restore-mode]').forEach((button) => button.addEventListener('click', () => {
+      void settingsStore.setSiteRecognitionMode(button.dataset.restoreMode!, 'auto').then(() => show(view));
+    }));
     root.querySelector<HTMLSelectElement>('#interface-locale')?.addEventListener('change', (event) => {
       const value = (event.currentTarget as HTMLSelectElement).value;
       if (isInterfaceLocale(value)) void settingsStore.setInterfaceLocale(value).then(() => show(view));

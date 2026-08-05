@@ -6,7 +6,7 @@ import {
 } from '../../training/ppocrv6-captcha/materialize-balanced-labels';
 import type { TrainingDatasetSample } from '../../training/ppocrv6-captcha/materialize-dataset';
 
-const labels = ['1234', 'AbCd', 'A1b2', '1+2', '3-1', '2*4', '8/2', '3x3', '4X2', '2×5', '8÷4'];
+const labels = ['1234', 'AbCd', 'A1b2', 'A0O1', '1+2', '3-1', '2*4', '8/2', '3x3', '4X2', '2×5', '8÷4'];
 
 function samples(): TrainingDatasetSample[] {
   return labels.map((label, index) => ({
@@ -37,6 +37,7 @@ describe('balanced PaddleOCR label materialization', () => {
     for (const operator of ['+', '-', '*', '/', 'x', 'X', '×', '÷']) {
       expect(counts.get(`arithmetic:${operator}`)).toBe(2);
     }
+    expect(first.filter((sample) => sample.label.includes('0') && sample.label.includes('O')).length).toBeGreaterThanOrEqual(1);
   });
 
   it('rejects invalid targets and unsupported labels', () => {

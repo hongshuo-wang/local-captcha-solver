@@ -120,4 +120,23 @@ describe('options entrypoint', () => {
 
     root.remove();
   });
+
+  it('lists site CAPTCHA type overrides and restores automatic detection', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, {
+      ...DEFAULT_SETTINGS,
+      siteRecognitionModes: [{ hostname: 'portal.example.test', mode: 'letters' }],
+    });
+    location.hash = 'behavior';
+    const root = document.createElement('div');
+    document.body.append(root);
+    await startOptions(root, app.extension);
+    expect(root.textContent).toContain('网站类型覆盖');
+    expect(root.textContent).toContain('portal.example.test');
+    expect(root.textContent).toContain('纯英文');
+    (root.querySelector('[data-restore-mode]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ siteRecognitionModes: [] }));
+    root.remove();
+    location.hash = '';
+  });
 });

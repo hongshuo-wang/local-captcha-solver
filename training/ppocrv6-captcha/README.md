@@ -48,6 +48,12 @@ npm test -- tests/training/ppocrv6-captcha-assets.test.ts tests/training/ppocrv6
 
 Before an approved training run, require at least the planned 100k synthetic training and 10k synthetic validation samples, plus any separately licensed public/real data. Keep the committed benchmark fixtures test-only. Store the manifest validation result and source/license counts in the model card.
 
+The pending next-candidate recipe adds split-isolated `multicolor-crossline` templates with per-glyph
+colors, dense speckles, crossing curves/lines, and deterministic `0/O` co-occurrence labels. When
+available, 10% of the balanced alphanumeric bucket is reserved for labels containing both `0` and
+uppercase `O`. Regenerate the synthetic images, manifest, and balanced labels before training; the
+current production ONNX was not trained with this follow-up recipe.
+
 ## Rendered training commands
 
 These commands are documentation for a later approved run. They have not been executed. Run from the project root and replace `/opt/PaddleOCR-v3.7.0` only with an absolute checkout at the pinned commit.

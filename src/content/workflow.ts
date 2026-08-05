@@ -9,7 +9,7 @@ import { snapshotForImage, type ImageDetailSnapshot } from './dom-snapshot';
 
 export type WorkflowTrigger = 'automatic' | 'explicit' | 'context';
 export interface CaptchaWorkflow { run(image: HTMLImageElement, trigger: WorkflowTrigger): Promise<WorkflowResult>; cancel?(image: HTMLImageElement): void; cancelAll?(): void; invalidate?(image: HTMLImageElement): void; }
-export interface CaptchaWorkflowOptions { snapshot?: (image: HTMLImageElement) => ImageDetailSnapshot | undefined; acquire: (image: HTMLImageElement) => Promise<ImageAcquisitionResult>; recognize: (dataUrl: string, revision: string, modes: readonly RecognitionMode[]) => Promise<readonly OcrResult[]>; autoFillEnabled?: () => boolean; }
+export interface CaptchaWorkflowOptions { snapshot?: (image: HTMLImageElement) => ImageDetailSnapshot | undefined; acquire: (image: HTMLImageElement) => Promise<ImageAcquisitionResult>; recognize: (dataUrl: string, revision: string, modes: readonly RecognitionMode[]) => Promise<readonly OcrResult[]>; recognitionModes?: () => readonly RecognitionMode[]; autoFillEnabled?: () => boolean; }
 interface RequestRecord { revision: string; priority: number; token: number; promise: Promise<WorkflowResult>; generation: number; settled: boolean; }
 const MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
 const ARITHMETIC_CONFIDENCE_DEFICIT = 0.1;
@@ -70,7 +70,7 @@ export function createCaptchaWorkflow(options: CaptchaWorkflowOptions): CaptchaW
     let acquired: ImageAcquisitionResult; try { acquired = await options.acquire(image); } catch { return { state: 'image_unavailable', candidateId }; }
     if (!valid(image, record)) return stale(candidateId);
     if (acquired.state !== 'ready') return acquired.reason === 'permission' ? { state: 'permission_denied', candidateId } : { state: 'image_unavailable', candidateId };
-    let results: readonly OcrResult[]; try { results = await options.recognize(acquired.dataUrl, acquired.revision, MODES); } catch (error) { return errorResult(candidateId, error); }
+    let results: readonly OcrResult[]; try { results = await options.recognize(acquired.dataUrl, acquired.revision, options.recognitionModes?.() ?? MODES); } catch (error) { return errorResult(candidateId, error); }
     const current = snapshot(image); if (!valid(image, record) || current === undefined || current.candidate.revision !== first.candidate.revision) return stale(candidateId);
     const chosen = choose(results); if (!chosen) return { state: 'needs_confirmation', candidateId, displayText: '', fieldIds: current.fields.map((field) => field.id), reason: 'unusable_result' }; const selected = chosen.candidate;
     const match = matchCaptchaField(image, current.fields.map((field) => field.field));

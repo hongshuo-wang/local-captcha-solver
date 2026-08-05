@@ -43,6 +43,12 @@ describe('createSettingsStore', () => {
     await expect(store.read()).resolves.toEqual({ ...defaults, accessMode: 'all', onboardingComplete: true, copyOnNoField: true, recognitionShortcut: 'shift-click' });
   });
 
+  it('migrates version 3 settings with automatic recognition modes', async () => {
+    const { version: _version, siteRecognitionModes: _modes, ...versionThree } = defaults;
+    const store = createSettingsStore(adapterWith({ ...versionThree, version: 3, autoFill: false }));
+    await expect(store.read()).resolves.toEqual({ ...defaults, autoFill: false });
+  });
+
   it('recovers corrupt or absent storage with privacy-conscious defaults', async () => {
     await expect(createSettingsStore(adapterWith({ version: 2, disabledHosts: 'nope' })).read()).resolves.toEqual(defaults);
     await expect(createSettingsStore(adapterWith()).read()).resolves.toEqual(defaults);
@@ -113,6 +119,32 @@ describe('createSettingsStore', () => {
     const store = createSettingsStore(adapterWith());
     await store.setRecognitionShortcut('shift-click');
     await expect(store.read()).resolves.toEqual({ ...defaults, recognitionShortcut: 'shift-click' });
+  });
+
+  it('stores exact-host recognition modes and removes an override when automatic is restored', async () => {
+    const store = createSettingsStore(adapterWith());
+    await store.setSiteRecognitionMode('Login.Example.test', 'letters');
+    await expect(store.recognitionModeForPage('https://login.example.test/captcha')).resolves.toBe('letters');
+    await expect(store.recognitionModeForPage('https://other.login.example.test/captcha')).resolves.toBe('auto');
+    await store.setSiteRecognitionMode('login.example.test', 'auto');
+    await expect(store.read()).resolves.toEqual(defaults);
+  });
+
+  it('normalizes and sorts persisted recognition mode overrides', async () => {
+    const store = createSettingsStore(adapterWith({
+      ...defaults,
+      siteRecognitionModes: [
+        { hostname: 'z.example.test', mode: 'digits' },
+        { hostname: 'A.example.test', mode: 'letters' },
+        { hostname: 'a.example.test', mode: 'alphanumeric' },
+      ],
+    }));
+    await expect(store.read()).resolves.toMatchObject({
+      siteRecognitionModes: [
+        { hostname: 'a.example.test', mode: 'alphanumeric' },
+        { hostname: 'z.example.test', mode: 'digits' },
+      ],
+    });
   });
 
   it('recovers malformed optional preferences with new-install defaults', async () => {

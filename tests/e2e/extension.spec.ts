@@ -157,10 +157,11 @@ test('registers globally and automatically fills after all-site access is explic
     if (api === undefined) throw new Error('Extension API unavailable');
     await api.storage.local.set({
       'captcha-settings': {
-        version: 3,
+        version: 4,
         accessMode: 'all',
         disabledHosts: [],
         selectedSites: [],
+        siteRecognitionModes: [],
         copyOnNoField: false,
         autoFill: true,
         recognitionShortcut: 'middle',

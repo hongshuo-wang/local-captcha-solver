@@ -90,8 +90,12 @@
 | `?` |  |  |  |  |
 | `x` |  |  |  |  |
 | `X` |  |  |  |  |
+| `0` |  |  |  |  |
+| `O` |  |  |  |  |
 
 - Confidence threshold and calibration method:
+- `0/O` confusion counts, posterior-margin calibration, and abstention coverage:
+- Multicolor-crossline scenario-group exact accuracy:
 - High-confidence error count/rate:
 - Representative failures:
 - Statistical uncertainty / confidence intervals:

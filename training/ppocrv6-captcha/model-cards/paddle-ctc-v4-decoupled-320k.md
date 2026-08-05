@@ -145,3 +145,12 @@ to meet the latency gate and remains a separately benchmarked future optimizatio
 Final decision: approved as the single production model for common static CAPTCHA scope. This does
 not authorize claims for rare scripts, multi-step math, animation, sliders, image selection, or
 behavioral challenges. New styles must enter through an isolated held-out scenario contribution.
+
+## Follow-up scenario record
+
+On 2026-08-04, the frozen real corpus gained an authorized alphanumeric regression labeled `UDJN`
+with SHA-256 `36ffa6f15c1962fc484e8e2d0e31791e85b5a7b1f4a551af6b76e3a6eb66136a`. The production model
+decodes it as `UDJ9` in alphanumeric mode and therefore fails exact recognition. The follow-up data
+recipe adds independent multicolor-crossline train/validation groups plus deterministic `0/O`
+co-occurrence sampling. None of those changes were used for this card's training or reported metrics;
+the approved production ONNX and thresholds remain unchanged pending a separately carded candidate.

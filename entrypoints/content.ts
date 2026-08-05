@@ -6,9 +6,9 @@ import { createCaptchaWorkflow } from '../src/content/workflow';
 import { fillEmptyField, fillPlaceholderField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
 import { copyText } from '../src/content/clipboard';
 import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../src/core/candidate-scorer';
-import type { OcrResult, WorkflowResult } from '../src/core/types';
+import type { OcrResult, RecognitionMode, WorkflowResult } from '../src/core/types';
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
-import { isInterfaceLocale, isRecognitionShortcut, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
+import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
 
 type Runtime = {
@@ -32,6 +32,13 @@ function localeFromSettings(value: unknown, browserLanguage: string): UiLocale {
     ? (value as { interfaceLocale: InterfaceLocale }).interfaceLocale
     : 'system';
   return resolveUiLocale(preference, browserLanguage);
+}
+const AUTOMATIC_MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
+function modesFromSettings(value: unknown): readonly RecognitionMode[] {
+  try {
+    const mode = recognitionModeFromSettings(value, location.href);
+    return mode === 'auto' ? AUTOMATIC_MODES : [mode];
+  } catch { return AUTOMATIC_MODES; }
 }
 
 const CONTENT_TEXT = {
@@ -63,6 +70,7 @@ function imageSourceSummary(image: HTMLImageElement): string {
 }
 export function createRuntimeContent(runtime: Runtime) {
   let autoFillEnabled = true;
+  let recognitionModes = AUTOMATIC_MODES;
   let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
   let text = CONTENT_TEXT[uiLocale];
   setStatusUiLocale(uiLocale);
@@ -74,6 +82,7 @@ export function createRuntimeContent(runtime: Runtime) {
       if (!isOcrResults(response)) throw new Error('Invalid OCR response');
       return response;
     },
+    recognitionModes: () => recognitionModes,
     autoFillEnabled: () => autoFillEnabled,
   });
   let automaticEnabled = false;
@@ -235,6 +244,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (shortcutGeneration === initialShortcutGeneration) {
       recognitionShortcut = shortcutFromSettings(settings);
       autoFillEnabled = autoFillFromSettings(settings);
+      recognitionModes = modesFromSettings(settings);
       uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
       text = CONTENT_TEXT[uiLocale];
       setStatusUiLocale(uiLocale);
@@ -244,6 +254,7 @@ export function createRuntimeContent(runtime: Runtime) {
     shortcutGeneration += 1;
     recognitionShortcut = shortcutFromSettings(settings);
     autoFillEnabled = autoFillFromSettings(settings);
+    recognitionModes = modesFromSettings(settings);
     uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
     text = CONTENT_TEXT[uiLocale];
     setStatusUiLocale(uiLocale);

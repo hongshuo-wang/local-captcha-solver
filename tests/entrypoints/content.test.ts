@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_SETTINGS } from '../../src/platform/settings-store';
 
 const listener = vi.fn();
 afterEach(() => { vi.resetModules(); vi.unstubAllGlobals(); listener.mockReset(); document.body.innerHTML = ''; });
@@ -171,6 +172,26 @@ describe('content runtime messages', () => {
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:recognize')).toHaveLength(1);
     image.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, shiftKey: true }));
     await vi.waitFor(() => expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:recognize')).toHaveLength(2));
+  });
+
+  it('applies an exact-host recognition mode to every workflow request', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<img id="image" alt="captcha" width="120" height="40" src="data:image/png;base64,AQ==">';
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:recognize'
+      ? [{ mode: 'letters', text: 'CODE', confidence: .99 }]
+      : undefined);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    const content = createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, siteRecognitionModes: [{ hostname: location.hostname, mode: 'letters' }] }),
+        subscribe: () => vi.fn(),
+      },
+    });
+    await Promise.resolve();
+    await content.workflow.run(document.querySelector('#image') as HTMLImageElement, 'explicit');
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'captcha:recognize', modes: ['letters'] }));
   });
 
   it('shows and copies a recognized value when no input field is found', async () => {

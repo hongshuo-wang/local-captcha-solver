@@ -10,6 +10,15 @@
       "sha256": "bd055d362cf75d551777b939e8e64614601cd5bad9c7962ae63c42eb10acaa43",
       "provenance": "User-provided CAPTCHA screenshot recovered from prior local session artifact dated 2026-07-26",
       "license": "User authorized local benchmark use in the 2026-07-28 project request"
+    },
+    {
+      "id": "real-36ffa6f15c1962fc",
+      "category": "alphanumeric",
+      "image": "benchmark/fixtures/real/36ffa6f15c1962fc484e8e2d0e31791e85b5a7b1f4a551af6b76e3a6eb66136a.png",
+      "answer": "UDJN",
+      "sha256": "36ffa6f15c1962fc484e8e2d0e31791e85b5a7b1f4a551af6b76e3a6eb66136a",
+      "provenance": "User-provided CAPTCHA screenshot with exact label confirmed in the 2026-08-04 project request",
+      "license": "User authorized repository-local frozen benchmark use in the 2026-08-04 project request; excluded from training and validation"
     }
   ]
 }

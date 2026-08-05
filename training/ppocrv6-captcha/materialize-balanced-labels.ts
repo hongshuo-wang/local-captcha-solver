@@ -51,6 +51,25 @@ function select(
   return selected;
 }
 
+function selectAlphanumeric(
+  source: readonly TrainingDatasetSample[],
+  count: number,
+  random: () => number,
+): TrainingDatasetSample[] {
+  const contrast = source.filter((sample) => sample.label.includes('0') && sample.label.includes('O'));
+  if (contrast.length === 0) return select(source, count, random);
+  const contrastCount = Math.min(Math.max(1, Math.floor(count / 10)), count);
+  const selectedContrast = select(contrast, contrastCount, random);
+  const selectedIds = new Set(selectedContrast.map((sample) => sample.id));
+  const remainderSource = source.filter((sample) => !selectedIds.has(sample.id));
+  const selectedRemainder = select(
+    remainderSource.length === 0 ? source : remainderSource,
+    count - selectedContrast.length,
+    random,
+  );
+  return [...selectedContrast, ...selectedRemainder];
+}
+
 export function balancedTrainingSamples(
   samples: readonly TrainingDatasetSample[],
   targetPerCategory = DEFAULT_TARGET_PER_CATEGORY,
@@ -70,7 +89,7 @@ export function balancedTrainingSamples(
   const balanced = [
     ...select(buckets.get('digits') ?? [], targetPerCategory, random),
     ...select(buckets.get('letters') ?? [], targetPerCategory, random),
-    ...select(buckets.get('alphanumeric') ?? [], targetPerCategory, random),
+    ...selectAlphanumeric(buckets.get('alphanumeric') ?? [], targetPerCategory, random),
     ...OPERATORS.flatMap((operator) => select(
       buckets.get(`arithmetic:${operator}`) ?? [],
       arithmeticTarget,

@@ -18,6 +18,8 @@ describe('popup view', () => {
     expect(root.textContent).not.toContain('自动复制');
     expect(root.querySelector<HTMLImageElement>('.brand-mark')?.src).toContain('/icons/icon-48.png');
     expect(view.checkbox.type).toBe('checkbox');
+    expect(view.modeSelect.value).toBe('auto');
+    expect(view.modeSelect.options).toHaveLength(5);
     expect(root.querySelector('[data-popup-status]')?.getAttribute('role')).toBe('status');
     root.remove();
   });
@@ -81,6 +83,28 @@ describe('popup view', () => {
     (root.querySelector('[data-recognize-page]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(adapter.tabs.sendMessage).toHaveBeenCalledWith(7, { type: 'captcha:recognize-page' }));
     await vi.waitFor(() => expect(closePopup).toHaveBeenCalledOnce());
+    root.remove();
+  });
+
+  it('loads and persists the current site CAPTCHA type', async () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:get-model-status'
+      ? { status: 'ready', progress: 100, message: 'ready', logs: [] } satisfies ModelStatusSnapshot
+      : { enabled: true });
+    const adapter: PopupControllerAdapter = {
+      tabs: { query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]), sendMessage: vi.fn(async () => ({ state: 'no_candidate' })) },
+      runtime: { sendMessage },
+      permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
+    };
+    const read = vi.fn(async () => 'letters' as const);
+    const write = vi.fn(async (_mode: 'auto' | 'digits' | 'letters' | 'alphanumeric' | 'arithmetic') => undefined);
+    startPopup(root, adapter, 'zh_CN', undefined, undefined, { read, write });
+    await vi.waitFor(() => expect(root.querySelector<HTMLSelectElement>('[data-captcha-mode]')?.value).toBe('letters'));
+    const select = root.querySelector<HTMLSelectElement>('[data-captcha-mode]')!;
+    select.value = 'alphanumeric';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith('alphanumeric'));
     root.remove();
   });
 });

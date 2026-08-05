@@ -19,13 +19,18 @@ describe('synthetic CAPTCHA plans', () => {
     const labels = plans.map((plan) => plan.label);
     for (const operator of ['+', '-', '*', '/', 'x', 'X', '×', '÷']) {
       expect(labels.some((label) => label.includes(operator))).toBe(true);
-      expect(new Set(plans.filter((plan) => plan.label.includes(operator)).map((plan) => plan.group)).size).toBe(4);
+      expect(new Set(plans.filter((plan) => plan.label.includes(operator)).map((plan) => plan.group)).size).toBe(5);
     }
     for (const suffix of ['=?', '=', '?']) {
       expect(labels.some((label) => label.endsWith(suffix))).toBe(true);
     }
     expect(labels.some((label) => !/[=?]$/.test(label))).toBe(true);
     expect(labels.every((label) => parseArithmetic(label) !== null)).toBe(true);
+  });
+
+  it('includes deterministic 0/O contrast labels in the multicolor scenario', () => {
+    const plans = Array.from({ length: 64 }, (_, index) => syntheticPlan('train', index * 4 + 2));
+    expect(plans.filter((plan) => plan.group === 'synthetic-train-multicolor-crossline').every((plan) => plan.label.includes('0') && plan.label.includes('O'))).toBe(true);
   });
 
   it('expands the canvas when text plus transform padding would be clipped', () => {

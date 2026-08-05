@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### 中文
+
+#### 新增
+
+- 支持按精确主机名设置自动、纯数字、纯英文、英数混合或算术验证码类型，并在设置页集中恢复自动判断。
+- 新增授权的 `UDJN` 冻结回归样本，以及多色交叉线和 `0/O` 同图对比的下一候选模型数据配方。
+
+### English
+
+#### Added
+
+- Added exact-host CAPTCHA type overrides for automatic, digits, letters, alphanumeric, or arithmetic decoding, with centralized reset controls in Settings.
+- Added the authorized `UDJN` frozen regression and a next-candidate data recipe for multicolor crossing lines and paired `0/O` samples.
+
 ## [1.1.0] - 2026-08-02
 
 ### 中文

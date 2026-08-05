@@ -17,6 +17,11 @@ describe('captcha workflow', () => {
     expect(result).toMatchObject({ state: 'filled', fieldId: 'field-1', fillValue: '1234' });
     expect(base.recognize).toHaveBeenCalledWith('data:image/png;base64,AQ==', 'bytes', ['digits', 'letters', 'alphanumeric', 'arithmetic']);
   });
+  it('uses a configured recognition mode without falling back to automatic modes', async () => {
+    const recognize = vi.fn(async () => [{ mode: 'letters' as const, text: 'CODE', confidence: .99 }]);
+    await expect(workflow({ recognize, recognitionModes: () => ['letters'] }).run(image, 'explicit')).resolves.toMatchObject({ state: 'filled', fillValue: 'CODE' });
+    expect(recognize).toHaveBeenCalledWith('data:image/png;base64,AQ==', 'bytes', ['letters']);
+  });
   it('fills a uniquely matched legacy captcha placeholder without treating it as user input', async () => {
     field.defaultValue = '验证码';
     field.value = '验证码';

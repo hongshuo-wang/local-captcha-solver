@@ -11,9 +11,17 @@ export type AccessMode = typeof ACCESS_MODES[number];
 export const INTERFACE_LOCALES = ['system', 'zh_CN', 'en'] as const;
 export type InterfaceLocale = typeof INTERFACE_LOCALES[number];
 
+export const SITE_RECOGNITION_MODES = ['auto', 'digits', 'letters', 'alphanumeric', 'arithmetic'] as const;
+export type SiteRecognitionMode = typeof SITE_RECOGNITION_MODES[number];
+
 export interface SelectedSiteRule {
   hostname: string;
   includeSubdomains: boolean;
+}
+
+export interface SiteRecognitionModeOverride {
+  hostname: string;
+  mode: Exclude<SiteRecognitionMode, 'auto'>;
 }
 
 export function isRecognitionShortcut(value: unknown): value is RecognitionShortcut {
@@ -21,10 +29,11 @@ export function isRecognitionShortcut(value: unknown): value is RecognitionShort
 }
 
 export interface CaptchaSettings {
-  version: 3;
+  version: 4;
   accessMode: AccessMode;
   disabledHosts: string[];
   selectedSites: SelectedSiteRule[];
+  siteRecognitionModes: SiteRecognitionModeOverride[];
   copyOnNoField: boolean;
   autoFill: boolean;
   recognitionShortcut: RecognitionShortcut;
@@ -43,15 +52,18 @@ export interface SettingsStore {
   setAccessMode(mode: AccessMode): Promise<void>;
   addSelectedSite(rule: SelectedSiteRule): Promise<void>;
   removeSelectedSite(rule: SelectedSiteRule): Promise<void>;
+  recognitionModeForPage(pageUrl: string): Promise<SiteRecognitionMode>;
+  setSiteRecognitionMode(hostname: string, mode: SiteRecognitionMode): Promise<void>;
   setInterfaceLocale(locale: InterfaceLocale): Promise<void>;
   setOnboardingComplete(complete: boolean): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: CaptchaSettings = {
-  version: 3,
+  version: 4,
   accessMode: 'selected',
   disabledHosts: [],
   selectedSites: [],
+  siteRecognitionModes: [],
   copyOnNoField: false,
   autoFill: true,
   recognitionShortcut: 'middle',
@@ -111,6 +123,10 @@ export function isInterfaceLocale(value: unknown): value is InterfaceLocale {
   return typeof value === 'string' && (INTERFACE_LOCALES as readonly string[]).includes(value);
 }
 
+export function isSiteRecognitionMode(value: unknown): value is SiteRecognitionMode {
+  return typeof value === 'string' && (SITE_RECOGNITION_MODES as readonly string[]).includes(value);
+}
+
 export function selectedSiteMatches(rule: SelectedSiteRule, hostname: string): boolean {
   const normalized = normalizeHostname(hostname);
   return normalized === rule.hostname || (rule.includeSubdomains && normalized.endsWith(`.${rule.hostname}`));
@@ -133,8 +149,28 @@ function normalizeSelectedSites(values: readonly unknown[]): SelectedSiteRule[] 
   return [...sites.values()].sort((left, right) => left.hostname.localeCompare(right.hostname) || Number(left.includeSubdomains) - Number(right.includeSubdomains));
 }
 
+function normalizeSiteRecognitionModes(values: readonly unknown[]): SiteRecognitionModeOverride[] {
+  const overrides = new Map<string, SiteRecognitionModeOverride>();
+  for (const value of values) {
+    if (typeof value !== 'object' || value === null) throw new Error('Site recognition mode must be an object');
+    const candidate = value as { hostname?: unknown; mode?: unknown };
+    if (typeof candidate.hostname !== 'string' || !isSiteRecognitionMode(candidate.mode) || candidate.mode === 'auto') {
+      throw new Error('Site recognition mode is invalid');
+    }
+    const hostname = normalizeHostname(candidate.hostname);
+    overrides.set(hostname, { hostname, mode: candidate.mode });
+  }
+  return [...overrides.values()].sort((left, right) => left.hostname.localeCompare(right.hostname));
+}
+
+export function recognitionModeFromSettings(value: unknown, pageUrl: string): SiteRecognitionMode {
+  const settings = parseSettings(value);
+  const hostname = hostnameForPage(pageUrl);
+  return settings.siteRecognitionModes.find((entry) => entry.hostname === hostname)?.mode ?? 'auto';
+}
+
 function parseSettings(value: unknown): CaptchaSettings {
-  if (typeof value !== 'object' || value === null) return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
+  if (typeof value !== 'object' || value === null) return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
   const legacy = value as { version?: unknown; allowlistedHosts?: unknown; disabledHosts?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown };
   if (legacy.version === 1 && Array.isArray(legacy.allowlistedHosts)) {
     return {
@@ -157,20 +193,23 @@ function parseSettings(value: unknown): CaptchaSettings {
         recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
       };
     } catch {
-      return { ...DEFAULT_SETTINGS, accessMode: 'all', onboardingComplete: true, selectedSites: [], disabledHosts: [] };
+      return { ...DEFAULT_SETTINGS, accessMode: 'all', onboardingComplete: true, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
     }
   }
-  const candidate = value as Partial<CaptchaSettings>;
-  if (candidate.version !== 3 || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
-    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
+  const candidate = value as Partial<Omit<CaptchaSettings, 'version'>> & { version?: unknown };
+  if ((candidate.version !== 3 && candidate.version !== 4) || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
+    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
   }
 
   try {
     return {
-      version: 3,
+      version: 4,
       accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : DEFAULT_SETTINGS.accessMode,
       disabledHosts: [...new Set(candidate.disabledHosts.map(normalizeHostname))].sort(),
       selectedSites: normalizeSelectedSites(candidate.selectedSites),
+      siteRecognitionModes: candidate.version === 4 && Array.isArray(candidate.siteRecognitionModes)
+        ? normalizeSiteRecognitionModes(candidate.siteRecognitionModes)
+        : [],
       copyOnNoField: candidate.copyOnNoField === true,
       autoFill: candidate.autoFill !== false,
       recognitionShortcut: isRecognitionShortcut(candidate.recognitionShortcut) ? candidate.recognitionShortcut : 'middle',
@@ -178,7 +217,7 @@ function parseSettings(value: unknown): CaptchaSettings {
       onboardingComplete: candidate.onboardingComplete === true,
     };
   } catch {
-    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [] };
+    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
   }
 }
 
@@ -186,10 +225,11 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
   const read = async (): Promise<CaptchaSettings> => parseSettings(await adapter.getLocal<unknown>(SETTINGS_STORAGE_KEY));
   const write = async (settings: CaptchaSettings): Promise<void> => {
     await adapter.setLocal<CaptchaSettings>(SETTINGS_STORAGE_KEY, {
-      version: 3,
+      version: 4,
       accessMode: settings.accessMode,
       disabledHosts: [...new Set(settings.disabledHosts)].sort(),
       selectedSites: normalizeSelectedSites(settings.selectedSites),
+      siteRecognitionModes: normalizeSiteRecognitionModes(settings.siteRecognitionModes),
       copyOnNoField: settings.copyOnNoField,
       autoFill: settings.autoFill,
       recognitionShortcut: settings.recognitionShortcut,
@@ -276,6 +316,22 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
         const settings = await read();
         const selectedSites = settings.selectedSites.filter((site) => site.hostname !== rule.hostname || site.includeSubdomains !== rule.includeSubdomains);
         if (selectedSites.length !== settings.selectedSites.length) await write({ ...settings, selectedSites });
+      });
+    },
+    async recognitionModeForPage(pageUrl: string): Promise<SiteRecognitionMode> {
+      return recognitionModeFromSettings(await adapter.getLocal<unknown>(SETTINGS_STORAGE_KEY), pageUrl);
+    },
+    async setSiteRecognitionMode(hostname: string, mode: SiteRecognitionMode): Promise<void> {
+      const normalized = normalizeHostname(hostname);
+      if (!isSiteRecognitionMode(mode)) throw new Error('Site recognition mode must be supported');
+      await mutate(async () => {
+        const settings = await read();
+        const siteRecognitionModes = settings.siteRecognitionModes.filter((entry) => entry.hostname !== normalized);
+        if (mode !== 'auto') siteRecognitionModes.push({ hostname: normalized, mode });
+        const normalizedModes = normalizeSiteRecognitionModes(siteRecognitionModes);
+        if (JSON.stringify(normalizedModes) !== JSON.stringify(settings.siteRecognitionModes)) {
+          await write({ ...settings, siteRecognitionModes: normalizedModes });
+        }
       });
     },
     async setInterfaceLocale(locale: InterfaceLocale): Promise<void> {

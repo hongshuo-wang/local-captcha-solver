@@ -26,6 +26,11 @@ An issue screenshot is evidence of a failure, but it is not a training set. A sc
 4. A short description of the missing visual mechanism: for example hollow glyphs, touching characters, perspective warp, foreground arcs, low contrast, or operator occlusion.
 5. Held-out examples added to the real benchmark before tuning. Their hashes must never appear in training or validation.
 
+A single authorized screenshot may be added as a frozen regression when its exact label, provenance,
+and usage permission are recorded. It still cannot justify a production model replacement or a claim
+of website-family coverage. Reproduce the missing visual mechanism in independent deterministic
+training and validation groups, and decide using the full repository benchmark.
+
 Do not solve an issue by hard-coding its expected text, image hash, colors, dimensions, or hostname into OCR logic.
 
 ## Coverage matrix
@@ -37,11 +42,17 @@ Training batches should combine independent values across these dimensions rathe
 | Content | digits, lower/upper letters, alphanumeric, arithmetic |
 | Glyph | multiple licensed fonts, handwriting-like, hollow/outline, dot-like, shadow/static 3D |
 | Geometry | spacing, rotation, scale, shear, wave, perspective, curved baseline, touching/overlap |
-| Interference | dots, lines, arcs, grids, shapes, background text, masking, partial occlusion |
+| Interference | dots, multicolor glyphs, crossing lines, arcs, grids, shapes, background text, masking, partial occlusion |
 | Imaging | color, low contrast, inversion, texture, alpha, blur, resampling, JPEG/WebP artifacts |
 | Sequence | variable length, ambiguous glyph pairs, common arithmetic operator and suffix variants |
 
 Rare scripts and puzzle formats are not added merely to increase nominal coverage.
+
+The next-candidate synthetic recipe includes isolated train/validation multicolor-crossline groups.
+Their alphanumeric labels deterministically place both `0` and uppercase `O` in the same image. The
+balanced-label materializer reserves 10% of the alphanumeric bucket for labels containing both
+characters when such samples are available. This recipe is not part of the currently shipped model;
+it requires a new candidate, model card, full benchmark, parity check, and browser release review.
 
 ## Data layout and isolation
 

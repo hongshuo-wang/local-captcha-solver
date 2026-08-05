@@ -1,7 +1,7 @@
 import { createModelStatusController, createPopupController, type PopupControllerAdapter, type PopupControllerLabels, type PopupView, type PopupViewState } from '../../src/popup/controller';
 import type { ModelLog, ModelStatusSnapshot } from '../../src/background/model-status';
 import { createTranslator, resolveUiLocale, type Translator, type UiLocale } from '../../src/platform/i18n';
-import { createSettingsStore } from '../../src/platform/settings-store';
+import { createSettingsStore, hostnameForPage, type SiteRecognitionMode } from '../../src/platform/settings-store';
 import { createExtensionBrowserAdapter } from '../../src/background/extension-browser';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
 
@@ -11,6 +11,7 @@ export interface PopupViewElements extends PopupView {
   modelRetry: HTMLButtonElement;
   recognizeButton: HTMLButtonElement;
   settingsButton: HTMLButtonElement;
+  modeSelect: HTMLSelectElement;
   renderModelStatus(snapshot: ModelStatusSnapshot): void;
 }
 
@@ -56,6 +57,7 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
         <label class="switch" aria-label="${t('autoFill')}"><input id="site-enabled" type="checkbox" aria-describedby="site-status" /><span aria-hidden="true"></span></label>
       </div>
       <p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p>
+      <label class="mode-row" for="captcha-mode"><span>${t('captchaType')}</span><select id="captcha-mode" data-captcha-mode><option value="auto">${t('modeAuto')}</option><option value="digits">${t('modeDigits')}</option><option value="letters">${t('modeLetters')}</option><option value="alphanumeric">${t('modeAlphanumeric')}</option><option value="arithmetic">${t('modeArithmetic')}</option></select></label>
     </section>
     <section class="activity-panel">
       <div class="section-heading"><p class="section-kicker">${t('recentStatus')}</p><time data-latest-time></time></div>
@@ -78,6 +80,7 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const latestTime = required<HTMLTimeElement>(root, '[data-latest-time]');
   const settingsButton = required<HTMLButtonElement>(root, '[data-open-settings]');
   const recognizeButton = required<HTMLButtonElement>(root, '[data-recognize-page]');
+  const modeSelect = required<HTMLSelectElement>(root, '[data-captcha-mode]');
 
   return {
     checkbox,
@@ -85,6 +88,7 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
     modelRetry,
     recognizeButton,
     settingsButton,
+    modeSelect,
     render(state: PopupViewState): void {
       hostname.textContent = state.hostname;
       checkbox.checked = state.checked;
@@ -144,6 +148,10 @@ export function startPopup(
   locale: UiLocale = 'zh_CN',
   openSettings: () => Promise<void> = async () => undefined,
   closePopup: () => void = () => window.close(),
+  siteModes?: {
+    read(): Promise<SiteRecognitionMode>;
+    write(mode: SiteRecognitionMode): Promise<void>;
+  },
 ): void {
   const view = createPopupView(root, locale);
   const t = createTranslator(locale);
@@ -166,6 +174,22 @@ export function startPopup(
     })();
   });
   view.settingsButton.addEventListener('click', () => { void openSettings(); });
+  if (siteModes !== undefined) {
+    view.modeSelect.disabled = true;
+    void siteModes.read().then((mode) => {
+      view.modeSelect.value = mode;
+      view.modeSelect.disabled = false;
+    }).catch(() => { view.modeSelect.value = 'auto'; view.modeSelect.disabled = false; });
+    view.modeSelect.addEventListener('change', () => {
+      const mode = view.modeSelect.value as SiteRecognitionMode;
+      view.modeSelect.disabled = true;
+      void siteModes.write(mode).then(() => {
+        view.modeSelect.value = mode;
+      }).catch(() => {
+        void siteModes.read().then((current) => { view.modeSelect.value = current; }).catch(() => { view.modeSelect.value = 'auto'; });
+      }).finally(() => { view.modeSelect.disabled = false; });
+    });
+  }
   void controller.start();
   void modelController.start();
 }
@@ -186,6 +210,19 @@ if (root !== null && typeof browser !== 'undefined') {
       runtime: { sendMessage: (message) => sendRuntimeMessage(browser.runtime, message) },
       permissions: browser.permissions,
       settings: { readAccessMode: async () => (await settingsStore.read()).accessMode },
-    }, locale, () => browser.runtime.openOptionsPage());
+    }, locale, () => browser.runtime.openOptionsPage(), () => window.close(), {
+      async read() {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const url = tabs[0]?.url;
+        if (typeof url !== 'string') throw new Error('unsupported page');
+        return settingsStore.recognitionModeForPage(url);
+      },
+      async write(mode) {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const url = tabs[0]?.url;
+        if (typeof url !== 'string') throw new Error('unsupported page');
+        await settingsStore.setSiteRecognitionMode(hostnameForPage(url), mode);
+      },
+    });
   });
 }

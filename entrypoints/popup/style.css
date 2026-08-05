@@ -19,7 +19,7 @@
 * { box-sizing: border-box; }
 html, body { width: 360px; min-width: 360px; margin: 0; }
 body { min-height: 250px; background: var(--canvas); }
-button, input { font: inherit; letter-spacing: 0; }
+button, input, select { font: inherit; letter-spacing: 0; }
 button { cursor: pointer; }
 [hidden] { display: none !important; }
 #app { width: 360px; overflow: hidden; }
@@ -58,6 +58,9 @@ button { cursor: pointer; }
 .hostname { max-width: 260px; margin: 0; overflow: hidden; color: var(--ink); font: 650 13px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .status { min-height: 16px; margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 16px; }
 .status.error { color: var(--danger); }
+.mode-row { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.mode-row select { min-width: 132px; max-width: 175px; height: 30px; padding: 0 25px 0 9px; border: 1px solid #c6d0ca; border-radius: 5px; color: var(--ink); background: var(--surface); font-size: 11px; }
+.mode-row select:disabled { cursor: wait; opacity: .62; }
 .switch { flex: 0 0 auto; position: relative; width: 40px; height: 23px; }
 .switch input { position: absolute; opacity: 0; }
 .switch span { position: absolute; inset: 0; border-radius: 999px; background: #aab4ae; transition: background-color 180ms ease; }
@@ -93,6 +96,7 @@ button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .recognize-command { color: #fff; background: #377a57; border-color: #377a57; }
   .recognize-command:hover:not(:disabled) { background: #438b65; border-color: #438b65; }
   .primary-command { border-color: #536159; }
+  .mode-row select { border-color: #536159; }
 }
 
 @media (prefers-reduced-motion: reduce) {

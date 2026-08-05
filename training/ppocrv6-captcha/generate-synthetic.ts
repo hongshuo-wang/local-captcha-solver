@@ -30,8 +30,10 @@ const FONTS = [
   ['Patrick Hand', 'node_modules/@fontsource/patrick-hand/files/patrick-hand-latin-400-normal.woff2'],
   ['Special Elite', 'node_modules/@fontsource/special-elite/files/special-elite-latin-400-normal.woff2'],
 ] as const;
-const TRAIN_TEMPLATES = ['synthetic-train-lines', 'synthetic-train-dots', 'synthetic-train-outline', 'synthetic-train-shadow'] as const;
-const VALIDATION_TEMPLATES = ['synthetic-validation-curves', 'synthetic-validation-speckle', 'synthetic-validation-crossline', 'synthetic-validation-wave'] as const;
+const TRAIN_TEMPLATES = ['synthetic-train-lines', 'synthetic-train-dots', 'synthetic-train-outline', 'synthetic-train-shadow', 'synthetic-train-multicolor-crossline'] as const;
+const VALIDATION_TEMPLATES = ['synthetic-validation-curves', 'synthetic-validation-speckle', 'synthetic-validation-crossline', 'synthetic-validation-wave', 'synthetic-validation-multicolor-crossline'] as const;
+const CONTRAST_PAIRS = ['0O', 'O0'] as const;
+const MULTICOLOR_FOREGROUNDS = ['#176b5b', '#8b3e24', '#2d3e91', '#5d2c72', '#6b5b1b'] as const;
 
 type Split = 'train' | 'validation';
 type Category = typeof CATEGORIES[number];
@@ -129,6 +131,15 @@ export function syntheticPlan(split: Split, index: number): SyntheticPlan {
     : categoryIndex % templates.length;
   const label = category === 'arithmetic'
     ? arithmetic(random, categoryIndex)
+    : category === 'alphanumeric' && templateIndex === 4
+      ? (() => {
+          const length = integer(random, 4, 6);
+          const pair = CONTRAST_PAIRS[categoryIndex % CONTRAST_PAIRS.length];
+          const tail = text(random, ALPHANUMERIC, length - pair.length);
+          const characters = Array.from(`${pair}${tail}`);
+          const rotation = integer(random, 0, characters.length - 1);
+          return [...characters.slice(rotation), ...characters.slice(0, rotation)].join('');
+        })()
     : text(
         random,
         category === 'digits' ? DIGITS : category === 'letters' ? LETTERS : ALPHANUMERIC,
@@ -179,8 +190,8 @@ function degradedPng(
 ): Buffer {
   const style = plan.templateIndex + (plan.split === 'train' ? 0 : TRAIN_TEMPLATES.length);
   const scaleRanges = [
-    [100, 100], [58, 82], [88, 100], [52, 74],
-    [82, 96], [55, 78], [72, 90], [60, 82],
+    [100, 100], [58, 82], [88, 100], [52, 74], [50, 76],
+    [82, 96], [55, 78], [72, 90], [60, 82], [48, 74],
   ] as const;
   const [minimumScale, maximumScale] = scaleRanges[style];
   const scale = integer(random, minimumScale, maximumScale) / 100;
@@ -200,7 +211,7 @@ function degradedPng(
   outputContext.imageSmoothingEnabled = true;
   outputContext.imageSmoothingQuality = 'medium';
   if (style === 3) outputContext.filter = `blur(${integer(random, 5, 10) / 10}px)`;
-  if (style === 7) outputContext.filter = `blur(${integer(random, 2, 6) / 10}px)`;
+  if (style === 8) outputContext.filter = `blur(${integer(random, 2, 6) / 10}px)`;
   outputContext.drawImage(reduced, 0, 0, output.width, output.height);
   return output.toBuffer('image/png');
 }
@@ -227,8 +238,8 @@ function render(plan: SyntheticPlan): Buffer {
   context.globalAlpha = 0.28;
   context.strokeStyle = plan.foreground;
   context.fillStyle = plan.foreground;
-  if (style === 1 || style === 5) {
-    const dots = style === 5 ? 75 : 45;
+  if (style === 1 || style === 4 || style === 6 || style === 9) {
+    const dots = style === 4 || style === 9 ? 110 : style === 6 ? 75 : 45;
     for (let dot = 0; dot < dots; dot += 1) {
       context.beginPath();
       context.arc(integer(random, 0, width), integer(random, 0, height), integer(random, 1, 2), 0, Math.PI * 2);
@@ -243,13 +254,15 @@ function render(plan: SyntheticPlan): Buffer {
   for (const [characterIndex, character] of Array.from(plan.label).entries()) {
     const characterWidth = widths[characterIndex];
     context.save();
-    const wave = style === 7 ? integer(random, 3, 7) : integer(random, 0, 4);
+    const wave = style === 8 ? integer(random, 3, 7) : integer(random, 0, 4);
     context.translate(x + characterWidth / 2, centerY + Math.sin(characterIndex * 1.7) * wave);
     context.rotate((integer(random, -13, 13) * Math.PI) / 180);
     context.transform(1, 0, integer(random, -10, 10) / 100, 1, 0, 0);
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillStyle = plan.foreground;
+    context.fillStyle = style === 4 || style === 9
+      ? MULTICOLOR_FOREGROUNDS[(plan.seed + characterIndex) % MULTICOLOR_FOREGROUNDS.length]
+      : plan.foreground;
     if (style === 2) {
       context.strokeStyle = plan.foreground;
       context.lineWidth = integer(random, 1, 2);
@@ -273,20 +286,33 @@ function render(plan: SyntheticPlan): Buffer {
     x += characterWidth + spacing;
   }
 
-  context.globalAlpha = 0.55;
+  context.globalAlpha = style === 4 || style === 9 ? 0.7 : 0.55;
   context.strokeStyle = plan.foreground;
   context.lineWidth = integer(random, 1, 2);
-  const lineCount = integer(random, 1, 3);
+  const lineCount = style === 4 || style === 9 ? integer(random, 3, 5) : integer(random, 1, 3);
   for (let line = 0; line < lineCount; line += 1) {
     context.beginPath();
-    if (plan.split === 'validation' && style !== 6) {
+    if (style === 4 || style === 9) {
+      context.strokeStyle = MULTICOLOR_FOREGROUNDS[(plan.seed + line * 2) % MULTICOLOR_FOREGROUNDS.length];
+      if (line % 2 === 0) {
+        context.moveTo(integer(random, 0, Math.floor(width * 0.2)), integer(random, 0, height));
+        context.lineTo(integer(random, Math.ceil(width * 0.8), width), integer(random, 0, height));
+      } else {
+        context.moveTo(0, integer(random, 5, height - 5));
+        context.bezierCurveTo(
+          width * 0.3, integer(random, 0, height),
+          width * 0.7, integer(random, 0, height),
+          width, integer(random, 5, height - 5),
+        );
+      }
+    } else if (plan.split === 'validation' && style !== 7 && style !== 9) {
       context.moveTo(0, integer(random, 5, height - 5));
       context.bezierCurveTo(
         width * 0.3, integer(random, 0, height),
         width * 0.7, integer(random, 0, height),
         width, integer(random, 5, height - 5),
       );
-    } else if (style === 6) {
+    } else if (style === 7) {
       context.moveTo(integer(random, 0, Math.floor(width * 0.2)), 0);
       context.lineTo(integer(random, Math.ceil(width * 0.8), width), height);
     } else {
