@@ -2,6 +2,7 @@ import { createModelStatusController, createPopupController, type PopupControlle
 import type { ModelLog, ModelStatusSnapshot } from '../../src/background/model-status';
 import { createTranslator, resolveUiLocale, type Translator, type UiLocale } from '../../src/platform/i18n';
 import { createSettingsStore, hostnameForPage, type SiteRecognitionMode } from '../../src/platform/settings-store';
+import { originsForPage } from '../../src/platform/permissions';
 import { createExtensionBrowserAdapter } from '../../src/background/extension-browser';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
 
@@ -12,6 +13,9 @@ export interface PopupViewElements extends PopupView {
   recognizeButton: HTMLButtonElement;
   settingsButton: HTMLButtonElement;
   modeSelect: HTMLSelectElement;
+  sliderButton: HTMLButtonElement;
+  sliderCheckbox: HTMLInputElement;
+  sliderStatus: HTMLElement;
   renderModelStatus(snapshot: ModelStatusSnapshot): void;
 }
 
@@ -59,6 +63,15 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
       <p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p>
       <label class="mode-row" for="captcha-mode"><span>${t('captchaType')}</span><select id="captcha-mode" data-captcha-mode><option value="auto">${t('modeAuto')}</option><option value="digits">${t('modeDigits')}</option><option value="letters">${t('modeLetters')}</option><option value="alphanumeric">${t('modeAlphanumeric')}</option><option value="arithmetic">${t('modeArithmetic')}</option></select></label>
     </section>
+    <section class="slider-panel">
+      <div class="site-heading">
+        <div><p class="section-kicker">${locale === 'zh_CN' ? '动态验证码 Beta' : 'Dynamic CAPTCHA Beta'}</p><h2>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</h2></div>
+        <label class="switch" aria-label="${locale === 'zh_CN' ? '在此网站自动处理滑块' : 'Automatically handle sliders on this site'}"><input type="checkbox" data-slider-enabled aria-describedby="slider-status" /><span aria-hidden="true"></span></label>
+      </div>
+      <button type="button" class="slider-command" data-run-slider>${locale === 'zh_CN' ? '处理当前滑块' : 'Handle current slider'}</button>
+      <p id="slider-status" class="status" role="status" aria-live="polite" data-slider-status></p>
+      <p class="permission-note">${locale === 'zh_CN' ? '滑块会发送浏览器级拖动。为避免误操作页面控件，不支持全局自动开启，必须逐站授权。' : 'Slider handling sends browser-level drag input. Global automatic mode is unavailable to prevent accidental page actions; enable each site explicitly.'}</p>
+    </section>
     <section class="activity-panel">
       <div class="section-heading"><p class="section-kicker">${t('recentStatus')}</p><time data-latest-time></time></div>
       <p class="latest-activity" data-latest-activity>${t('noActivity')}</p>
@@ -81,6 +94,9 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const settingsButton = required<HTMLButtonElement>(root, '[data-open-settings]');
   const recognizeButton = required<HTMLButtonElement>(root, '[data-recognize-page]');
   const modeSelect = required<HTMLSelectElement>(root, '[data-captcha-mode]');
+  const sliderButton = required<HTMLButtonElement>(root, '[data-run-slider]');
+  const sliderCheckbox = required<HTMLInputElement>(root, '[data-slider-enabled]');
+  const sliderStatus = required<HTMLElement>(root, '[data-slider-status]');
 
   return {
     checkbox,
@@ -89,6 +105,9 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
     recognizeButton,
     settingsButton,
     modeSelect,
+    sliderButton,
+    sliderCheckbox,
+    sliderStatus,
     render(state: PopupViewState): void {
       hostname.textContent = state.hostname;
       checkbox.checked = state.checked;
@@ -152,6 +171,7 @@ export function startPopup(
     read(): Promise<SiteRecognitionMode>;
     write(mode: SiteRecognitionMode): Promise<void>;
   },
+  sliderPermissions?: { requestDebugger(): Promise<boolean> },
 ): void {
   const view = createPopupView(root, locale);
   const t = createTranslator(locale);
@@ -174,6 +194,94 @@ export function startPopup(
     })();
   });
   view.settingsButton.addEventListener('click', () => { void openSettings(); });
+  const sliderText = locale === 'zh_CN' ? {
+    disabled: '此网站未开启自动处理。', enabled: '已为此网站开启自动处理。', running: '正在定位并拖动…', success: '滑块验证已通过。',
+    notFound: '当前页面未找到唯一、受支持的滑块。', lowConfidence: '定位置信度不足，已停止操作。', permission: '需要浏览器调试权限才能发送可信拖动。', failed: '未能完成滑块验证，请手动处理。', unsupported: '当前页面不支持滑块处理。',
+  } : {
+    disabled: 'Automatic slider handling is disabled for this site.', enabled: 'Automatic slider handling is enabled for this site.', running: 'Locating and dragging...', success: 'Slider verification passed.',
+    notFound: 'No unique supported slider was found.', lowConfidence: 'Gap confidence was too low; no drag was sent.', permission: 'Browser debugging permission is required for trusted drag input.', failed: 'Slider verification did not complete; handle it manually.', unsupported: 'Slider handling is unavailable on this page.',
+  };
+  let sliderHostname: string | undefined;
+  let debuggerGranted = false;
+  const renderSliderState = (enabled: boolean): void => {
+    view.sliderCheckbox.checked = enabled;
+    view.sliderStatus.textContent = enabled ? sliderText.enabled : sliderText.disabled;
+  };
+  const readSliderState = async (): Promise<void> => {
+    const value = await adapter.runtime.sendMessage({ type: 'captcha:get-slider-state' });
+    if (typeof value !== 'object' || value === null || (value as { supported?: unknown }).supported !== true) {
+      sliderHostname = undefined;
+      view.sliderButton.disabled = true;
+      view.sliderCheckbox.disabled = true;
+      view.sliderStatus.textContent = sliderText.unsupported;
+      return;
+    }
+    sliderHostname = typeof (value as { hostname?: unknown }).hostname === 'string' ? (value as { hostname: string }).hostname : undefined;
+    debuggerGranted = (value as { debuggerGranted?: unknown }).debuggerGranted === true;
+    view.sliderButton.disabled = false;
+    view.sliderCheckbox.disabled = false;
+    renderSliderState((value as { enabled?: unknown }).enabled === true);
+  };
+  const ensureDebugger = async (): Promise<boolean> => {
+    if (debuggerGranted) return true;
+    debuggerGranted = await sliderPermissions?.requestDebugger() ?? false;
+    return debuggerGranted;
+  };
+  const ensureSliderPageAccess = async (): Promise<boolean> => {
+    const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
+    const pageUrl = typeof tabs[0]?.url === 'string' ? tabs[0].url : undefined;
+    if (pageUrl === undefined) return false;
+    const origins = [...originsForPage(pageUrl)];
+    if (await adapter.permissions.contains({ origins })) return true;
+    return adapter.permissions.request({ origins });
+  };
+  const ensureSliderContent = async (): Promise<void> => {
+    await adapter.runtime.sendMessage({ type: 'captcha:reconcile-access' }).catch(() => undefined);
+    const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
+    const tabId = typeof tabs[0]?.id === 'number' ? tabs[0].id : undefined;
+    if (tabId === undefined || adapter.scripting === undefined) return;
+    try { await adapter.tabs.sendMessage?.(tabId, { type: 'captcha:ping' }); }
+    catch {
+      await adapter.scripting.executeScript({ target: { tabId }, files: ['content-scripts/content.js'] }).catch(() => undefined);
+    }
+  };
+  view.sliderButton.addEventListener('click', () => {
+    void (async () => {
+      view.sliderButton.disabled = true;
+      view.sliderStatus.textContent = sliderText.running;
+      if (!await ensureSliderPageAccess() || !await ensureDebugger()) {
+        view.sliderStatus.textContent = sliderText.permission;
+        view.sliderButton.disabled = false;
+        return;
+      }
+      await ensureSliderContent();
+      const result = await adapter.runtime.sendMessage({ type: 'captcha:run-slider' }).catch(() => ({ state: 'failed' }));
+      const state = typeof result === 'object' && result !== null ? (result as { state?: unknown }).state : undefined;
+      view.sliderStatus.textContent = state === 'success' ? sliderText.success
+        : state === 'not-found' || state === 'unsupported' ? sliderText.notFound
+          : state === 'low-confidence' ? sliderText.lowConfidence
+            : state === 'permission-denied' ? sliderText.permission
+              : sliderText.failed;
+      view.sliderButton.disabled = false;
+    })();
+  });
+  view.sliderCheckbox.addEventListener('change', () => {
+    void (async () => {
+      const requested = view.sliderCheckbox.checked;
+      view.sliderCheckbox.disabled = true;
+      if (sliderHostname === undefined || (requested && (!await ensureSliderPageAccess() || !await ensureDebugger()))) {
+        view.sliderCheckbox.checked = false;
+        view.sliderStatus.textContent = sliderText.permission;
+        view.sliderCheckbox.disabled = false;
+        return;
+      }
+      const value = await adapter.runtime.sendMessage({ type: 'captcha:set-slider-enabled', enabled: requested, hostname: sliderHostname }).catch(() => undefined);
+      if (requested) await ensureSliderContent();
+      const saved = typeof value === 'object' && value !== null && (value as { enabled?: unknown }).enabled === requested;
+      renderSliderState(saved ? requested : !requested);
+      view.sliderCheckbox.disabled = false;
+    })();
+  });
   if (siteModes !== undefined) {
     view.modeSelect.disabled = true;
     void siteModes.read().then((mode) => {
@@ -192,6 +300,11 @@ export function startPopup(
   }
   void controller.start();
   void modelController.start();
+  void readSliderState().catch(() => {
+    view.sliderButton.disabled = true;
+    view.sliderCheckbox.disabled = true;
+    view.sliderStatus.textContent = sliderText.failed;
+  });
 }
 
 const root = document.querySelector<HTMLElement>('#app');
@@ -223,6 +336,6 @@ if (root !== null && typeof browser !== 'undefined') {
         if (typeof url !== 'string') throw new Error('unsupported page');
         await settingsStore.setSiteRecognitionMode(hostnameForPage(url), mode);
       },
-    });
+    }, { requestDebugger: () => browser.permissions.request({ permissions: ['debugger'] }) });
   });
 }

@@ -8,6 +8,7 @@
 - Created: 2026-07-29 (Asia/Shanghai)
 - Production model changed: yes, replacing `ddddocr/common_old.onnx`
 - Scope: common static digit, English letter, alphanumeric, and one-step integer arithmetic CAPTCHAs
+- Dynamic slider Beta is a separate non-OCR feature and does not use this model or its training data.
 
 ## Reproducibility
 

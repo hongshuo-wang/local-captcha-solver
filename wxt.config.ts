@@ -57,6 +57,7 @@ export default defineConfig({
       },
     },
     permissions: ['activeTab', 'clipboardWrite', 'contextMenus', 'storage', 'scripting', 'offscreen'],
+    optional_permissions: ['debugger'],
     ...(process.env.CAPTCHA_E2E_PREGRANT === '1'
       ? { host_permissions: ['http://*/*', 'https://*/*'] }
       : { optional_host_permissions: ['http://*/*', 'https://*/*'] }),

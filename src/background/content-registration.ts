@@ -66,6 +66,15 @@ async function selectedScript(rule: SelectedSiteRule): Promise<Required<Register
   };
 }
 
+async function exactSliderScript(hostname: string): Promise<Required<RegisteredContentScript>> {
+  return {
+    id: await contentScriptRegistrationId(hostname),
+    matches: [...exactOrigins(hostname)],
+    js: [CONTENT_SCRIPT_FILE],
+    persistAcrossSessions: true,
+  };
+}
+
 function isSameScript(actual: RegisteredContentScript, expected: Required<RegisteredContentScript>): boolean {
   return actual.id === expected.id
     && actual.persistAcrossSessions === true
@@ -110,18 +119,23 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
           if (await adapter.permissions.contains({ origins })) desired.push(await selectedScript(rule));
         }
       }
+      for (const hostname of settings.sliderEnabledHosts) {
+        const origins = exactOrigins(hostname);
+        if (await adapter.permissions.contains({ origins })) desired.push(await exactSliderScript(hostname));
+      }
+      const uniqueDesired = [...new Map(desired.map((script) => [script.id, script])).values()];
       const current = await adapter.scripting.getRegisteredContentScripts();
       const kept = new Set<string>();
       const invalid = current.filter((script) => {
         if (!script.id.startsWith(REGISTRATION_PREFIX)) return false;
-        if (!desired.some((candidate) => isSameScript(script, candidate)) || kept.has(script.id)) return true;
+        if (!uniqueDesired.some((candidate) => isSameScript(script, candidate)) || kept.has(script.id)) return true;
         kept.add(script.id);
         return false;
       });
       const invalidIds = [...new Set(invalid.map((script) => script.id))];
       await unregister(invalidIds);
       const present = current.filter((script) => !invalid.includes(script) && !invalidIds.includes(script.id));
-      const missing = desired.filter((script) => !present.some((candidate) => isSameScript(candidate, script)));
+      const missing = uniqueDesired.filter((script) => !present.some((candidate) => isSameScript(candidate, script)));
       if (missing.length > 0) {
         try { await adapter.scripting.registerContentScripts(missing); } catch (error) {
           try { await unregister(missing.map((script) => script.id)); } catch { /* Best-effort partial registration cleanup. */ }

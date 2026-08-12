@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper 标志">
   <h1>Captcha Helper · 本地验证码助手</h1>
-  <p>在浏览器本地识别常见静态验证码，授权范围始终由用户决定。</p>
+  <p>在浏览器本地识别常见静态验证码，并实验性处理逐站授权的拼图滑块，授权范围始终由用户决定。</p>
   <p><a href="README.md">English</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI 状态"></a>
@@ -27,7 +27,9 @@ Captcha Helper 是一款开源 Chromium 浏览器扩展，完全在用户设备�
 - 英文字母与数字组合；
 - 使用 `+`、`-`、`*`、`/`、`x`、`X`、`×` 或 `÷` 的一步整数算术。
 
-算式可以使用 `=?`、`=`、`?` 或无后缀形式。减法结果必须非负，除法必须整除。图片选择、滑块、拼图、动画、行为验证、非拉丁文字、小数、余数、负数结果和多步数学不在项目范围内。
+算式可以使用 `=?`、`=`、`?` 或无后缀形式。减法结果必须非负，除法必须整除。图片选择、动画、行为验证、非拉丁文字、小数、余数、负数结果和多步数学不在静态 OCR 范围内。动态滑块目前处于 Beta：仅支持桌面 Chrome/Edge、单个缺口、水平轨道和可稳定读取视觉资源的拼图挑战；必须为每个精确主机名单独开启，不能全局自动开启。滑块会发送浏览器级拖动，因此误判可能操作页面控件；遇到多个挑战、结构变化、低置信度或服务端拒绝时会停止并交还用户。
+
+GeeTest V4 是自适应行为验证产品，插件只支持其中可识别的拼图滑块挑战，不代表支持整个 GeeTest V4。
 
 ## 安装
 

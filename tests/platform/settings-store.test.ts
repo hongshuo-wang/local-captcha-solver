@@ -170,4 +170,19 @@ describe('createSettingsStore', () => {
     await store.setOnboardingComplete(true);
     await expect(store.read()).resolves.toMatchObject({ interfaceLocale: 'en', onboardingComplete: true });
   });
+
+  it('migrates existing settings without enabling slider automation on any site', async () => {
+    const store = createSettingsStore(adapterWith({ ...defaults, version: 4, sliderEnabledHosts: undefined }));
+    await expect(store.read()).resolves.toMatchObject({ version: 5, sliderEnabledHosts: [] });
+  });
+
+  it('stores slider automation as an exact-host permission independent of OCR access', async () => {
+    const store = createSettingsStore(adapterWith());
+    await store.setSliderEnabled('Login.Example.test', true);
+    await expect(store.isSliderEnabled('https://login.example.test/captcha')).resolves.toBe(true);
+    await expect(store.isSliderEnabled('https://child.login.example.test/captcha')).resolves.toBe(false);
+    await expect(store.read()).resolves.toMatchObject({ sliderEnabledHosts: ['login.example.test'] });
+    await store.setSliderEnabled('login.example.test', false);
+    await expect(store.isSliderEnabled('https://login.example.test/captcha')).resolves.toBe(false);
+  });
 });

@@ -27,7 +27,7 @@ The project intentionally supports one static image containing:
 - alphanumeric strings; or
 - one-step integer arithmetic using `+`, `-`, `*`, `/`, `x`, `X`, `×`, or `÷`.
 
-Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces nonnegative answers and division must be exact. Image selection, sliders, puzzles, animation, behavioral challenges, non-Latin scripts, decimals, remainders, negative results, and multi-step mathematics are outside the project scope.
+Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces nonnegative answers and division must be exact. Image selection, animation, behavioral challenges, non-Latin scripts, decimals, remainders, negative results, and multi-step mathematics are outside the static OCR scope. A separate slider Beta supports only desktop Chrome/Edge single-gap horizontal puzzle challenges with stable visible image resources. It requires exact-host per-site authorization and never offers global automatic mode because it sends browser-level drag input that could affect a page control after a false detection. GeeTest V4 support is limited to compatible puzzle-slider challenges, not the whole adaptive verification product.
 
 ## Installation
 

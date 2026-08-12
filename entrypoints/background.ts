@@ -9,6 +9,7 @@ import { createBackgroundRuntime } from '../src/background/background-runtime';
 import { createModelStatusStore, MODEL_LOGS_STORAGE_KEY } from '../src/background/model-status';
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 import { registerInstallExperience } from '../src/background/install-experience';
+import { createSliderSolver, decodeScreenshot } from '../src/slider/slider-solver';
 
 interface RuntimeWithContexts {
   getContexts?: InferenceBrowser['runtime']['getContexts'];
@@ -21,7 +22,7 @@ interface BrowserWithOffscreen {
 interface BackgroundBrowser {
   storage: { local: { get(key: string): Promise<Record<string, unknown>>; set(values: Record<string, unknown>): Promise<void> }; onChanged: { addListener(listener: (changes: Record<string, unknown>, areaName: string) => void): void } };
   permissions: {
-    contains(details: { origins: readonly string[] }): Promise<boolean>;
+    contains(details: { origins?: readonly string[]; permissions?: readonly string[] }): Promise<boolean>;
     request(details: { origins: string[] }): Promise<boolean>;
     remove(details: { origins: string[] }): Promise<boolean>;
   };
@@ -35,6 +36,12 @@ interface BackgroundBrowser {
     query(details: { url?: readonly string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string }[]>;
     sendMessage(tabId: number, message: unknown, options?: { frameId: number }): Promise<unknown>;
     create(details: { url: string }): Promise<unknown>;
+    captureVisibleTab(windowId?: number, options?: { format?: 'png' }): Promise<string>;
+  };
+  debugger: {
+    attach(target: { tabId: number }, version: string): Promise<void>;
+    detach(target: { tabId: number }): Promise<void>;
+    sendCommand(target: { tabId: number }, method: string, params?: Record<string, unknown>): Promise<unknown>;
   };
   contextMenus: {
     create(details: { id: string; title: string; contexts: readonly ['image'] }): unknown;
@@ -80,6 +87,16 @@ export default defineBackground(() => {
     async read() { return (await extension.storage.local.get(MODEL_LOGS_STORAGE_KEY))[MODEL_LOGS_STORAGE_KEY]; },
     async write(value) { await extension.storage.local.set({ [MODEL_LOGS_STORAGE_KEY]: value }); },
   });
+  const sliderSolver = createSliderSolver({
+    settings,
+    permissions: { contains: extension.permissions.contains.bind(extension.permissions) },
+    tabs: {
+      sendMessage: (tabId, message) => extension.tabs.sendMessage(tabId, message),
+      captureVisibleTab: (windowId, options) => extension.tabs.captureVisibleTab(windowId, options),
+    },
+    debugger: extension.debugger,
+    decodeImage: decodeScreenshot,
+  });
   const runtimeApp = createBackgroundRuntime({
     permissions: { contains: extension.permissions.contains.bind(extension.permissions) },
     imageFetcher: createImageFetcher({ permissions: { contains: extension.permissions.contains.bind(extension.permissions) }, fetch: globalThis.fetch.bind(globalThis) }),
@@ -87,6 +104,7 @@ export default defineBackground(() => {
     modelStatus,
     siteState: { isEnabled: settings.isEnabled, enablePage: registration.enablePage, disablePage: registration.disablePage, reconcile: registration.reconcile },
     settings,
+    sliderSolver,
     activeTab: async () => (await extension.tabs.query({ active: true, currentWindow: true }))[0],
     registration,
     contextMenu,

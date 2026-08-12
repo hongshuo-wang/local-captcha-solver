@@ -29,11 +29,12 @@ export function isRecognitionShortcut(value: unknown): value is RecognitionShort
 }
 
 export interface CaptchaSettings {
-  version: 4;
+  version: 5;
   accessMode: AccessMode;
   disabledHosts: string[];
   selectedSites: SelectedSiteRule[];
   siteRecognitionModes: SiteRecognitionModeOverride[];
+  sliderEnabledHosts: string[];
   copyOnNoField: boolean;
   autoFill: boolean;
   recognitionShortcut: RecognitionShortcut;
@@ -54,16 +55,19 @@ export interface SettingsStore {
   removeSelectedSite(rule: SelectedSiteRule): Promise<void>;
   recognitionModeForPage(pageUrl: string): Promise<SiteRecognitionMode>;
   setSiteRecognitionMode(hostname: string, mode: SiteRecognitionMode): Promise<void>;
+  isSliderEnabled(pageUrl: string): Promise<boolean>;
+  setSliderEnabled(hostname: string, enabled: boolean): Promise<void>;
   setInterfaceLocale(locale: InterfaceLocale): Promise<void>;
   setOnboardingComplete(complete: boolean): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: CaptchaSettings = {
-  version: 4,
+  version: 5,
   accessMode: 'selected',
   disabledHosts: [],
   selectedSites: [],
   siteRecognitionModes: [],
+  sliderEnabledHosts: [],
   copyOnNoField: false,
   autoFill: true,
   recognitionShortcut: 'middle',
@@ -169,8 +173,12 @@ export function recognitionModeFromSettings(value: unknown, pageUrl: string): Si
   return settings.siteRecognitionModes.find((entry) => entry.hostname === hostname)?.mode ?? 'auto';
 }
 
+function freshSettings(): CaptchaSettings {
+  return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [], sliderEnabledHosts: [] };
+}
+
 function parseSettings(value: unknown): CaptchaSettings {
-  if (typeof value !== 'object' || value === null) return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
+  if (typeof value !== 'object' || value === null) return freshSettings();
   const legacy = value as { version?: unknown; allowlistedHosts?: unknown; disabledHosts?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown };
   if (legacy.version === 1 && Array.isArray(legacy.allowlistedHosts)) {
     return {
@@ -193,22 +201,25 @@ function parseSettings(value: unknown): CaptchaSettings {
         recognitionShortcut: isRecognitionShortcut(legacy.recognitionShortcut) ? legacy.recognitionShortcut : 'middle',
       };
     } catch {
-      return { ...DEFAULT_SETTINGS, accessMode: 'all', onboardingComplete: true, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
+      return { ...freshSettings(), accessMode: 'all', onboardingComplete: true };
     }
   }
   const candidate = value as Partial<Omit<CaptchaSettings, 'version'>> & { version?: unknown };
-  if ((candidate.version !== 3 && candidate.version !== 4) || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
-    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
+  if ((candidate.version !== 3 && candidate.version !== 4 && candidate.version !== 5) || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
+    return freshSettings();
   }
 
   try {
     return {
-      version: 4,
+      version: 5,
       accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : DEFAULT_SETTINGS.accessMode,
       disabledHosts: [...new Set(candidate.disabledHosts.map(normalizeHostname))].sort(),
       selectedSites: normalizeSelectedSites(candidate.selectedSites),
-      siteRecognitionModes: candidate.version === 4 && Array.isArray(candidate.siteRecognitionModes)
+      siteRecognitionModes: (candidate.version === 4 || candidate.version === 5) && Array.isArray(candidate.siteRecognitionModes)
         ? normalizeSiteRecognitionModes(candidate.siteRecognitionModes)
+        : [],
+      sliderEnabledHosts: candidate.version === 5 && Array.isArray(candidate.sliderEnabledHosts)
+        ? [...new Set(candidate.sliderEnabledHosts.map(normalizeHostname))].sort()
         : [],
       copyOnNoField: candidate.copyOnNoField === true,
       autoFill: candidate.autoFill !== false,
@@ -217,7 +228,7 @@ function parseSettings(value: unknown): CaptchaSettings {
       onboardingComplete: candidate.onboardingComplete === true,
     };
   } catch {
-    return { ...DEFAULT_SETTINGS, selectedSites: [], disabledHosts: [], siteRecognitionModes: [] };
+    return freshSettings();
   }
 }
 
@@ -225,11 +236,12 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
   const read = async (): Promise<CaptchaSettings> => parseSettings(await adapter.getLocal<unknown>(SETTINGS_STORAGE_KEY));
   const write = async (settings: CaptchaSettings): Promise<void> => {
     await adapter.setLocal<CaptchaSettings>(SETTINGS_STORAGE_KEY, {
-      version: 4,
+      version: 5,
       accessMode: settings.accessMode,
       disabledHosts: [...new Set(settings.disabledHosts)].sort(),
       selectedSites: normalizeSelectedSites(settings.selectedSites),
       siteRecognitionModes: normalizeSiteRecognitionModes(settings.siteRecognitionModes),
+      sliderEnabledHosts: [...new Set(settings.sliderEnabledHosts.map(normalizeHostname))].sort(),
       copyOnNoField: settings.copyOnNoField,
       autoFill: settings.autoFill,
       recognitionShortcut: settings.recognitionShortcut,
@@ -331,6 +343,22 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
         const normalizedModes = normalizeSiteRecognitionModes(siteRecognitionModes);
         if (JSON.stringify(normalizedModes) !== JSON.stringify(settings.siteRecognitionModes)) {
           await write({ ...settings, siteRecognitionModes: normalizedModes });
+        }
+      });
+    },
+    async isSliderEnabled(pageUrl: string): Promise<boolean> {
+      return (await read()).sliderEnabledHosts.includes(hostnameForPage(pageUrl));
+    },
+    async setSliderEnabled(hostname: string, enabled: boolean): Promise<void> {
+      const normalized = normalizeHostname(hostname);
+      if (typeof enabled !== 'boolean') throw new Error('Slider enabled state must be a boolean');
+      await mutate(async () => {
+        const settings = await read();
+        const sliderEnabledHosts = enabled
+          ? [...new Set([...settings.sliderEnabledHosts, normalized])].sort()
+          : settings.sliderEnabledHosts.filter((host) => host !== normalized);
+        if (JSON.stringify(sliderEnabledHosts) !== JSON.stringify(settings.sliderEnabledHosts)) {
+          await write({ ...settings, sliderEnabledHosts });
         }
       });
     },

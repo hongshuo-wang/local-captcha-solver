@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Captcha Helper slider fixture</title>
+    <style>
+      body { margin: 0; padding: 40px; background: #eef2ef; color: #203027; font: 16px system-ui, sans-serif; }
+      main { width: 360px; margin: 0 auto; padding: 24px; background: white; border: 1px solid #c8d4cc; border-radius: 8px; }
+      h1 { margin: 0 0 6px; font-size: 20px; }
+      p { margin: 0 0 16px; color: #617067; font-size: 13px; line-height: 1.45; }
+      .challenge { position: relative; width: 320px; height: 210px; }
+      #background { position: absolute; inset: 0 auto auto 0; width: 320px; height: 160px; border: 1px solid #b5c4ba; }
+      .track { position: absolute; left: 0; right: 0; top: 177px; height: 30px; border-radius: 15px; background: #e3ebe5; }
+      #handle { position: absolute; left: 0; top: 172px; width: 40px; height: 40px; border: 0; border-radius: 8px; background: #286a49; cursor: grab; touch-action: none; }
+      #handle:active { cursor: grabbing; }
+      #status { min-height: 20px; margin: 12px 0 0; color: #286a49; font-weight: 650; }
+      #reset { margin-top: 10px; padding: 7px 12px; border: 1px solid #9ab0a1; border-radius: 5px; background: white; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main data-slider-captcha>
+      <h1>本地滑块测试页</h1>
+      <p>用于验证 Captcha Helper Beta 的本地定位、逐站授权和真实拖动。此页不会提交表单。</p>
+      <div class="challenge">
+        <canvas id="background" data-slider-image width="320" height="160"></canvas>
+        <div class="track" data-slider-track></div>
+        <button id="handle" data-slider-handle aria-label="滑块"></button>
+      </div>
+      <div id="status" role="status" aria-live="polite"></div>
+      <button id="reset" type="button">刷新挑战</button>
+    </main>
+    <script>
+      const canvas = document.querySelector('#background');
+      const context = canvas.getContext('2d');
+      const handle = document.querySelector('#handle');
+      const status = document.querySelector('#status');
+      let gapX = 192;
+      let dragging = false;
+      let startX = 0;
+      let startLeft = 0;
+      function draw() {
+        const gradient = context.createLinearGradient(0, 0, 320, 160);
+        gradient.addColorStop(0, '#8db5c5'); gradient.addColorStop(1, '#e5bb83');
+        context.fillStyle = gradient; context.fillRect(0, 0, 320, 160);
+        for (let index = 0; index < 22; index += 1) {
+          context.fillStyle = `hsla(${index * 17}, 48%, 32%, .28)`;
+          context.beginPath(); context.arc(20 + index * 23, 28 + (index * 37) % 120, 12 + index % 9, 0, Math.PI * 2); context.fill();
+        }
+        context.strokeStyle = '#1d342d'; context.lineWidth = 4;
+        context.strokeRect(gapX, 62, 40, 40);
+        context.beginPath(); context.moveTo(gapX + 20, 58); context.lineTo(gapX + 29, 67); context.lineTo(gapX + 20, 76); context.stroke();
+      }
+      function reset() { gapX = 152 + Math.round(Math.random() * 100); handle.style.left = '0px'; status.textContent = ''; draw(); }
+      handle.addEventListener('pointerdown', (event) => { dragging = true; startX = event.clientX; startLeft = handle.offsetLeft; handle.setPointerCapture(event.pointerId); });
+      handle.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        const left = Math.max(0, Math.min(280, startLeft + event.clientX - startX));
+        handle.style.left = `${left}px`;
+      });
+      handle.addEventListener('pointerup', () => {
+        if (!dragging) return;
+        dragging = false;
+        const left = handle.offsetLeft;
+        if (Math.abs(left - gapX) <= 7) { status.textContent = '验证成功'; handle.style.left = `${gapX}px`; }
+        else { status.textContent = '验证失败，请重试'; handle.style.left = '0px'; }
+      });
+      document.querySelector('#reset').addEventListener('click', reset);
+      reset();
+    </script>
+  </body>
+</html>

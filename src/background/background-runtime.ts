@@ -16,6 +16,10 @@ const BACKGROUND_MESSAGE_TYPES = new Set([
   'captcha:record-activity',
   'captcha:clear-diagnostics',
   'captcha:reconcile-access',
+  'captcha:get-slider-state',
+  'captcha:set-slider-enabled',
+  'captcha:run-slider',
+  'captcha:slider-auto-run',
 ]);
 
 function isBackgroundMessage(message: unknown): boolean {

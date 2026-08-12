@@ -6,10 +6,13 @@ import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
 import type { EnableRegistrationOptions } from './content-registration';
 import type { DiagnosticContext, ModelStatusStore, WorkflowActivity, WorkflowActivityOutcome } from './model-status';
+import type { SliderSolver } from '../slider/types';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
 export interface RuntimeRouterAdapter {
-  permissions: { contains(details: { origins: readonly string[] }): Promise<boolean> };
+  permissions: {
+    contains(details: { origins?: readonly string[]; permissions?: readonly string[] }): Promise<boolean>;
+  };
   imageFetcher: ImageFetcher;
   inferenceHost: InferenceHost;
   modelStatus: ModelStatusStore;
@@ -19,7 +22,9 @@ export interface RuntimeRouterAdapter {
     disablePage(pageUrl: string): Promise<unknown>;
     reconcile?(): Promise<void>;
   };
-  settings?: Pick<SettingsStore, 'read' | 'setCopyOnNoField' | 'setAutoFill' | 'setRecognitionShortcut'>;
+  settings?: Pick<SettingsStore, 'read' | 'setCopyOnNoField' | 'setAutoFill' | 'setRecognitionShortcut'> &
+    Partial<Pick<SettingsStore, 'isSliderEnabled' | 'setSliderEnabled'>>;
+  sliderSolver?: SliderSolver;
   activeTab(): Promise<{ id?: number; url?: string } | undefined>;
 }
 
@@ -149,7 +154,45 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   return {
     async handle(message: unknown, sender: RuntimeSender): Promise<unknown | undefined> {
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
-      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown; diagnostic?: unknown };
+      const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown; diagnostic?: unknown; trigger?: unknown };
+      if (request.type === 'captcha:get-slider-state') {
+        if (!canManageDiagnostics(sender)) return { supported: false, enabled: false, debuggerGranted: false };
+        const tab = await adapter.activeTab();
+        if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { supported: false, enabled: false, debuggerGranted: false };
+        try {
+          const hostname = hostnameForPage(tab.url);
+          const enabled = await adapter.settings?.isSliderEnabled?.(tab.url) ?? false;
+          const debuggerGranted = await adapter.permissions.contains({ permissions: ['debugger'] });
+          return { supported: true, enabled, debuggerGranted, hostname };
+        } catch { return { supported: false, enabled: false, debuggerGranted: false }; }
+      }
+      if (request.type === 'captcha:set-slider-enabled') {
+        if (!canManageDiagnostics(sender) || typeof request.enabled !== 'boolean' || typeof request.hostname !== 'string') return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' };
+        const tab = await adapter.activeTab();
+        if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { supported: false, enabled: false, debuggerGranted: false, reason: 'unsupported' };
+        try {
+          const hostname = hostnameForPage(tab.url);
+          if (normalizeHostname(request.hostname) !== hostname) return { supported: true, enabled: false, debuggerGranted: false, hostname, reason: 'site-changed' };
+          const debuggerGranted = await adapter.permissions.contains({ permissions: ['debugger'] });
+          if (request.enabled && !debuggerGranted) return { supported: true, enabled: false, debuggerGranted: false, hostname, reason: 'permission-denied' };
+          if (adapter.settings?.setSliderEnabled === undefined) throw new Error('Slider settings are unavailable');
+          await adapter.settings.setSliderEnabled(hostname, request.enabled);
+          return { supported: true, enabled: request.enabled, debuggerGranted, hostname };
+        } catch { return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' }; }
+      }
+      if (request.type === 'captcha:run-slider') {
+        if (!canManageDiagnostics(sender) || adapter.sliderSolver === undefined) return { state: 'permission-denied', reason: 'untrusted-sender' };
+        const tab = await adapter.activeTab();
+        if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { state: 'unsupported' };
+        const pageOriginPermission = permissionOriginForPage(tab.url);
+        if (pageOriginPermission === undefined || !await adapter.permissions.contains({ origins: [pageOriginPermission] })) return { state: 'permission-denied', reason: 'site-access-not-granted' };
+        return adapter.sliderSolver.solve({ id: tab.id, url: tab.url }, 'manual');
+      }
+      if (request.type === 'captcha:slider-auto-run') {
+        const page = senderPage(sender);
+        if (page === undefined || sender.tab?.id === undefined || adapter.sliderSolver === undefined || typeof request.revision !== 'string') return { state: 'permission-denied', reason: 'untrusted-sender' };
+        return adapter.sliderSolver.solve({ id: sender.tab.id, url: page }, 'automatic');
+      }
       if (request.type === 'captcha:get-preferences') {
         const settings = await adapter.settings?.read();
         return {

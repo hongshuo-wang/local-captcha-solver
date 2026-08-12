@@ -31,7 +31,8 @@ export interface OptionsBrowser extends ExtensionBrowserStoragePermissions {
     };
   };
   permissions: ExtensionBrowserStoragePermissions['permissions'] & {
-    contains(details: { origins: string[] }): Promise<boolean>;
+    contains(details: { origins?: string[]; permissions?: string[] }): Promise<boolean>;
+    remove(details: { origins?: string[]; permissions?: string[] }): Promise<boolean>;
     onAdded?: { addListener(listener: () => void): void };
     onRemoved?: { addListener(listener: () => void): void };
   };
@@ -150,6 +151,9 @@ function siteModeOverrides(overrides: CaptchaSettings['siteRecognitionModes'], t
 }
 
 function behaviorMarkup(settings: CaptchaSettings, t: Translator): string {
+  const sliderSites = settings.sliderEnabledHosts.length === 0
+    ? `<p class="empty-state">${t('noSliderSites')}</p>`
+    : `<ul class="site-list">${settings.sliderEnabledHosts.map((host) => `<li><div><strong>${host}</strong><small>${t('sliderSiteEnabled')}</small></div><button type="button" class="text-button danger" data-remove-slider="${host}">${t('remove')}</button></li>`).join('')}</ul>`;
   return `${pageHeading(t('navSettings'), t('recognitionHeading'), t('behaviorDescription'))}
     <section class="content-section behavior-section">
       <div class="section-heading compact"><h2>${t('recognitionHeading')}</h2></div>
@@ -158,6 +162,11 @@ function behaviorMarkup(settings: CaptchaSettings, t: Translator): string {
     <section class="content-section site-mode-section">
       <div class="section-heading compact"><h2>${t('siteModeOverrides')}</h2><span class="count">${settings.siteRecognitionModes.length}</span></div>
       ${siteModeOverrides(settings.siteRecognitionModes, t)}
+    </section>
+    <section class="content-section site-mode-section slider-settings-section">
+      <div class="section-heading compact"><div><h2>${t('sliderSitesHeading')}</h2><p class="section-description">${t('sliderSitesDescription')}</p></div><span class="count">${settings.sliderEnabledHosts.length}</span></div>
+      ${sliderSites}
+      <button type="button" class="text-button danger" data-remove-debugger>${t('removeDebuggerPermission')}</button>
     </section>
     <section class="content-section language-section">
       <div class="section-heading compact"><h2>${t('languageHeading')}</h2></div>
@@ -270,6 +279,12 @@ export async function startOptions(
     root.querySelectorAll<HTMLButtonElement>('[data-restore-mode]').forEach((button) => button.addEventListener('click', () => {
       void settingsStore.setSiteRecognitionMode(button.dataset.restoreMode!, 'auto').then(() => show(view));
     }));
+    root.querySelectorAll<HTMLButtonElement>('[data-remove-slider]').forEach((button) => button.addEventListener('click', () => {
+      void settingsStore.setSliderEnabled(button.dataset.removeSlider!, false).then(() => show(view));
+    }));
+    root.querySelector<HTMLButtonElement>('[data-remove-debugger]')?.addEventListener('click', () => {
+      void extension.permissions.remove({ permissions: ['debugger'] }).then(() => show(view));
+    });
     root.querySelector<HTMLSelectElement>('#interface-locale')?.addEventListener('change', (event) => {
       const value = (event.currentTarget as HTMLSelectElement).value;
       if (isInterfaceLocale(value)) void settingsStore.setInterfaceLocale(value).then(() => show(view));

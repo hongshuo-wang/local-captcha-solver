@@ -247,4 +247,27 @@ describe('background runtime router', () => {
     expect(app.setAutoFill).not.toHaveBeenCalled();
     expect(app.setRecognitionShortcut).not.toHaveBeenCalled();
   });
+
+  it('does not let a page sender read or change slider authorization', async () => {
+    const app = harness();
+    await expect(app.router.handle({ type: 'captcha:get-slider-state' }, sender)).resolves.toEqual({ supported: false, enabled: false, debuggerGranted: false });
+    await expect(app.router.handle({ type: 'captcha:set-slider-enabled', enabled: true, hostname: 'portal.example.test' }, sender)).resolves.toMatchObject({ reason: 'invalid-request' });
+  });
+
+  it('rejects manual slider execution until the active site has host permission', async () => {
+    const app = harness({ pagePermission: false });
+    const solve = vi.fn(async () => ({ state: 'success' as const }));
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: { read: app.readSettings, setCopyOnNoField: app.setCopyOnNoField, setAutoFill: app.setAutoFill, setRecognitionShortcut: app.setRecognitionShortcut },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+    await expect(router.handle({ type: 'captcha:run-slider' }, { tab: { id: 8, url: 'chrome-extension://test/popup.html' }, url: 'chrome-extension://test/popup.html' })).resolves.toEqual({ state: 'permission-denied', reason: 'site-access-not-granted' });
+    expect(solve).not.toHaveBeenCalled();
+  });
 });

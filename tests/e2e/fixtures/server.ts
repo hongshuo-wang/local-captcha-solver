@@ -11,6 +11,7 @@ const pages = new Map([
   ['/automatic.html', new URL('./automatic.html', import.meta.url)],
   ['/dynamic.html', new URL('./dynamic.html', import.meta.url)],
   ['/ambiguous.html', new URL('./ambiguous.html', import.meta.url)],
+  ['/slider.html', new URL('./slider.html', import.meta.url)],
 ]);
 
 const images = new Map([

@@ -46,7 +46,7 @@ button { cursor: pointer; }
 .recognize-command:disabled { cursor: not-allowed; border-color: #a6b2ab; background: #a6b2ab; opacity: .72; }
 .recognition-panel p { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 15px; text-align: center; }
 
-.access-panel, .site-panel, .activity-panel { padding: 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.access-panel, .site-panel, .slider-panel, .activity-panel { padding: 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .access-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; }
 .access-panel h2, .access-panel p { margin: 0; }
 .access-panel h2 { max-width: 205px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
@@ -58,6 +58,11 @@ button { cursor: pointer; }
 .hostname { max-width: 260px; margin: 0; overflow: hidden; color: var(--ink); font: 650 13px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .status { min-height: 16px; margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 16px; }
 .status.error { color: var(--danger); }
+.slider-panel h2 { margin: 0; color: var(--ink); font-size: 14px; }
+.slider-command { width: 100%; min-height: 38px; margin-top: 11px; border: 1px solid #9eaaa3; border-radius: 6px; color: var(--accent); background: var(--surface); font-size: 12px; font-weight: 700; }
+.slider-command:hover:not(:disabled) { border-color: var(--accent); background: var(--surface-muted); }
+.slider-command:disabled { cursor: not-allowed; opacity: .55; }
+.permission-note { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 15px; }
 .mode-row { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 .mode-row select { min-width: 132px; max-width: 175px; height: 30px; padding: 0 25px 0 9px; border: 1px solid #c6d0ca; border-radius: 5px; color: var(--ink); background: var(--surface); font-size: 11px; }
 .mode-row select:disabled { cursor: wait; opacity: .62; }

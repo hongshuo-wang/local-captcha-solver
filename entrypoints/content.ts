@@ -10,6 +10,7 @@ import type { OcrResult, RecognitionMode, WorkflowResult } from '../src/core/typ
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
+import { discoverSliderChallenge, observeSliderOutcome } from '../src/slider/challenge-discovery';
 
 type Runtime = {
   sendMessage(message: unknown): Promise<unknown>;
@@ -32,6 +33,13 @@ function localeFromSettings(value: unknown, browserLanguage: string): UiLocale {
     ? (value as { interfaceLocale: InterfaceLocale }).interfaceLocale
     : 'system';
   return resolveUiLocale(preference, browserLanguage);
+}
+function sliderEnabledFromSettings(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || !Array.isArray((value as { sliderEnabledHosts?: unknown }).sliderEnabledHosts)) return false;
+  try {
+    const hostname = new URL(location.href).hostname.toLowerCase();
+    return (value as { sliderEnabledHosts: unknown[] }).sliderEnabledHosts.includes(hostname);
+  } catch { return false; }
 }
 const AUTOMATIC_MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
 function modesFromSettings(value: unknown): readonly RecognitionMode[] {
@@ -72,6 +80,10 @@ export function createRuntimeContent(runtime: Runtime) {
   let autoFillEnabled = true;
   let recognitionModes = AUTOMATIC_MODES;
   let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
+  let sliderAutomaticEnabled = false;
+  let lastSliderRevision: string | undefined;
+  let lastUserInputAt = 0;
+  let sliderObserver: MutationObserver | undefined;
   let text = CONTENT_TEXT[uiLocale];
   setStatusUiLocale(uiLocale);
   const workflow = createCaptchaWorkflow({
@@ -248,6 +260,8 @@ export function createRuntimeContent(runtime: Runtime) {
       uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
       text = CONTENT_TEXT[uiLocale];
       setStatusUiLocale(uiLocale);
+      sliderAutomaticEnabled = sliderEnabledFromSettings(settings);
+      if (sliderAutomaticEnabled) startSliderObserver();
     }
   }).catch(() => undefined);
   const unsubscribeSettings = runtime.settings?.subscribe((settings) => {
@@ -258,6 +272,9 @@ export function createRuntimeContent(runtime: Runtime) {
     uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
     text = CONTENT_TEXT[uiLocale];
     setStatusUiLocale(uiLocale);
+    sliderAutomaticEnabled = sliderEnabledFromSettings(settings);
+    if (sliderAutomaticEnabled) startSliderObserver();
+    else { sliderObserver?.disconnect(); sliderObserver = undefined; }
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
   documentWithShortcut.__localCaptchaShortcutCleanup?.();
@@ -277,10 +294,17 @@ export function createRuntimeContent(runtime: Runtime) {
   window.addEventListener('mousedown', onShortcutDown, true);
   window.addEventListener('click', suppressShortcutDefault, true);
   window.addEventListener('auxclick', suppressShortcutDefault, true);
+  const noteUserInput = (event: Event): void => {
+    if ((event as Event & { isTrusted?: boolean }).isTrusted !== false) lastUserInputAt = Date.now();
+  };
+  window.addEventListener('pointerdown', noteUserInput, true);
+  window.addEventListener('keydown', noteUserInput, true);
   documentWithShortcut.__localCaptchaShortcutCleanup = () => {
     window.removeEventListener('mousedown', onShortcutDown, true);
     window.removeEventListener('click', suppressShortcutDefault, true);
     window.removeEventListener('auxclick', suppressShortcutDefault, true);
+    window.removeEventListener('pointerdown', noteUserInput, true);
+    window.removeEventListener('keydown', noteUserInput, true);
     unsubscribeSettings?.();
   };
   const enable = () => {
@@ -311,12 +335,40 @@ export function createRuntimeContent(runtime: Runtime) {
       }
       return displayed.run(best.snapshot.element, 'explicit');
     }
+    if (type === 'captcha:slider-discover') {
+      const discovery = discoverSliderChallenge(document);
+      if (discovery.state !== 'ready') return Promise.resolve(discovery);
+      return Promise.resolve({ ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible' && document.hasFocus() });
+    }
+    if (type === 'captcha:slider-outcome') {
+      const revision = (message as { revision?: unknown }).revision;
+      return Promise.resolve({ outcome: typeof revision === 'string' ? observeSliderOutcome(revision, document) : 'uncertain' });
+    }
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
     return undefined;
   });
   const initialGeneration = lifecycleGeneration;
   void Promise.resolve(runtime.sendMessage({ type: 'captcha:get-site-state' })).then((state) => { if (isSiteState(state) && state.enabled && lifecycleGeneration === initialGeneration) enable(); }).catch(() => undefined);
+  let sliderTimer: ReturnType<typeof setTimeout> | undefined;
+  const scanSlider = (): void => {
+    sliderTimer = undefined;
+    if (!sliderAutomaticEnabled || document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    const discovery = discoverSliderChallenge(document);
+    if (discovery.state !== 'ready' || discovery.challenge.revision === lastSliderRevision || Date.now() - lastUserInputAt < 1200) return;
+    lastSliderRevision = discovery.challenge.revision;
+    void Promise.resolve(runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: discovery.challenge.revision })).catch(() => undefined);
+  };
+  const startSliderObserver = (): void => {
+    if (!sliderAutomaticEnabled || sliderObserver !== undefined) return;
+    sliderObserver = new MutationObserver(() => {
+      if (sliderTimer !== undefined) clearTimeout(sliderTimer);
+      sliderTimer = setTimeout(scanSlider, 250);
+    });
+    sliderObserver.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'src'] });
+    setTimeout(scanSlider, 250);
+  };
+  startSliderObserver();
   return { workflow: displayed, enable, disable };
 }
 
