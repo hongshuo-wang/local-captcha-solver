@@ -31,6 +31,13 @@ Captcha Helper 是一款开源 Chromium 浏览器扩展，完全在用户设备�
 
 ## 安装
 
+### 浏览器应用商店
+
+也可以从官方浏览器应用商店直接安装：
+
+- [Microsoft Edge 加载项](https://microsoftedge.microsoft.com/addons/detail/captcha-helper-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81%E7%A0%81%E5%8A%A9%E6%89%8B/pibbaaacfjbfcoahjfhnbfdlefgjfbfd)
+- [Chrome 应用商店](https://chromewebstore.google.com/detail/captcha-helper-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81%E7%A0%81%E5%8A%A9%E6%89%8B/jdpjgicecfidnfbpfdnihpjhpjcahada?hl=zh-CN&utm_source=ext_sidebar)
+
 ### GitHub Release
 
 从 [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases) 下载 Chrome 或 Edge ZIP 以及 `SHA256SUMS.txt`。校验文件后解压 ZIP，打开浏览器扩展管理页、启用开发者模式，并加载解压后的目录。

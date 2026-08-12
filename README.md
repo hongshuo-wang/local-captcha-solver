@@ -31,6 +31,13 @@ Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces 
 
 ## Installation
 
+### Browser stores
+
+Install the extension directly from the official browser stores:
+
+- [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/captcha-helper-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81%E7%A0%81%E5%8A%A9%E6%89%8B/pibbaaacfjbfcoahjfhnbfdlefgjfbfd)
+- [Chrome Web Store](https://chromewebstore.google.com/detail/captcha-helper-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81%E7%A0%81%E5%8A%A9%E6%89%8B/jdpjgicecfidnfbpfdnihpjhpjcahada?hl=zh-CN&utm_source=ext_sidebar)
+
 ### GitHub Release
 
 Download the Chrome or Edge ZIP and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases). Verify the checksum, extract the ZIP, enable developer mode on the browser's extensions page, and load the extracted directory as an unpacked extension.
