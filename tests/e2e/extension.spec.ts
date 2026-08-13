@@ -356,7 +356,7 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await options.close();
 });
 
-test('exposes the slider controls on a supported fixture page', async () => {
+test('enables slider automation and handles a supported fixture in Edge', async () => {
   const page = await open('/slider.html');
   const popup = await openActionPopup(page);
   await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
@@ -368,6 +368,9 @@ test('exposes the slider controls on a supported fixture page', async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     return api?.permissions.contains({ permissions: ['debugger'] });
   })).toBe(true);
+  await popup.locator('[data-run-slider]').click();
+  await expect(popup.locator('[data-slider-status]')).toHaveText(/滑块验证已通过。|Slider verification passed\./, { timeout: 15_000 });
+  await expect(page.locator('#status')).toHaveText('验证成功');
   await popup.close();
   await page.close();
 });

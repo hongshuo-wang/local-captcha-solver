@@ -338,7 +338,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:slider-discover') {
       const discovery = discoverSliderChallenge(document);
       if (discovery.state !== 'ready') return Promise.resolve(discovery);
-      return Promise.resolve({ ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible' && document.hasFocus() });
+      return Promise.resolve({ ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() });
     }
     if (type === 'captcha:slider-outcome') {
       const revision = (message as { revision?: unknown }).revision;

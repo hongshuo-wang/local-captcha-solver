@@ -33,10 +33,9 @@ interface BackgroundBrowser {
     executeScript(details: { target: { tabId: number; frameIds?: readonly number[] }; files: readonly string[] }): Promise<unknown>;
   };
   tabs: {
-    query(details: { url?: readonly string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string }[]>;
+    query(details: { url?: readonly string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string; windowId?: number }[]>;
     sendMessage(tabId: number, message: unknown, options?: { frameId: number }): Promise<unknown>;
     create(details: { url: string }): Promise<unknown>;
-    captureVisibleTab(windowId?: number, options?: { format?: 'png' }): Promise<string>;
   };
   debugger: {
     attach(target: { tabId: number }, version: string): Promise<void>;
@@ -54,7 +53,7 @@ interface BackgroundBrowser {
   };
   runtime: {
     onMessage: {
-      addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string }; url?: string }, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
+      addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string; windowId?: number }; url?: string }, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
     };
     onStartup: { addListener(listener: () => void): void };
     onInstalled: { addListener(listener: (details: { reason: string }) => void): void };
@@ -92,7 +91,6 @@ export default defineBackground(() => {
     permissions: { contains: extension.permissions.contains.bind(extension.permissions) },
     tabs: {
       sendMessage: (tabId, message) => extension.tabs.sendMessage(tabId, message),
-      captureVisibleTab: (windowId, options) => extension.tabs.captureVisibleTab(windowId, options),
     },
     debugger: extension.debugger,
     decodeImage: decodeScreenshot,

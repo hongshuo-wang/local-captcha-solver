@@ -26,5 +26,5 @@ export interface SliderSiteState {
 }
 
 export interface SliderSolver {
-  solve(tab: { id: number; url: string }, trigger: 'manual' | 'automatic'): Promise<SliderRunResult>;
+  solve(tab: { id: number; url: string; windowId?: number }, trigger: 'manual' | 'automatic'): Promise<SliderRunResult>;
 }

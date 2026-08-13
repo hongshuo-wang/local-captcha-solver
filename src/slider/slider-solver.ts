@@ -3,7 +3,7 @@ import { locateSliderGap, type PixelImage } from './gap-locator';
 import type { SliderRunResult, SliderSolver } from './types';
 
 type ContentDiscovery =
-  | { state: 'ready'; challenge: SliderChallengeSnapshot; recentUserInput: boolean; pageVisible: boolean }
+  | { state: 'ready'; challenge: SliderChallengeSnapshot; recentUserInput: boolean; pageVisible: boolean; pageFocused: boolean }
   | { state: 'not-found' | 'ambiguous' | 'unsupported' };
 
 export interface SliderSolverAdapter {
@@ -15,7 +15,6 @@ export interface SliderSolverAdapter {
   };
   tabs: {
     sendMessage(tabId: number, message: unknown): Promise<unknown>;
-    captureVisibleTab(windowId?: number, options?: { format?: 'png' }): Promise<string>;
   };
   debugger: {
     attach(target: { tabId: number }, version: string): Promise<void>;
@@ -32,7 +31,7 @@ const MINIMUM_CONFIDENCE = .58;
 function isDiscovery(value: unknown): value is ContentDiscovery {
   if (typeof value !== 'object' || value === null || typeof (value as { state?: unknown }).state !== 'string') return false;
   const candidate = value as Partial<ContentDiscovery>;
-  return candidate.state !== 'ready' || (typeof candidate.recentUserInput === 'boolean' && typeof candidate.pageVisible === 'boolean' && typeof candidate.challenge === 'object' && candidate.challenge !== null);
+  return candidate.state !== 'ready' || (typeof candidate.recentUserInput === 'boolean' && typeof candidate.pageVisible === 'boolean' && typeof candidate.pageFocused === 'boolean' && typeof candidate.challenge === 'object' && candidate.challenge !== null);
 }
 
 function crop(image: PixelImage, rect: { x: number; y: number; width: number; height: number }, viewport: { width: number; height: number }): { image: PixelImage; scaleX: number; scaleY: number } | undefined {
@@ -100,31 +99,37 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       if (!isDiscovery(discoveryValue)) return { state: 'failed', reason: 'content-unavailable' };
       if (discoveryValue.state !== 'ready') return { state: discoveryValue.state === 'not-found' ? 'not-found' : 'unsupported', reason: discoveryValue.state };
       if (!discoveryValue.pageVisible) return { state: 'page-inactive' };
+      if (trigger === 'automatic' && !discoveryValue.pageFocused) return { state: 'page-inactive' };
       if (discoveryValue.recentUserInput) return { state: 'user-active' };
       const before = discoveryValue.challenge;
-      const screenshot = await adapter.tabs.captureVisibleTab(undefined, { format: 'png' }).catch(() => undefined);
-      if (screenshot === undefined) return { state: 'failed', reason: 'screenshot-failed' };
-      const pixels = await adapter.decodeImage(screenshot).catch(() => undefined);
-      if (pixels === undefined) return { state: 'failed', reason: 'screenshot-invalid' };
-      const cropped = crop(pixels, before.image, before.viewport);
-      if (cropped === undefined) return { state: 'unsupported', reason: 'image-outside-viewport' };
-      const expectedSize = Math.max(before.handle.width, before.handle.height) * (cropped.scaleX + cropped.scaleY) / 2;
-      const location = locateSliderGap({ image: cropped.image, expectedSize, minimumX: cropped.image.width * .2 });
-      if (location === undefined || location.confidence < MINIMUM_CONFIDENCE) return { state: 'low-confidence', confidence: location?.confidence ?? 0 };
-      const verifyValue = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
-      if (!isDiscovery(verifyValue) || verifyValue.state !== 'ready' || verifyValue.challenge.revision !== before.revision || !verifyValue.pageVisible || verifyValue.recentUserInput) {
-        return { state: 'uncertain', reason: 'challenge-changed' };
-      }
-      const start = { x: before.handle.x + before.handle.width / 2, y: before.handle.y + before.handle.height / 2 };
-      const gapCenterCss = before.image.x + (location.x + location.width / 2) / cropped.scaleX;
-      const pieceCenterCss = before.image.x + expectedSize / cropped.scaleX / 2;
-      const requestedEndX = start.x + gapCenterCss - pieceCenterCss;
-      const endX = Math.max(before.track.x + before.handle.width / 2, Math.min(before.track.x + before.track.width - before.handle.width / 2, requestedEndX));
-      const points = dragPoints(start, endX, random);
+      let confidence: number | undefined;
       let attached = false;
       try {
         await adapter.debugger.attach(target(tab.id), '1.3');
         attached = true;
+        const screenshotResult = await adapter.debugger.sendCommand(target(tab.id), 'Page.captureScreenshot', { format: 'png', captureBeyondViewport: false, fromSurface: true }).catch(() => undefined);
+        const screenshotData = typeof screenshotResult === 'object' && screenshotResult !== null && typeof (screenshotResult as { data?: unknown }).data === 'string'
+          ? (screenshotResult as { data: string }).data
+          : undefined;
+        if (screenshotData === undefined) return { state: 'failed', reason: 'screenshot-failed' };
+        const pixels = await adapter.decodeImage(`data:image/png;base64,${screenshotData}`).catch(() => undefined);
+        if (pixels === undefined) return { state: 'failed', reason: 'screenshot-invalid' };
+        const cropped = crop(pixels, before.image, before.viewport);
+        if (cropped === undefined) return { state: 'unsupported', reason: 'image-outside-viewport' };
+        const expectedSize = Math.max(before.handle.width, before.handle.height) * (cropped.scaleX + cropped.scaleY) / 2;
+        const location = locateSliderGap({ image: cropped.image, expectedSize, minimumX: cropped.image.width * .2 });
+        if (location === undefined || location.confidence < MINIMUM_CONFIDENCE) return { state: 'low-confidence', confidence: location?.confidence ?? 0 };
+        confidence = location.confidence;
+        const verifyValue = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
+        if (!isDiscovery(verifyValue) || verifyValue.state !== 'ready' || verifyValue.challenge.revision !== before.revision || !verifyValue.pageVisible || (trigger === 'automatic' && !verifyValue.pageFocused) || verifyValue.recentUserInput) {
+          return { state: 'uncertain', reason: 'challenge-changed' };
+        }
+        const start = { x: before.handle.x + before.handle.width / 2, y: before.handle.y + before.handle.height / 2 };
+        const gapCenterCss = before.image.x + (location.x + location.width / 2) / cropped.scaleX;
+        const pieceCenterCss = before.image.x + expectedSize / cropped.scaleX / 2;
+        const requestedEndX = start.x + gapCenterCss - pieceCenterCss;
+        const endX = Math.max(before.track.x + before.handle.width / 2, Math.min(before.track.x + before.track.width - before.handle.width / 2, requestedEndX));
+        const points = dragPoints(start, endX, random);
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.x, y: start.y });
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mousePressed', x: start.x, y: start.y, button: 'left', buttons: 1, clickCount: 1 });
         for (const [index, point] of points.entries()) {
@@ -134,18 +139,18 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const end = points.at(-1) ?? { x: endX, y: start.y };
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1 });
       } catch {
-        return { state: 'failed', confidence: location.confidence, reason: attached ? 'input-failed' : 'debugger-unavailable' };
+        return { state: 'failed', reason: attached ? 'input-failed' : 'debugger-unavailable' };
       } finally {
         if (attached) await adapter.debugger.detach(target(tab.id)).catch(() => undefined);
       }
       for (const wait of [250, 500, 750]) {
         await delay(wait);
         const current = outcome(await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-outcome', revision: before.revision }).catch(() => undefined));
-        if (current === 'success') return { state: 'success', confidence: location.confidence };
-        if (current === 'failure') return { state: 'failed', confidence: location.confidence, reason: 'challenge-rejected' };
-        if (current === 'uncertain') return { state: 'uncertain', confidence: location.confidence };
+        if (current === 'success') return { state: 'success', confidence };
+        if (current === 'failure') return { state: 'failed', confidence, reason: 'challenge-rejected' };
+        if (current === 'uncertain') return { state: 'uncertain', confidence };
       }
-      return { state: 'uncertain', confidence: location.confidence, reason: 'outcome-timeout' };
+      return { state: 'uncertain', confidence, reason: 'outcome-timeout' };
     },
   };
 }

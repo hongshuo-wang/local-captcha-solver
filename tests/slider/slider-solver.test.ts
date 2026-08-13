@@ -37,18 +37,18 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
     const type = (message as { type?: string }).type;
     if (type === 'captcha:slider-discover') {
       discoveries += 1;
-      return { state: 'ready', challenge: { ...challenge, revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision }, recentUserInput: options.recentUserInput ?? false, pageVisible: true };
+      return { state: 'ready', challenge: { ...challenge, revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision }, recentUserInput: options.recentUserInput ?? false, pageVisible: true, pageFocused: true };
     }
     if (type === 'captcha:slider-outcome') return { outcome: 'success' };
     return undefined;
   });
   const attach = vi.fn(async () => undefined);
   const detach = vi.fn(async () => undefined);
-  const sendCommand = vi.fn(async (_target: { tabId: number }, _method: string, _params?: Record<string, unknown>) => undefined);
+  const sendCommand = vi.fn(async (_target: { tabId: number }, method: string, _params?: Record<string, unknown>) => method === 'Page.captureScreenshot' ? { data: 'AA==' } : undefined);
   const solver = createSliderSolver({
     settings: { isSliderEnabled: vi.fn(async () => options.enabled ?? true) },
     permissions: { contains: vi.fn(async () => options.granted ?? true) },
-    tabs: { sendMessage, captureVisibleTab: vi.fn(async () => 'data:image/png;base64,AA==') },
+    tabs: { sendMessage },
     debugger: { attach, detach, sendCommand },
     decodeImage: vi.fn(async () => screenshot()),
     delay: vi.fn(async () => undefined),
@@ -63,7 +63,8 @@ describe('slider solver', () => {
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success', confidence: expect.any(Number) });
     expect(app.attach).toHaveBeenCalledOnce();
     expect(app.detach).toHaveBeenCalledOnce();
-    expect(app.sendCommand.mock.calls.at(0)?.[1]).toBe('Input.dispatchMouseEvent');
+    expect(app.sendCommand.mock.calls.at(0)?.[1]).toBe('Page.captureScreenshot');
+    expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(true);
     expect(app.sendCommand.mock.calls.at(-1)?.[2]).toMatchObject({ type: 'mouseReleased', button: 'left', buttons: 0 });
   });
 
@@ -82,7 +83,9 @@ describe('slider solver', () => {
   it('stops when the challenge changes between localization and execution', async () => {
     const app = harness({ changed: true });
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toEqual({ state: 'uncertain', reason: 'challenge-changed' });
-    expect(app.attach).not.toHaveBeenCalled();
+    expect(app.attach).toHaveBeenCalledOnce();
+    expect(app.detach).toHaveBeenCalledOnce();
+    expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(false);
   });
 
   it('returns a permission result without attaching when debugger access is absent', async () => {

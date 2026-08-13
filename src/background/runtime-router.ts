@@ -8,7 +8,7 @@ import type { EnableRegistrationOptions } from './content-registration';
 import type { DiagnosticContext, ModelStatusStore, WorkflowActivity, WorkflowActivityOutcome } from './model-status';
 import type { SliderSolver } from '../slider/types';
 
-export interface RuntimeSender { tab?: { id?: number; url?: string }; url?: string; }
+export interface RuntimeSender { tab?: { id?: number; url?: string; windowId?: number }; url?: string; }
 export interface RuntimeRouterAdapter {
   permissions: {
     contains(details: { origins?: readonly string[]; permissions?: readonly string[] }): Promise<boolean>;
@@ -25,7 +25,7 @@ export interface RuntimeRouterAdapter {
   settings?: Pick<SettingsStore, 'read' | 'setCopyOnNoField' | 'setAutoFill' | 'setRecognitionShortcut'> &
     Partial<Pick<SettingsStore, 'isSliderEnabled' | 'setSliderEnabled'>>;
   sliderSolver?: SliderSolver;
-  activeTab(): Promise<{ id?: number; url?: string } | undefined>;
+  activeTab(): Promise<{ id?: number; url?: string; windowId?: number } | undefined>;
 }
 
 interface WarmupRunState {
@@ -186,12 +186,22 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { state: 'unsupported' };
         const pageOriginPermission = permissionOriginForPage(tab.url);
         if (pageOriginPermission === undefined || !await adapter.permissions.contains({ origins: [pageOriginPermission] })) return { state: 'permission-denied', reason: 'site-access-not-granted' };
-        return adapter.sliderSolver.solve({ id: tab.id, url: tab.url }, 'manual');
+        try {
+          return await adapter.sliderSolver.solve({ id: tab.id, url: tab.url, windowId: tab.windowId }, 'manual');
+        } catch (error) {
+          console.error('Slider solver failed', error);
+          return { state: 'failed', reason: 'solver-error' };
+        }
       }
       if (request.type === 'captcha:slider-auto-run') {
         const page = senderPage(sender);
         if (page === undefined || sender.tab?.id === undefined || adapter.sliderSolver === undefined || typeof request.revision !== 'string') return { state: 'permission-denied', reason: 'untrusted-sender' };
-        return adapter.sliderSolver.solve({ id: sender.tab.id, url: page }, 'automatic');
+        try {
+          return await adapter.sliderSolver.solve({ id: sender.tab.id, url: page, windowId: sender.tab.windowId }, 'automatic');
+        } catch (error) {
+          console.error('Slider solver failed', error);
+          return { state: 'failed', reason: 'solver-error' };
+        }
       }
       if (request.type === 'captcha:get-preferences') {
         const settings = await adapter.settings?.read();
