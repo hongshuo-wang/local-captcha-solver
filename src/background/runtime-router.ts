@@ -102,7 +102,7 @@ function isExtensionDocumentUrl(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   try {
     const protocol = new URL(value).protocol;
-    return protocol === 'chrome-extension:' || protocol === 'moz-extension:';
+    return protocol === 'chrome-extension:' || protocol === 'moz-extension:' || protocol === 'edge-extension:' || protocol === 'extension:';
   } catch { return false; }
 }
 

@@ -354,3 +354,13 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await options.screenshot({ path: testInfo.outputPath('captcha-helper-options-behavior-mobile.png'), fullPage: true });
   await options.close();
 });
+
+test('exposes the slider controls on a supported fixture page', async () => {
+  const page = await open('/slider.html');
+  const popup = await openActionPopup(page);
+  await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
+  await expect(popup.locator('[data-run-slider]')).toBeEnabled();
+  await expect(popup.locator('[data-slider-status]')).toHaveText(/此网站未开启自动处理。|Automatic slider handling is disabled for this site\./);
+  await popup.close();
+  await page.close();
+});

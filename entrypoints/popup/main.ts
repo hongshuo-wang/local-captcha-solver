@@ -333,7 +333,7 @@ if (root !== null && typeof browser !== 'undefined') {
         sendMessage: (tabId, message) => browser.tabs.sendMessage(tabId, message),
       },
       scripting: {
-        executeScript: (details) => browser.scripting.executeScript({ target: details.target, files: ['/content-scripts/content.js'] }),
+        executeScript: (details) => (browser.scripting as unknown as { executeScript(value: { target: { tabId: number }; files: string[] }): Promise<unknown> }).executeScript({ target: details.target, files: [...details.files] }),
       },
       runtime: { sendMessage: (message) => sendRuntimeMessage(browser.runtime, message) },
       permissions: browser.permissions,

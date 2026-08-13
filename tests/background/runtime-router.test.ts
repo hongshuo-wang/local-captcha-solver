@@ -270,4 +270,27 @@ describe('background runtime router', () => {
     await expect(router.handle({ type: 'captcha:run-slider' }, { tab: { id: 8, url: 'chrome-extension://test/popup.html' }, url: 'chrome-extension://test/popup.html' })).resolves.toEqual({ state: 'permission-denied', reason: 'site-access-not-granted' });
     expect(solve).not.toHaveBeenCalled();
   });
+
+  it('trusts Edge extension pages for slider popup commands', async () => {
+    const app = harness({ pagePermission: true });
+    const solve = vi.fn(async () => ({ state: 'success' as const }));
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => false),
+        setSliderEnabled: vi.fn(async () => undefined),
+      },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+    await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({ supported: true });
+  });
 });
