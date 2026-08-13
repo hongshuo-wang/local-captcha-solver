@@ -77,6 +77,7 @@ npm run build
 | `activeTab` | 用户明确操作后临时访问当前页面。 |
 | `clipboardWrite` | 通过明确命令或可选设置复制结果；扩展不能读取剪贴板。 |
 | `contextMenus` | 为网页图片添加由用户主动触发的识别命令。 |
+| `debugger` | 仅在用户手动处理滑块，或明确为某个网站开启滑块自动处理时发送可信鼠标输入；每次尝试结束后都会断开连接。 |
 | `offscreen` | 在 Manifest V3 离屏文档中运行内置 ONNX/WebAssembly 模型。 |
 | `scripting` | 用户授权后安装页面辅助脚本。 |
 | `storage` | 在本地保存设置、权限状态、模型状态和最多 20 条经过清理的诊断记录。 |

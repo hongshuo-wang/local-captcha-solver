@@ -171,7 +171,6 @@ export function startPopup(
     read(): Promise<SiteRecognitionMode>;
     write(mode: SiteRecognitionMode): Promise<void>;
   },
-  sliderPermissions?: { requestDebugger(): Promise<boolean> },
 ): void {
   const view = createPopupView(root, locale);
   const t = createTranslator(locale);
@@ -222,11 +221,6 @@ export function startPopup(
     view.sliderCheckbox.disabled = false;
     renderSliderState((value as { enabled?: unknown }).enabled === true);
   };
-  const ensureDebugger = async (): Promise<boolean> => {
-    if (debuggerGranted) return true;
-    debuggerGranted = await sliderPermissions?.requestDebugger() ?? false;
-    return debuggerGranted;
-  };
   const ensureSliderPageAccess = async (): Promise<boolean> => {
     const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
     const pageUrl = typeof tabs[0]?.url === 'string' ? tabs[0].url : undefined;
@@ -255,7 +249,7 @@ export function startPopup(
       view.sliderButton.disabled = true;
       view.sliderStatus.textContent = sliderText.running;
       try {
-        if (!await ensureDebugger() || !await ensureSliderPageAccess()) {
+        if (!debuggerGranted || !await ensureSliderPageAccess()) {
           view.sliderStatus.textContent = sliderText.permission;
           return;
         }
@@ -279,7 +273,7 @@ export function startPopup(
       const requested = view.sliderCheckbox.checked;
       view.sliderCheckbox.disabled = true;
       try {
-        if (sliderHostname === undefined || (requested && (!await ensureDebugger() || !await ensureSliderPageAccess()))) {
+        if (sliderHostname === undefined || (requested && (!debuggerGranted || !await ensureSliderPageAccess()))) {
           view.sliderCheckbox.checked = false;
           view.sliderStatus.textContent = sliderText.permission;
           return;
@@ -351,6 +345,6 @@ if (root !== null && typeof browser !== 'undefined') {
         if (typeof url !== 'string') throw new Error('unsupported page');
         await settingsStore.setSiteRecognitionMode(hostnameForPage(url), mode);
       },
-    }, { requestDebugger: () => browser.permissions.request({ permissions: ['debugger'] }) });
+    });
   });
 }

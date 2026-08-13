@@ -33,6 +33,8 @@ Captcha Helper may write a recognition result to the clipboard when the user exp
 
 Users choose whether to grant access to all HTTP/HTTPS websites or only selected sites. Site access is used to read a CAPTCHA image, run the page helper, and fill a matching input field after a user-authorized workflow. Permissions can be reviewed, disabled, or removed from the extension settings and browser settings.
 
+The slider Beta declares the browser debugger permission to send trusted drag input. It is used only when the user manually requests a slider run or explicitly enables slider automation for the exact current hostname, and the debugger connection is detached after every attempt. Global slider automation is unavailable.
+
 Captcha Helper never clicks a submit button and never submits a form automatically.
 
 ## Storage and deletion
@@ -67,7 +69,7 @@ Captcha Helper 在用户设备本地处理验证码，不会把验证码图片�
 
 只有在用户明确点击“复制”或启用可选复制行为后，扩展才会把识别结果写入剪贴板；扩展不会读取剪贴板。
 
-用户可以选择授权所有 HTTP/HTTPS 网站，也可以只授权指定网站。网站权限仅用于读取验证码图片、运行网页辅助脚本，并在用户授权的流程中填写匹配输入框。扩展不会点击提交按钮，也不会自动提交表单。滑块 Beta 不支持全局自动开启：它需要逐站保存授权，并在用户明确允许后使用可选的浏览器调试权限发送拖动，以避免误操作页面控件。
+用户可以选择授权所有 HTTP/HTTPS 网站，也可以只授权指定网站。网站权限仅用于读取验证码图片、运行网页辅助脚本，并在用户授权的流程中填写匹配输入框。扩展不会点击提交按钮，也不会自动提交表单。滑块 Beta 不支持全局自动开启：扩展声明浏览器调试权限以发送可信拖动，但只有用户手动处理当前滑块或明确为当前网站开启滑块自动处理时才会使用，并在每次操作后立即断开调试连接。
 
 设置、权限状态和诊断记录通过浏览器扩展存储接口保存在本地。用户可以在设置页面清除诊断记录，也可以通过卸载扩展或清除扩展存储删除全部本地数据。
 

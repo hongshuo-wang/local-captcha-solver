@@ -23,6 +23,7 @@ interface ExtensionApi {
     local: { set(values: Record<string, unknown>): Promise<void> };
   };
   scripting: { getRegisteredContentScripts(): Promise<readonly { id: string }[]> };
+  permissions: { contains(details: { permissions: string[] }): Promise<boolean> };
   tabs: {
     query(query: { url?: string[]; active?: boolean; currentWindow?: boolean }): Promise<readonly { id?: number; url?: string }[]>;
     sendMessage(tabId: number, message: unknown): Promise<unknown>;
@@ -361,6 +362,12 @@ test('exposes the slider controls on a supported fixture page', async () => {
   await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
   await expect(popup.locator('[data-run-slider]')).toBeEnabled();
   await expect(popup.locator('[data-slider-status]')).toHaveText(/此网站未开启自动处理。|Automatic slider handling is disabled for this site\./);
+  await popup.locator('[data-slider-enabled]').click();
+  await expect(popup.locator('[data-slider-enabled]')).toBeChecked();
+  await expect.poll(() => worker.evaluate(async () => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    return api?.permissions.contains({ permissions: ['debugger'] });
+  })).toBe(true);
   await popup.close();
   await page.close();
 });

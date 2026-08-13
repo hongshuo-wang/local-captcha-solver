@@ -75,6 +75,7 @@ CAPTCHA images, recognition results, settings, and sanitized diagnostics remain 
 | `activeTab` | Temporarily access the active page after an explicit user action. |
 | `clipboardWrite` | Copy a result through an explicit command or optional setting; the extension cannot read the clipboard. |
 | `contextMenus` | Add user-initiated recognition for page images. |
+| `debugger` | Send trusted mouse input only for a manually requested slider run or a slider site explicitly enabled by the user; the connection is detached after every attempt. |
 | `offscreen` | Run the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
 | `scripting` | Install the page helper after the user grants access. |
 | `storage` | Store settings, permission state, model state, and up to 20 sanitized diagnostic records locally. |

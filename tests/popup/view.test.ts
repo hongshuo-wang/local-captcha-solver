@@ -136,7 +136,7 @@ describe('popup view', () => {
       runtime: { sendMessage },
       permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
     };
-    startPopup(root, adapter, 'zh_CN', undefined, undefined, undefined, { requestDebugger: vi.fn(async () => true) });
+    startPopup(root, adapter, 'zh_CN');
     await vi.waitFor(() => expect((root.querySelector('[data-slider-enabled]') as HTMLInputElement | null)?.disabled).toBe(false));
 
     (root.querySelector('[data-slider-enabled]') as HTMLInputElement).click();

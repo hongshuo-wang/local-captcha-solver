@@ -166,7 +166,6 @@ function behaviorMarkup(settings: CaptchaSettings, t: Translator): string {
     <section class="content-section site-mode-section slider-settings-section">
       <div class="section-heading compact"><div><h2>${t('sliderSitesHeading')}</h2><p class="section-description">${t('sliderSitesDescription')}</p></div><span class="count">${settings.sliderEnabledHosts.length}</span></div>
       ${sliderSites}
-      <button type="button" class="text-button danger" data-remove-debugger>${t('removeDebuggerPermission')}</button>
     </section>
     <section class="content-section language-section">
       <div class="section-heading compact"><h2>${t('languageHeading')}</h2></div>
@@ -282,9 +281,6 @@ export async function startOptions(
     root.querySelectorAll<HTMLButtonElement>('[data-remove-slider]').forEach((button) => button.addEventListener('click', () => {
       void settingsStore.setSliderEnabled(button.dataset.removeSlider!, false).then(() => show(view));
     }));
-    root.querySelector<HTMLButtonElement>('[data-remove-debugger]')?.addEventListener('click', () => {
-      void extension.permissions.remove({ permissions: ['debugger'] }).then(() => show(view));
-    });
     root.querySelector<HTMLSelectElement>('#interface-locale')?.addEventListener('change', (event) => {
       const value = (event.currentTarget as HTMLSelectElement).value;
       if (isInterfaceLocale(value)) void settingsStore.setInterfaceLocale(value).then(() => show(view));
