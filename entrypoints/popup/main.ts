@@ -240,46 +240,61 @@ export function startPopup(
     const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
     const tabId = typeof tabs[0]?.id === 'number' ? tabs[0].id : undefined;
     if (tabId === undefined || adapter.scripting === undefined) return;
-    try { await adapter.tabs.sendMessage?.(tabId, { type: 'captcha:ping' }); }
-    catch {
+    let ready = false;
+    try {
+      const response = await adapter.tabs.sendMessage?.(tabId, { type: 'captcha:ping' });
+      ready = typeof response === 'object' && response !== null && (response as { ok?: unknown }).ok === true;
+    } catch { ready = false; }
+    if (!ready) {
       await adapter.scripting.executeScript({ target: { tabId }, files: ['content-scripts/content.js'] }).catch(() => undefined);
+      await adapter.tabs.sendMessage?.(tabId, { type: 'captcha:ping' }).catch(() => undefined);
     }
   };
   view.sliderButton.addEventListener('click', () => {
     void (async () => {
       view.sliderButton.disabled = true;
       view.sliderStatus.textContent = sliderText.running;
-      if (!await ensureSliderPageAccess() || !await ensureDebugger()) {
-        view.sliderStatus.textContent = sliderText.permission;
+      try {
+        if (!await ensureDebugger() || !await ensureSliderPageAccess()) {
+          view.sliderStatus.textContent = sliderText.permission;
+          return;
+        }
+        await ensureSliderContent();
+        const result = await adapter.runtime.sendMessage({ type: 'captcha:run-slider' });
+        const state = typeof result === 'object' && result !== null ? (result as { state?: unknown }).state : undefined;
+        view.sliderStatus.textContent = state === 'success' ? sliderText.success
+          : state === 'not-found' || state === 'unsupported' ? sliderText.notFound
+            : state === 'low-confidence' ? sliderText.lowConfidence
+              : state === 'permission-denied' ? sliderText.permission
+                : sliderText.failed;
+      } catch {
+        view.sliderStatus.textContent = sliderText.failed;
+      } finally {
         view.sliderButton.disabled = false;
-        return;
       }
-      await ensureSliderContent();
-      const result = await adapter.runtime.sendMessage({ type: 'captcha:run-slider' }).catch(() => ({ state: 'failed' }));
-      const state = typeof result === 'object' && result !== null ? (result as { state?: unknown }).state : undefined;
-      view.sliderStatus.textContent = state === 'success' ? sliderText.success
-        : state === 'not-found' || state === 'unsupported' ? sliderText.notFound
-          : state === 'low-confidence' ? sliderText.lowConfidence
-            : state === 'permission-denied' ? sliderText.permission
-              : sliderText.failed;
-      view.sliderButton.disabled = false;
     })();
   });
   view.sliderCheckbox.addEventListener('change', () => {
     void (async () => {
       const requested = view.sliderCheckbox.checked;
       view.sliderCheckbox.disabled = true;
-      if (sliderHostname === undefined || (requested && (!await ensureSliderPageAccess() || !await ensureDebugger()))) {
-        view.sliderCheckbox.checked = false;
-        view.sliderStatus.textContent = sliderText.permission;
+      try {
+        if (sliderHostname === undefined || (requested && (!await ensureDebugger() || !await ensureSliderPageAccess()))) {
+          view.sliderCheckbox.checked = false;
+          view.sliderStatus.textContent = sliderText.permission;
+          return;
+        }
+        const value = await adapter.runtime.sendMessage({ type: 'captcha:set-slider-enabled', enabled: requested, hostname: sliderHostname });
+        if (requested) await ensureSliderContent();
+        const saved = typeof value === 'object' && value !== null && (value as { enabled?: unknown }).enabled === requested;
+        renderSliderState(saved ? requested : !requested);
+        if (!saved) view.sliderStatus.textContent = sliderText.failed;
+      } catch {
+        view.sliderCheckbox.checked = !requested;
+        view.sliderStatus.textContent = sliderText.failed;
+      } finally {
         view.sliderCheckbox.disabled = false;
-        return;
       }
-      const value = await adapter.runtime.sendMessage({ type: 'captcha:set-slider-enabled', enabled: requested, hostname: sliderHostname }).catch(() => undefined);
-      if (requested) await ensureSliderContent();
-      const saved = typeof value === 'object' && value !== null && (value as { enabled?: unknown }).enabled === requested;
-      renderSliderState(saved ? requested : !requested);
-      view.sliderCheckbox.disabled = false;
     })();
   });
   if (siteModes !== undefined) {

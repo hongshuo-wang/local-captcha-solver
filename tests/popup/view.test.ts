@@ -107,4 +107,46 @@ describe('popup view', () => {
     await vi.waitFor(() => expect(write).toHaveBeenCalledWith('alphanumeric'));
     root.remove();
   });
+
+  it('prepares the slider content script before manual handling and site enablement', async () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    const runtimeMessages: string[] = [];
+    let injected = false;
+    const sendMessage = vi.fn(async (message: { type: string }) => {
+      runtimeMessages.push(message.type);
+      if (message.type === 'captcha:get-model-status') return { status: 'ready', progress: 100, message: 'ready', logs: [] } satisfies ModelStatusSnapshot;
+      if (message.type === 'captcha:get-site-state') return { enabled: true };
+      if (message.type === 'captcha:get-slider-state') return { supported: true, enabled: false, debuggerGranted: true, hostname: 'portal.example.test' };
+      if (message.type === 'captcha:set-slider-enabled') return { supported: true, enabled: true, debuggerGranted: true, hostname: 'portal.example.test' };
+      if (message.type === 'captcha:run-slider') return { state: 'success' };
+      return { reconciled: true };
+    });
+    const tabSendMessage = vi.fn(async (_tabId: number, message: { type: string }) => {
+      if (message.type === 'captcha:ping') return injected ? { ok: true } : undefined;
+      return undefined;
+    });
+    const executeScript = vi.fn(async () => { injected = true; });
+    const adapter: PopupControllerAdapter = {
+      tabs: {
+        query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]),
+        sendMessage: tabSendMessage,
+      },
+      scripting: { executeScript },
+      runtime: { sendMessage },
+      permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
+    };
+    startPopup(root, adapter, 'zh_CN', undefined, undefined, undefined, { requestDebugger: vi.fn(async () => true) });
+    await vi.waitFor(() => expect((root.querySelector('[data-slider-enabled]') as HTMLInputElement | null)?.disabled).toBe(false));
+
+    (root.querySelector('[data-slider-enabled]') as HTMLInputElement).click();
+    await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:set-slider-enabled', enabled: true, hostname: 'portal.example.test' }));
+    await vi.waitFor(() => expect(executeScript).toHaveBeenCalledWith({ target: { tabId: 7 }, files: ['content-scripts/content.js'] }));
+
+    (root.querySelector('[data-run-slider]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:run-slider' }));
+    await vi.waitFor(() => expect(root.querySelector('[data-slider-status]')?.textContent).toBe('滑块验证已通过。'));
+    expect(runtimeMessages).toContain('captcha:reconcile-access');
+    root.remove();
+  });
 });
