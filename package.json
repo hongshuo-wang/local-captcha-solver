@@ -32,6 +32,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:extension": "playwright test -c playwright.extension.config.ts",
+    "test:e2e:slider:edge": "CAPTCHA_E2E_TARGET=edge CAPTCHA_E2E_HEADLESS=1 playwright test -c playwright.extension.config.ts -g 'automatically handles a supported slider'",
     "test:e2e:recognition:chrome": "CAPTCHA_E2E_TARGET=chrome playwright test tests/e2e/recognition.spec.ts",
     "test:e2e:recognition:edge": "CAPTCHA_E2E_TARGET=edge playwright test tests/e2e/recognition.spec.ts",
     "assets:sync": "node scripts/sync-third-party-assets.mjs",

@@ -127,7 +127,7 @@ test.beforeAll(async () => {
   }
   try {
     context = await chromium.launchPersistentContext(profileDirectory, {
-      headless: false,
+      headless: e2eTarget === 'edge' && process.env.CAPTCHA_E2E_HEADLESS === '1',
       ...(executablePath === undefined ? {} : { executablePath }),
       args: [
         `--disable-extensions-except=${extensionPath}`,
@@ -356,7 +356,7 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await options.close();
 });
 
-test('enables slider automation and handles a supported fixture in Edge', async () => {
+test('automatically handles a supported slider after the site is explicitly enabled', async () => {
   const page = await open('/slider.html');
   const popup = await openActionPopup(page);
   await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
@@ -368,9 +368,7 @@ test('enables slider automation and handles a supported fixture in Edge', async 
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     return api?.permissions.contains({ permissions: ['debugger'] });
   })).toBe(true);
-  await popup.locator('[data-run-slider]').click();
-  await expect(popup.locator('[data-slider-status]')).toHaveText(/滑块验证已通过。|Slider verification passed\./, { timeout: 15_000 });
-  await expect(page.locator('#status')).toHaveText('验证成功');
+  await expect(page.locator('#status')).toHaveText('验证成功', { timeout: 15_000 });
   await popup.close();
   await page.close();
 });

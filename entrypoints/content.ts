@@ -10,7 +10,7 @@ import type { OcrResult, RecognitionMode, WorkflowResult } from '../src/core/typ
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
-import { discoverSliderChallenge, observeSliderOutcome } from '../src/slider/challenge-discovery';
+import { discoverSliderChallenge, observeSliderOutcome, sliderDiscoveryKey } from '../src/slider/challenge-discovery';
 
 type Runtime = {
   sendMessage(message: unknown): Promise<unknown>;
@@ -81,7 +81,8 @@ export function createRuntimeContent(runtime: Runtime) {
   let recognitionModes = AUTOMATIC_MODES;
   let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
   let sliderAutomaticEnabled = false;
-  let lastSliderRevision: string | undefined;
+  let lastSliderAttempt: string | undefined;
+  let sliderRunInFlight = false;
   let lastUserInputAt = 0;
   let sliderObserver: MutationObserver | undefined;
   let text = CONTENT_TEXT[uiLocale];
@@ -274,7 +275,11 @@ export function createRuntimeContent(runtime: Runtime) {
     setStatusUiLocale(uiLocale);
     sliderAutomaticEnabled = sliderEnabledFromSettings(settings);
     if (sliderAutomaticEnabled) startSliderObserver();
-    else { sliderObserver?.disconnect(); sliderObserver = undefined; }
+    else {
+      sliderObserver?.disconnect();
+      sliderObserver = undefined;
+      lastSliderAttempt = undefined;
+    }
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
   documentWithShortcut.__localCaptchaShortcutCleanup?.();
@@ -305,6 +310,10 @@ export function createRuntimeContent(runtime: Runtime) {
     window.removeEventListener('auxclick', suppressShortcutDefault, true);
     window.removeEventListener('pointerdown', noteUserInput, true);
     window.removeEventListener('keydown', noteUserInput, true);
+    window.removeEventListener('focus', scheduleSliderScan);
+    document.removeEventListener('visibilitychange', scheduleSliderScan);
+    sliderObserver?.disconnect();
+    if (sliderTimer !== undefined) clearTimeout(sliderTimer);
     unsubscribeSettings?.();
   };
   const enable = () => {
@@ -356,21 +365,35 @@ export function createRuntimeContent(runtime: Runtime) {
   let sliderTimer: ReturnType<typeof setTimeout> | undefined;
   const scanSlider = async (): Promise<void> => {
     sliderTimer = undefined;
-    if (!sliderAutomaticEnabled || document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    if (!sliderAutomaticEnabled || sliderRunInFlight || document.visibilityState !== 'visible' || !document.hasFocus()) return;
     const discovery = await discoverSliderChallenge(document);
-    if (discovery.state !== 'ready' || discovery.challenge.revision === lastSliderRevision || Date.now() - lastUserInputAt < 1200) return;
-    lastSliderRevision = discovery.challenge.revision;
-    void Promise.resolve(runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: discovery.challenge.revision })).catch(() => undefined);
+    const key = sliderDiscoveryKey(discovery);
+    if (key === undefined || key === lastSliderAttempt || Date.now() - lastUserInputAt < 1200) return;
+    lastSliderAttempt = key;
+    sliderRunInFlight = true;
+    try {
+      await runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: key });
+    } catch {
+      // A new DOM revision is required before another automatic attempt.
+    } finally {
+      sliderRunInFlight = false;
+      const current = await discoverSliderChallenge(document).catch(() => ({ state: 'not-found' as const }));
+      lastSliderAttempt = sliderDiscoveryKey(current);
+    }
   };
+  function scheduleSliderScan(): void {
+    if (!sliderAutomaticEnabled) return;
+    if (sliderTimer !== undefined) clearTimeout(sliderTimer);
+    sliderTimer = setTimeout(() => { void scanSlider(); }, 250);
+  }
   const startSliderObserver = (): void => {
     if (!sliderAutomaticEnabled || sliderObserver !== undefined) return;
-    sliderObserver = new MutationObserver(() => {
-      if (sliderTimer !== undefined) clearTimeout(sliderTimer);
-      sliderTimer = setTimeout(() => { void scanSlider(); }, 250);
-    });
+    sliderObserver = new MutationObserver(scheduleSliderScan);
     sliderObserver.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'src'] });
-    setTimeout(() => { void scanSlider(); }, 250);
+    scheduleSliderScan();
   };
+  window.addEventListener('focus', scheduleSliderScan);
+  document.addEventListener('visibilitychange', scheduleSliderScan);
   startSliderObserver();
   return { workflow: displayed, enable, disable };
 }

@@ -75,4 +75,38 @@ describe('slider gap locator', () => {
     expect(result!.x).toBeLessThanOrEqual(166);
     expect(result!.confidence).toBeGreaterThan(.58);
   });
+
+  it('uses piece texture to distinguish a real gap from a competing silhouette edge', () => {
+    const width = 38;
+    const height = 38;
+    const targetX = 164;
+    const targetY = 30;
+    const distractorX = 92;
+    const image = imageWithGap('square', targetX, targetY, width);
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+      const shade = 55 + ((x * 37 + y * 61 + x * y * 7) % 170);
+      luminance[y * width + x] = shade;
+      if (x >= 3 && x < width - 3 && y >= 3 && y < height - 3) alpha[y * width + x] = 255;
+      const target = ((targetY + y) * image.width + targetX + x) * 4;
+      image.data[target] = shade;
+      image.data[target + 1] = shade;
+      image.data[target + 2] = shade;
+    }
+    const border = (originX: number, originY: number): void => {
+      for (let offset = 3; offset < width - 3; offset += 1) for (const [x, y] of [[originX + offset, originY + 3], [originX + offset, originY + height - 4], [originX + 3, originY + offset], [originX + width - 4, originY + offset]]) {
+        const index = (y * image.width + x) * 4;
+        image.data[index] = 10; image.data[index + 1] = 10; image.data[index + 2] = 10;
+      }
+    };
+    border(targetX, targetY);
+    border(distractorX, targetY);
+
+    const result = locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
+    expect(result).toMatchObject({ confidence: expect.any(Number) });
+    expect(result!.x).toBeGreaterThanOrEqual(targetX - 1);
+    expect(result!.x).toBeLessThanOrEqual(targetX + 1);
+    expect(result!.confidence).toBeGreaterThan(.58);
+  });
 });

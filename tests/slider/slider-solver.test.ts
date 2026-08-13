@@ -104,9 +104,16 @@ describe('slider solver', () => {
     expect(clickRelease?.[2]).toMatchObject({ x: 210, y: 65, clickCount: 1 });
   });
 
-  it('does not automatically open a collapsed challenge', async () => {
+  it('opens one collapsed challenge automatically after the site is explicitly enabled', async () => {
     const app = harness({ activatable: true });
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toEqual({ state: 'not-found', reason: 'challenge-not-open' });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success' });
+    expect(app.attach).toHaveBeenCalledTimes(2);
+    expect(app.detach).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not inspect or open a collapsed challenge automatically on a disabled site', async () => {
+    const app = harness({ activatable: true, enabled: false });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toEqual({ state: 'permission-denied', reason: 'site-not-enabled' });
     expect(app.attach).not.toHaveBeenCalled();
   });
 });

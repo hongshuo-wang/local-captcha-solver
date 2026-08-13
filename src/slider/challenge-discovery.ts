@@ -26,6 +26,7 @@ export interface SliderPieceMask {
   alphaWidth: number;
   alphaHeight: number;
   alpha: number[];
+  luminance: number[];
 }
 
 export interface SliderActivatorSnapshot {
@@ -37,6 +38,12 @@ export type SliderChallengeDiscovery =
   | { state: 'ready'; challenge: SliderChallengeSnapshot }
   | { state: 'activatable'; activator: SliderActivatorSnapshot }
   | { state: 'not-found' | 'ambiguous' | 'unsupported' };
+
+export function sliderDiscoveryKey(discovery: SliderChallengeDiscovery): string | undefined {
+  if (discovery.state === 'ready') return `ready|${discovery.challenge.revision}`;
+  if (discovery.state !== 'activatable') return undefined;
+  return `activatable|${discovery.activator.provider}|${rounded(discovery.activator.rect)}`;
+}
 
 const HANDLE_SELECTORS = [
   '[data-slider-handle]',
@@ -191,8 +198,11 @@ async function maskForPiece(piece: { element: Element; rect: SliderRect }, image
   const height = maximumY - minimumY + 1;
   if (width < 20 || height < 20 || width > 120 || height > 120) return undefined;
   const alpha = new Array<number>(width * height);
+  const luminance = new Array<number>(width * height);
   for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
-    alpha[y * width + x] = pixels.data[((minimumY + y) * pixels.width + minimumX + x) * 4 + 3]!;
+    const source = ((minimumY + y) * pixels.width + minimumX + x) * 4;
+    alpha[y * width + x] = pixels.data[source + 3]!;
+    luminance[y * width + x] = pixels.data[source]! * .2126 + pixels.data[source + 1]! * .7152 + pixels.data[source + 2]! * .0722;
   }
   const scaleX = piece.rect.width / pixels.width;
   const scaleY = piece.rect.height / pixels.height;
@@ -204,6 +214,7 @@ async function maskForPiece(piece: { element: Element; rect: SliderRect }, image
     alphaWidth: width,
     alphaHeight: height,
     alpha,
+    luminance,
   };
 }
 

@@ -70,16 +70,18 @@ function dragPoints(start: { x: number; y: number }, endX: number, random: () =>
 
 function scaledPieceMask(challenge: SliderChallengeSnapshot, scaleX: number, scaleY: number) {
   const mask = challenge.pieceMask;
-  if (mask === undefined || mask.alpha.length !== mask.alphaWidth * mask.alphaHeight) return undefined;
+  if (mask === undefined || mask.alpha.length !== mask.alphaWidth * mask.alphaHeight || mask.luminance.length !== mask.alpha.length) return undefined;
   const width = Math.max(1, Math.round(mask.width * scaleX));
   const height = Math.max(1, Math.round(mask.height * scaleY));
   const alpha = new Array<number>(width * height);
+  const luminance = new Array<number>(width * height);
   for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
     const sourceX = Math.min(mask.alphaWidth - 1, Math.floor(x / width * mask.alphaWidth));
     const sourceY = Math.min(mask.alphaHeight - 1, Math.floor(y / height * mask.alphaHeight));
     alpha[y * width + x] = mask.alpha[sourceY * mask.alphaWidth + sourceX]!;
+    luminance[y * width + x] = mask.luminance[sourceY * mask.alphaWidth + sourceX]!;
   }
-  return { offsetY: mask.offsetY * scaleY, width, height, alpha };
+  return { offsetY: mask.offsetY * scaleY, width, height, alpha, luminance };
 }
 
 async function activateChallenge(adapter: SliderSolverAdapter, tabId: number, discovery: Extract<ContentDiscovery, { state: 'activatable' }>, delay: (durationMs: number) => Promise<void>): Promise<ContentDiscovery> {
@@ -143,8 +145,8 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       if (!isDiscovery(initialDiscovery)) return { state: 'failed', reason: 'content-unavailable' };
       let discoveryValue: ContentDiscovery = initialDiscovery;
       if (discoveryValue.state === 'activatable') {
-        if (trigger === 'automatic') return { state: 'not-found', reason: 'challenge-not-open' };
-        if (!discoveryValue.pageVisible || discoveryValue.recentUserInput) return { state: discoveryValue.pageVisible ? 'user-active' : 'page-inactive' };
+        if (!discoveryValue.pageVisible || (trigger === 'automatic' && !discoveryValue.pageFocused)) return { state: 'page-inactive' };
+        if (discoveryValue.recentUserInput) return { state: 'user-active' };
         discoveryValue = await activateChallenge(adapter, tab.id, discoveryValue, delay);
       }
       if (discoveryValue.state !== 'ready') return { state: discoveryValue.state === 'not-found' ? 'not-found' : 'unsupported', reason: discoveryValue.state };

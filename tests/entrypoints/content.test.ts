@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../src/platform/settings-store';
 
 const listener = vi.fn();
-afterEach(() => { vi.resetModules(); vi.unstubAllGlobals(); listener.mockReset(); document.body.innerHTML = ''; });
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.resetModules(); vi.unstubAllGlobals(); listener.mockReset(); document.body.innerHTML = ''; });
 const statusHost = () => document.querySelector<HTMLElement>('[data-local-captcha-status]');
 const statusText = () => statusHost()?.shadowRoot?.textContent ?? '';
 describe('content runtime messages', () => {
@@ -38,6 +38,50 @@ describe('content runtime messages', () => {
     vi.useFakeTimers(); vi.stubGlobal('defineContentScript', (value: unknown) => value); document.body.innerHTML = '<img alt="captcha" width="120" height="40">';
     const { createRuntimeContent } = await import('../../entrypoints/content'); createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } }); const handle = listener.mock.calls[0]?.[0] as (message: unknown) => unknown;
     await expect(handle({ type: 'captcha:get-status' })).resolves.toEqual({ enabled: false }); await expect(handle({ type: 'captcha:auto-enable' })).resolves.toEqual({ enabled: true }); await expect(handle({ type: 'captcha:auto-disable' })).resolves.toEqual({ enabled: false }); vi.useRealTimers();
+  });
+  it('automatically requests one run for a collapsed slider on an explicitly enabled site', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    let pageFocused = false;
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => pageFocused);
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.body.innerHTML = '<button class="geetest_btn_click" style="display:block;visibility:visible;opacity:1">Click to verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ x: 40, y: 30, left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    let finishRun!: () => void;
+    const pendingRun = new Promise<void>((resolve) => { finishRun = resolve; });
+    const sendMessage = vi.fn((message: { type: string }) => message.type === 'captcha:slider-auto-run' ? pendingRun : Promise.resolve(undefined));
+    let updateSettings!: (settings: unknown) => void;
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }),
+        subscribe: (subscriber) => { updateSettings = subscriber; return () => undefined; },
+      },
+    });
+
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(250);
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(0);
+    pageFocused = true;
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(250);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:slider-auto-run', revision: 'activatable|geetest-v4|40:30:260:50' });
+    activator.classList.add('changed-once');
+    await vi.advanceTimersByTimeAsync(250);
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
+
+    finishRun();
+    await pendingRun;
+    activator.classList.add('changed-twice');
+    await vi.advanceTimersByTimeAsync(250);
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [] });
   });
   it('reconciles automatic state when a dynamically registered new document starts', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value);
