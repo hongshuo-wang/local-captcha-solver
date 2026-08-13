@@ -8,6 +8,12 @@ export interface GapLocatorInput {
   image: PixelImage;
   expectedSize: number;
   minimumX?: number;
+  pieceMask?: {
+    offsetY: number;
+    width: number;
+    height: number;
+    alpha: readonly number[];
+  };
 }
 
 export interface GapLocation {
@@ -71,13 +77,56 @@ function perimeterScore(map: Float64Array, width: number, x: number, y: number, 
   return (outer - inner) / perimeterArea - (inner / (innerSize * innerSize)) * .2;
 }
 
+function maskEdges(mask: NonNullable<GapLocatorInput['pieceMask']>): Array<{ x: number; y: number }> {
+  const opaque = (x: number, y: number) => mask.alpha[y * mask.width + x]! > 20;
+  const edges: Array<{ x: number; y: number }> = [];
+  for (let y = 1; y < mask.height - 1; y += 1) for (let x = 1; x < mask.width - 1; x += 1) {
+    if (opaque(x, y) && (!opaque(x - 1, y) || !opaque(x + 1, y) || !opaque(x, y - 1) || !opaque(x, y + 1))) edges.push({ x, y });
+  }
+  return edges;
+}
+
+function locateMaskedGap(image: PixelImage, map: Float32Array, mask: NonNullable<GapLocatorInput['pieceMask']>, minimumX: number): GapLocation | undefined {
+  if (mask.width < 20 || mask.height < 20 || mask.alpha.length !== mask.width * mask.height) return undefined;
+  const edges = maskEdges(mask);
+  if (edges.length < 16) return undefined;
+  const yRadius = Math.max(4, Math.round(mask.height * .12));
+  const minimumY = Math.max(1, Math.round(mask.offsetY) - yRadius);
+  const maximumY = Math.min(image.height - mask.height - 2, Math.round(mask.offsetY) + yRadius);
+  const candidates: Array<{ x: number; y: number; score: number }> = [];
+  for (let y = minimumY; y <= maximumY; y += 1) for (let x = minimumX; x + mask.width < image.width - 1; x += 1) {
+    let edgeScore = 0;
+    for (const edge of edges) edgeScore += map[(y + edge.y) * image.width + x + edge.x]!;
+    let interiorScore = 0;
+    let interiorCount = 0;
+    for (let sampleY = 4; sampleY < mask.height - 4; sampleY += 3) for (let sampleX = 4; sampleX < mask.width - 4; sampleX += 3) {
+      if (mask.alpha[sampleY * mask.width + sampleX]! <= 20) continue;
+      interiorScore += map[(y + sampleY) * image.width + x + sampleX]!;
+      interiorCount += 1;
+    }
+    const score = edgeScore / edges.length - (interiorCount === 0 ? 0 : interiorScore / interiorCount * .35);
+    candidates.push({ x, y, score });
+  }
+  candidates.sort((left, right) => right.score - left.score);
+  const best = candidates[0];
+  if (best === undefined || best.score < 12) return undefined;
+  const competing = candidates.find((candidate) => Math.hypot(candidate.x - best.x, candidate.y - best.y) >= Math.max(mask.width, mask.height) * .75);
+  const competitorScore = Math.max(0, competing?.score ?? 0);
+  const separation = (best.score - competitorScore) / Math.max(best.score, 1);
+  const absolute = Math.min(1, Math.max(0, (best.score - 12) / 35));
+  const confidence = Math.min(1, Math.max(0, separation * .85 + absolute * .15));
+  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score };
+}
+
 export function locateSliderGap(input: GapLocatorInput): GapLocation | undefined {
   const { image } = input;
   if (image.width < 120 || image.height < 60 || image.data.length !== image.width * image.height * 4) return undefined;
-  const size = Math.max(20, Math.min(Math.round(input.expectedSize), Math.floor(Math.min(image.width, image.height) * .6)));
   const minimumX = Math.max(Math.round(image.width * .18), Math.round(input.minimumX ?? 0));
+  const gradient = gradientMap(image);
+  if (input.pieceMask !== undefined) return locateMaskedGap(image, gradient, input.pieceMask, minimumX);
+  const size = Math.max(20, Math.min(Math.round(input.expectedSize), Math.floor(Math.min(image.width, image.height) * .6)));
   if (minimumX + size >= image.width) return undefined;
-  const map = integral(gradientMap(image), image.width, image.height);
+  const map = integral(gradient, image.width, image.height);
   const step = Math.max(1, Math.round(size / 14));
   const candidates: Array<{ x: number; y: number; score: number }> = [];
   for (let y = 1; y + size < image.height - 1; y += step) {

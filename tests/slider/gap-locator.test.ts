@@ -52,4 +52,27 @@ describe('slider gap locator', () => {
     for (let index = 3; index < data.length; index += 4) data[index] = 255;
     expect(locateSliderGap({ image: { width: 220, height: 100, data }, expectedSize: 36 })).toBeUndefined();
   });
+
+  it('uses an arbitrary transparent puzzle silhouette to reject unrelated background edges', () => {
+    const image = imageWithGap('square', 166, 34, 38);
+    const width = 38;
+    const height = 38;
+    const alpha = new Array<number>(width * height).fill(0);
+    const opaque = (x: number, y: number) => x >= 4 && x < 34 && y >= 4 && y < 34 && !(x >= 14 && x < 24 && y < 10);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) alpha[y * width + x] = opaque(x, y) ? 255 : 0;
+    const border = (x: number, y: number): void => {
+      const index = (y * image.width + x) * 4;
+      image.data[index] = 12; image.data[index + 1] = 12; image.data[index + 2] = 12;
+    };
+    for (let y = 1; y < height - 1; y += 1) for (let x = 1; x < width - 1; x += 1) {
+      if (!opaque(x, y) || (opaque(x - 1, y) && opaque(x + 1, y) && opaque(x, y - 1) && opaque(x, y + 1))) continue;
+      border(162 + x, 30 + y);
+    }
+
+    const result = locateSliderGap({ image, expectedSize: 38, pieceMask: { offsetY: 30, width, height, alpha } });
+    expect(result).toMatchObject({ x: expect.any(Number), y: expect.any(Number), confidence: expect.any(Number) });
+    expect(result!.x).toBeGreaterThanOrEqual(160);
+    expect(result!.x).toBeLessThanOrEqual(166);
+    expect(result!.confidence).toBeGreaterThan(.58);
+  });
 });

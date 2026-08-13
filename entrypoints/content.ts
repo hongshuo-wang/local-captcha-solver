@@ -336,13 +336,16 @@ export function createRuntimeContent(runtime: Runtime) {
       return displayed.run(best.snapshot.element, 'explicit');
     }
     if (type === 'captcha:slider-discover') {
-      const discovery = discoverSliderChallenge(document);
-      if (discovery.state !== 'ready') return Promise.resolve(discovery);
-      return Promise.resolve({ ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() });
+      return discoverSliderChallenge(document).then((discovery) => {
+        if (discovery.state !== 'ready' && discovery.state !== 'activatable') return discovery;
+        return { ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() };
+      });
     }
     if (type === 'captcha:slider-outcome') {
       const revision = (message as { revision?: unknown }).revision;
-      return Promise.resolve({ outcome: typeof revision === 'string' ? observeSliderOutcome(revision, document) : 'uncertain' });
+      return typeof revision === 'string'
+        ? observeSliderOutcome(revision, document).then((outcome) => ({ outcome }))
+        : Promise.resolve({ outcome: 'uncertain' });
     }
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
@@ -351,10 +354,10 @@ export function createRuntimeContent(runtime: Runtime) {
   const initialGeneration = lifecycleGeneration;
   void Promise.resolve(runtime.sendMessage({ type: 'captcha:get-site-state' })).then((state) => { if (isSiteState(state) && state.enabled && lifecycleGeneration === initialGeneration) enable(); }).catch(() => undefined);
   let sliderTimer: ReturnType<typeof setTimeout> | undefined;
-  const scanSlider = (): void => {
+  const scanSlider = async (): Promise<void> => {
     sliderTimer = undefined;
     if (!sliderAutomaticEnabled || document.visibilityState !== 'visible' || !document.hasFocus()) return;
-    const discovery = discoverSliderChallenge(document);
+    const discovery = await discoverSliderChallenge(document);
     if (discovery.state !== 'ready' || discovery.challenge.revision === lastSliderRevision || Date.now() - lastUserInputAt < 1200) return;
     lastSliderRevision = discovery.challenge.revision;
     void Promise.resolve(runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: discovery.challenge.revision })).catch(() => undefined);
@@ -363,10 +366,10 @@ export function createRuntimeContent(runtime: Runtime) {
     if (!sliderAutomaticEnabled || sliderObserver !== undefined) return;
     sliderObserver = new MutationObserver(() => {
       if (sliderTimer !== undefined) clearTimeout(sliderTimer);
-      sliderTimer = setTimeout(scanSlider, 250);
+      sliderTimer = setTimeout(() => { void scanSlider(); }, 250);
     });
     sliderObserver.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'src'] });
-    setTimeout(scanSlider, 250);
+    setTimeout(() => { void scanSlider(); }, 250);
   };
   startSliderObserver();
   return { workflow: displayed, enable, disable };

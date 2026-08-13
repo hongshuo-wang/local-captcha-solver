@@ -31,12 +31,13 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean } = {}) {
   let discoveries = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
     if (type === 'captcha:slider-discover') {
       discoveries += 1;
+      if (options.activatable && discoveries === 1) return { state: 'activatable', activator: { provider: 'geetest-v4', rect: { x: 80, y: 40, width: 260, height: 50 } }, recentUserInput: false, pageVisible: true, pageFocused: true };
       return { state: 'ready', challenge: { ...challenge, revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision }, recentUserInput: options.recentUserInput ?? false, pageVisible: true, pageFocused: true };
     }
     if (type === 'captcha:slider-outcome') return { outcome: 'success' };
@@ -91,6 +92,21 @@ describe('slider solver', () => {
   it('returns a permission result without attaching when debugger access is absent', async () => {
     const app = harness({ granted: false });
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toEqual({ state: 'permission-denied', reason: 'debugger-not-granted' });
+    expect(app.attach).not.toHaveBeenCalled();
+  });
+
+  it('opens one collapsed challenge before locating and dragging it manually', async () => {
+    const app = harness({ activatable: true });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({ state: 'success' });
+    expect(app.attach).toHaveBeenCalledTimes(2);
+    expect(app.detach).toHaveBeenCalledTimes(2);
+    const clickRelease = app.sendCommand.mock.calls.find((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string })?.type === 'mouseReleased');
+    expect(clickRelease?.[2]).toMatchObject({ x: 210, y: 65, clickCount: 1 });
+  });
+
+  it('does not automatically open a collapsed challenge', async () => {
+    const app = harness({ activatable: true });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toEqual({ state: 'not-found', reason: 'challenge-not-open' });
     expect(app.attach).not.toHaveBeenCalled();
   });
 });
