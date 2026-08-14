@@ -233,6 +233,24 @@ function imageRevision(element: Element): string {
   return element.getAttribute('src') ?? getComputedStyle(element).backgroundImage;
 }
 
+function fingerprintText(value: string): string {
+  let hash = 2_166_136_261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function fingerprintNumbers(values: readonly number[]): string {
+  let hash = 2_166_136_261;
+  for (const value of values) {
+    hash ^= Math.round(value) & 255;
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
 async function snapshotForHandle(handle: Element): Promise<SliderChallengeSnapshot | undefined> {
   const handleRect = rectFor(handle);
   if (handleRect === undefined || handleRect.width < 18 || handleRect.width > 100 || handleRect.height < 18 || handleRect.height > 100) return undefined;
@@ -254,7 +272,11 @@ async function snapshotForHandle(handle: Element): Promise<SliderChallengeSnapsh
     width: pieceMask.width,
     height: pieceMask.height,
   };
-  const revision = [provider, rounded(challenge), rounded(image.rect), piece === undefined ? '' : rounded(piece), rounded(track.rect), rounded(handleRect), imageRevision(image.element), root.textContent?.trim().slice(0, 80) ?? ''].join('|');
+  const backgroundFingerprint = fingerprintText(backgroundDataUrl ?? imageRevision(image.element));
+  const pieceFingerprint = pieceMask === undefined
+    ? piece === undefined ? '' : `${Math.round(piece.width)}:${Math.round(piece.height)}`
+    : `${pieceMask.alphaWidth}:${pieceMask.alphaHeight}:${fingerprintNumbers(pieceMask.alpha)}:${fingerprintNumbers(pieceMask.luminance)}`;
+  const revision = [provider, backgroundFingerprint, pieceFingerprint].join('|');
   return {
     revision,
     provider,
@@ -278,9 +300,8 @@ function activatorFor(element: Element): SliderActivatorSnapshot | undefined {
 export async function discoverSliderChallenge(root: ParentNode = document): Promise<SliderChallengeDiscovery> {
   const handles = new Set(HANDLE_SELECTORS.flatMap((selector) => [...root.querySelectorAll(selector)]));
   const candidates = (await Promise.all([...handles].map(snapshotForHandle))).filter((value): value is SliderChallengeSnapshot => value !== undefined);
-  const unique = new Map(candidates.map((candidate) => [candidate.revision, candidate]));
-  if (unique.size === 1) return { state: 'ready', challenge: [...unique.values()][0]! };
-  if (unique.size > 1) return { state: 'ambiguous' };
+  if (candidates.length === 1) return { state: 'ready', challenge: candidates[0]! };
+  if (candidates.length > 1) return { state: 'ambiguous' };
   const activators = new Map<string, SliderActivatorSnapshot>();
   for (const selector of ACTIVATOR_SELECTORS) for (const element of root.querySelectorAll(selector)) {
     const activator = activatorFor(element);
