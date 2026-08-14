@@ -293,4 +293,69 @@ describe('background runtime router', () => {
     });
     await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({ supported: true });
   });
+
+  it('exposes automatic slider progress and its terminal result to the popup', async () => {
+    const app = harness({ pagePermission: true });
+    let finishSolve: ((value: { state: 'success'; confidence: number }) => void) | undefined;
+    const solve = vi.fn(() => new Promise<{ state: 'success'; confidence: number }>((resolve) => { finishSolve = resolve; }));
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => true),
+        setSliderEnabled: vi.fn(async () => undefined),
+      },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+    const pending = router.handle({ type: 'captcha:slider-auto-run', revision: 'challenge-1' }, sender);
+    await vi.waitFor(() => expect(solve).toHaveBeenCalledOnce());
+
+    await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({
+      supported: true,
+      enabled: true,
+      activity: { state: 'running', trigger: 'automatic', at: expect.any(Number) },
+    });
+
+    finishSolve?.({ state: 'success', confidence: .82 });
+    await expect(pending).resolves.toEqual({ state: 'success', confidence: .82 });
+    await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({
+      activity: { state: 'success', trigger: 'automatic', confidence: .82, at: expect.any(Number) },
+    });
+  });
+
+  it('does not expose slider activity after the active tab navigates', async () => {
+    const app = harness({ pagePermission: true });
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => true),
+        setSliderEnabled: vi.fn(async () => undefined),
+      },
+      sliderSolver: { solve: vi.fn(async () => ({ state: 'success' as const })) },
+      activeTab: app.activeTab,
+    });
+    await router.handle({ type: 'captcha:slider-auto-run', revision: 'challenge-1' }, sender);
+    app.activeTab.mockResolvedValue({ id: 4, url: 'https://portal.example.test/other-page' });
+
+    await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({
+      supported: true,
+      activity: undefined,
+    });
+  });
 });

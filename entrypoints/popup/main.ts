@@ -5,6 +5,9 @@ import { createSettingsStore, hostnameForPage, type SiteRecognitionMode } from '
 import { originsForPage } from '../../src/platform/permissions';
 import { createExtensionBrowserAdapter } from '../../src/background/extension-browser';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
+import { SLIDER_RESULT_STATES, type SliderActivity, type SliderResultState, type SliderSiteState } from '../../src/slider/types';
+
+type SliderDisplayState = 'loading' | 'off' | 'idle' | 'running' | 'unavailable' | SliderResultState;
 
 export interface PopupViewElements extends PopupView {
   checkbox: HTMLInputElement;
@@ -15,6 +18,9 @@ export interface PopupViewElements extends PopupView {
   modeSelect: HTMLSelectElement;
   sliderButton: HTMLButtonElement;
   sliderCheckbox: HTMLInputElement;
+  sliderPanel: HTMLElement;
+  sliderStateMode: HTMLElement;
+  sliderStateTitle: HTMLElement;
   sliderStatus: HTMLElement;
   renderModelStatus(snapshot: ModelStatusSnapshot): void;
 }
@@ -63,13 +69,19 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
       <p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p>
       <label class="mode-row" for="captcha-mode"><span>${t('captchaType')}</span><select id="captcha-mode" data-captcha-mode><option value="auto">${t('modeAuto')}</option><option value="digits">${t('modeDigits')}</option><option value="letters">${t('modeLetters')}</option><option value="alphanumeric">${t('modeAlphanumeric')}</option><option value="arithmetic">${t('modeArithmetic')}</option></select></label>
     </section>
-    <section class="slider-panel">
+    <section class="slider-panel" data-slider-panel data-state="loading">
       <div class="site-heading">
         <div><p class="section-kicker">${locale === 'zh_CN' ? '动态验证码 Beta' : 'Dynamic CAPTCHA Beta'}</p><h2>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</h2></div>
-        <label class="switch" aria-label="${locale === 'zh_CN' ? '在此网站自动处理滑块' : 'Automatically handle sliders on this site'}"><input type="checkbox" data-slider-enabled aria-describedby="slider-status" /><span aria-hidden="true"></span></label>
+        <div class="slider-toggle"><span>${locale === 'zh_CN' ? '本站接管' : 'Take over this site'}</span><label class="switch" aria-label="${locale === 'zh_CN' ? '在此网站自动处理滑块' : 'Automatically handle sliders on this site'}"><input type="checkbox" data-slider-enabled aria-describedby="slider-status" /><span aria-hidden="true"></span></label></div>
       </div>
-      <button type="button" class="slider-command" data-run-slider>${locale === 'zh_CN' ? '处理当前滑块' : 'Handle current slider'}</button>
-      <p id="slider-status" class="status" role="status" aria-live="polite" data-slider-status></p>
+      <div class="slider-state" role="status" aria-live="polite">
+        <span class="slider-state-indicator" aria-hidden="true"></span>
+        <div class="slider-state-copy">
+          <div class="slider-state-heading"><strong data-slider-state-title>${locale === 'zh_CN' ? '正在读取接管状态' : 'Reading takeover status'}</strong><span class="slider-state-mode" data-slider-state-mode hidden></span></div>
+          <p id="slider-status" data-slider-status>${locale === 'zh_CN' ? '正在确认当前网站设置。' : 'Checking the current site setting.'}</p>
+        </div>
+      </div>
+      <button type="button" class="slider-command" data-run-slider>${locale === 'zh_CN' ? '立即检测当前滑块' : 'Check current slider now'}</button>
       <p class="permission-note">${locale === 'zh_CN' ? '滑块会发送浏览器级拖动。为避免误操作页面控件，不支持全局自动开启，必须逐站授权。' : 'Slider handling sends browser-level drag input. Global automatic mode is unavailable to prevent accidental page actions; enable each site explicitly.'}</p>
     </section>
     <section class="activity-panel">
@@ -96,6 +108,9 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const modeSelect = required<HTMLSelectElement>(root, '[data-captcha-mode]');
   const sliderButton = required<HTMLButtonElement>(root, '[data-run-slider]');
   const sliderCheckbox = required<HTMLInputElement>(root, '[data-slider-enabled]');
+  const sliderPanel = required<HTMLElement>(root, '[data-slider-panel]');
+  const sliderStateMode = required<HTMLElement>(root, '[data-slider-state-mode]');
+  const sliderStateTitle = required<HTMLElement>(root, '[data-slider-state-title]');
   const sliderStatus = required<HTMLElement>(root, '[data-slider-status]');
 
   return {
@@ -107,6 +122,9 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
     modeSelect,
     sliderButton,
     sliderCheckbox,
+    sliderPanel,
+    sliderStateMode,
+    sliderStateTitle,
     sliderStatus,
     render(state: PopupViewState): void {
       hostname.textContent = state.hostname;
@@ -194,32 +212,112 @@ export function startPopup(
   });
   view.settingsButton.addEventListener('click', () => { void openSettings(); });
   const sliderText = locale === 'zh_CN' ? {
-    disabled: '此网站未开启自动处理。', enabled: '已为此网站开启自动处理。', running: '正在定位并拖动…', success: '滑块验证已通过。',
-    notFound: '当前页面未找到唯一、受支持的滑块。', lowConfidence: '定位置信度不足，已停止操作。', permission: '需要浏览器调试权限才能发送可信拖动。', failed: '未能完成滑块验证，请手动处理。', unsupported: '当前页面不支持滑块处理。',
+    off: ['未接管此网站', '开启“本站接管”后，检测到滑块会自动拖动。'],
+    idle: ['已接管本站', '正在等待滑块出现，检测到后会自动处理。'],
+    automaticRunning: ['正在自动拖动', '已发现滑块，正在发送浏览器级拖动。'],
+    manualRunning: ['正在处理当前滑块', '正在定位缺口并发送浏览器级拖动。'],
+    automaticSuccess: ['已自动完成拖动', '本次滑块验证已通过。'],
+    manualSuccess: ['本次处理已完成', '滑块验证已通过。'],
+    notFound: ['未发现可处理的滑块', '已停止操作，可等待滑块出现或再次检测。'],
+    lowConfidence: ['已接管，但没有拖动', '定位结果不够确定，为避免误操作已停止。'],
+    inactive: ['已接管，暂未拖动', '页面当前不可操作，返回页面后会再次检测。'],
+    userActive: ['已暂停自动拖动', '检测到你正在操作页面，本次没有接管。'],
+    permission: ['未获得拖动权限', '需要浏览器调试权限才能发送可信拖动。'],
+    failed: ['本次未能完成', '操作已停止，可手动再次检测。'],
+    unavailable: ['当前页面不可用', '此页面不支持滑块接管。'],
+    automatic: '自动接管', manual: '手动处理', command: '立即检测当前滑块', retry: '重新检测当前滑块', working: '正在处理…',
   } : {
-    disabled: 'Automatic slider handling is disabled for this site.', enabled: 'Automatic slider handling is enabled for this site.', running: 'Locating and dragging...', success: 'Slider verification passed.',
-    notFound: 'No unique supported slider was found.', lowConfidence: 'Gap confidence was too low; no drag was sent.', permission: 'Browser debugging permission is required for trusted drag input.', failed: 'Slider verification did not complete; handle it manually.', unsupported: 'Slider handling is unavailable on this page.',
+    off: ['This site is not taken over', 'Enable site takeover to drag sliders automatically when detected.'],
+    idle: ['Site takeover is active', 'Waiting for a slider; it will be handled automatically.'],
+    automaticRunning: ['Dragging automatically', 'A slider was found and browser-level drag input is being sent.'],
+    manualRunning: ['Handling the current slider', 'Locating the gap and sending browser-level drag input.'],
+    automaticSuccess: ['Automatic drag completed', 'This slider verification passed.'],
+    manualSuccess: ['Current slider completed', 'Slider verification passed.'],
+    notFound: ['No supported slider found', 'No input was sent; wait for a slider or check again.'],
+    lowConfidence: ['Taken over, but not dragged', 'The location was uncertain, so the extension stopped to avoid a wrong action.'],
+    inactive: ['Taken over, waiting to drag', 'The page is not currently actionable; it will be checked again when you return.'],
+    userActive: ['Automatic drag paused', 'You were interacting with the page, so takeover was skipped.'],
+    permission: ['Drag permission unavailable', 'Browser debugging permission is required for trusted drag input.'],
+    failed: ['This attempt did not complete', 'The operation stopped; check the current slider again.'],
+    unavailable: ['Current page unavailable', 'Slider takeover is not supported on this page.'],
+    automatic: 'Automatic', manual: 'Manual', command: 'Check current slider now', retry: 'Check current slider again', working: 'Working…',
   };
   let sliderHostname: string | undefined;
   let debuggerGranted = false;
-  const renderSliderState = (enabled: boolean): void => {
+  let sliderSupported = false;
+  let sliderEnabled = false;
+  let sliderBusy = false;
+  let sliderDisplayState: SliderDisplayState = 'loading';
+  let sliderReadGeneration = 0;
+  const sliderActivity = (value: unknown): SliderActivity | undefined => {
+    if (typeof value !== 'object' || value === null) return undefined;
+    const candidate = value as { state?: unknown; trigger?: unknown; at?: unknown; confidence?: unknown; reason?: unknown };
+    if (candidate.state !== 'running' && !SLIDER_RESULT_STATES.includes(candidate.state as SliderResultState)) return undefined;
+    if (candidate.trigger !== 'manual' && candidate.trigger !== 'automatic') return undefined;
+    if (typeof candidate.at !== 'number' || !Number.isFinite(candidate.at)) return undefined;
+    return {
+      state: candidate.state as SliderActivity['state'],
+      trigger: candidate.trigger,
+      at: candidate.at,
+      ...(typeof candidate.confidence === 'number' ? { confidence: candidate.confidence } : {}),
+      ...(typeof candidate.reason === 'string' ? { reason: candidate.reason } : {}),
+    };
+  };
+  const displayForActivity = (activity: SliderActivity): SliderDisplayState => {
+    if (activity.state === 'unsupported') return 'not-found';
+    return activity.state;
+  };
+  const displayForResult = (state: SliderResultState): SliderDisplayState => state === 'unsupported' ? 'not-found' : state;
+  const updateSliderControls = (): void => {
+    const running = sliderDisplayState === 'running';
+    view.sliderCheckbox.disabled = !sliderSupported || sliderBusy || running || !debuggerGranted;
+    view.sliderButton.disabled = !sliderSupported || sliderBusy || running || !debuggerGranted;
+  };
+  const renderSliderState = (enabled: boolean, state: SliderDisplayState, trigger?: SliderActivity['trigger']): void => {
+    sliderEnabled = enabled;
+    sliderDisplayState = state;
     view.sliderCheckbox.checked = enabled;
-    view.sliderStatus.textContent = enabled ? sliderText.enabled : sliderText.disabled;
+    view.sliderPanel.dataset.state = state;
+    const automatic = trigger === 'automatic';
+    const content = state === 'off' ? sliderText.off
+      : state === 'idle' || state === 'loading' ? sliderText.idle
+        : state === 'running' ? (automatic ? sliderText.automaticRunning : sliderText.manualRunning)
+          : state === 'success' ? (automatic ? sliderText.automaticSuccess : sliderText.manualSuccess)
+            : state === 'not-found' ? sliderText.notFound
+              : state === 'low-confidence' ? sliderText.lowConfidence
+                : state === 'page-inactive' ? sliderText.inactive
+                  : state === 'user-active' ? sliderText.userActive
+                    : state === 'permission-denied' ? sliderText.permission
+                      : state === 'unavailable' ? sliderText.unavailable
+                        : sliderText.failed;
+    view.sliderStateTitle.textContent = content[0];
+    view.sliderStatus.textContent = content[1];
+    view.sliderStateMode.hidden = trigger === undefined;
+    view.sliderStateMode.textContent = automatic ? sliderText.automatic : sliderText.manual;
+    view.sliderButton.textContent = state === 'running' ? sliderText.working
+      : state === 'success' || state === 'not-found' || state === 'low-confidence' || state === 'failed' || state === 'uncertain' ? sliderText.retry
+        : sliderText.command;
+    updateSliderControls();
   };
   const readSliderState = async (): Promise<void> => {
+    const generation = ++sliderReadGeneration;
     const value = await adapter.runtime.sendMessage({ type: 'captcha:get-slider-state' });
+    if (generation !== sliderReadGeneration || sliderBusy) return;
     if (typeof value !== 'object' || value === null || (value as { supported?: unknown }).supported !== true) {
       sliderHostname = undefined;
-      view.sliderButton.disabled = true;
-      view.sliderCheckbox.disabled = true;
-      view.sliderStatus.textContent = sliderText.unsupported;
+      sliderSupported = false;
+      renderSliderState(false, 'unavailable');
       return;
     }
-    sliderHostname = typeof (value as { hostname?: unknown }).hostname === 'string' ? (value as { hostname: string }).hostname : undefined;
-    debuggerGranted = (value as { debuggerGranted?: unknown }).debuggerGranted === true;
-    view.sliderButton.disabled = false;
-    view.sliderCheckbox.disabled = false;
-    renderSliderState((value as { enabled?: unknown }).enabled === true);
+    const state = value as Partial<SliderSiteState>;
+    sliderSupported = true;
+    sliderHostname = typeof state.hostname === 'string' ? state.hostname : undefined;
+    debuggerGranted = state.debuggerGranted === true;
+    const enabled = state.enabled === true;
+    const activity = sliderActivity(state.activity);
+    if (!debuggerGranted) renderSliderState(false, 'permission-denied');
+    else if (activity !== undefined) renderSliderState(enabled, displayForActivity(activity), activity.trigger);
+    else renderSliderState(enabled, enabled ? 'idle' : 'off');
   };
   const ensureSliderPageAccess = async (): Promise<boolean> => {
     const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
@@ -246,48 +344,46 @@ export function startPopup(
   };
   view.sliderButton.addEventListener('click', () => {
     void (async () => {
-      view.sliderButton.disabled = true;
-      view.sliderStatus.textContent = sliderText.running;
+      sliderBusy = true;
+      sliderReadGeneration += 1;
+      renderSliderState(sliderEnabled, 'running', 'manual');
       try {
         if (!debuggerGranted || !await ensureSliderPageAccess()) {
-          view.sliderStatus.textContent = sliderText.permission;
+          renderSliderState(sliderEnabled, 'permission-denied', 'manual');
           return;
         }
         await ensureSliderContent();
         const result = await adapter.runtime.sendMessage({ type: 'captcha:run-slider' });
         const state = typeof result === 'object' && result !== null ? (result as { state?: unknown }).state : undefined;
-        view.sliderStatus.textContent = state === 'success' ? sliderText.success
-          : state === 'not-found' || state === 'unsupported' ? sliderText.notFound
-            : state === 'low-confidence' ? sliderText.lowConfidence
-              : state === 'permission-denied' ? sliderText.permission
-                : sliderText.failed;
+        renderSliderState(sliderEnabled, SLIDER_RESULT_STATES.includes(state as SliderResultState) ? displayForResult(state as SliderResultState) : 'failed', 'manual');
       } catch {
-        view.sliderStatus.textContent = sliderText.failed;
+        renderSliderState(sliderEnabled, 'failed', 'manual');
       } finally {
-        view.sliderButton.disabled = false;
+        sliderBusy = false;
+        updateSliderControls();
       }
     })();
   });
   view.sliderCheckbox.addEventListener('change', () => {
     void (async () => {
       const requested = view.sliderCheckbox.checked;
-      view.sliderCheckbox.disabled = true;
+      sliderBusy = true;
+      sliderReadGeneration += 1;
+      updateSliderControls();
       try {
         if (sliderHostname === undefined || (requested && (!debuggerGranted || !await ensureSliderPageAccess()))) {
-          view.sliderCheckbox.checked = false;
-          view.sliderStatus.textContent = sliderText.permission;
+          renderSliderState(false, 'permission-denied');
           return;
         }
         const value = await adapter.runtime.sendMessage({ type: 'captcha:set-slider-enabled', enabled: requested, hostname: sliderHostname });
         if (requested) await ensureSliderContent();
         const saved = typeof value === 'object' && value !== null && (value as { enabled?: unknown }).enabled === requested;
-        renderSliderState(saved ? requested : !requested);
-        if (!saved) view.sliderStatus.textContent = sliderText.failed;
+        renderSliderState(saved ? requested : !requested, saved ? (requested ? 'idle' : 'off') : 'failed');
       } catch {
-        view.sliderCheckbox.checked = !requested;
-        view.sliderStatus.textContent = sliderText.failed;
+        renderSliderState(!requested, 'failed');
       } finally {
-        view.sliderCheckbox.disabled = false;
+        sliderBusy = false;
+        updateSliderControls();
       }
     })();
   });
@@ -309,10 +405,20 @@ export function startPopup(
   }
   void controller.start();
   void modelController.start();
-  void readSliderState().catch(() => {
-    view.sliderButton.disabled = true;
-    view.sliderCheckbox.disabled = true;
-    view.sliderStatus.textContent = sliderText.failed;
+  const scheduleSliderRefresh = (): void => {
+    globalThis.setTimeout(() => {
+      if (!root.isConnected) return;
+      if (sliderBusy) {
+        scheduleSliderRefresh();
+        return;
+      }
+      void readSliderState().catch(() => undefined).finally(scheduleSliderRefresh);
+    }, 500);
+  };
+  void readSliderState().then(scheduleSliderRefresh).catch(() => {
+    sliderSupported = false;
+    renderSliderState(false, 'failed');
+    scheduleSliderRefresh();
   });
 }
 

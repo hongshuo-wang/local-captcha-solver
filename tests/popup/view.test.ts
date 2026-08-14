@@ -138,15 +138,53 @@ describe('popup view', () => {
     };
     startPopup(root, adapter, 'zh_CN');
     await vi.waitFor(() => expect((root.querySelector('[data-slider-enabled]') as HTMLInputElement | null)?.disabled).toBe(false));
+    expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('未接管此网站');
 
     (root.querySelector('[data-slider-enabled]') as HTMLInputElement).click();
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:set-slider-enabled', enabled: true, hostname: 'portal.example.test' }));
     await vi.waitFor(() => expect(executeScript).toHaveBeenCalledWith({ target: { tabId: 7 }, files: ['content-scripts/content.js'] }));
+    expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('已接管本站');
 
     (root.querySelector('[data-run-slider]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:run-slider' }));
     await vi.waitFor(() => expect(root.querySelector('[data-slider-status]')?.textContent).toBe('滑块验证已通过。'));
     expect(runtimeMessages).toContain('captcha:reconcile-access');
+    root.remove();
+  });
+
+  it('shows automatic takeover progress and completion without a manual click', async () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    let sliderReadCount = 0;
+    const sendMessage = vi.fn(async (message: { type: string }) => {
+      if (message.type === 'captcha:get-model-status') return { status: 'ready', progress: 100, message: 'ready', logs: [] } satisfies ModelStatusSnapshot;
+      if (message.type === 'captcha:get-site-state') return { enabled: true };
+      if (message.type === 'captcha:get-slider-state') {
+        sliderReadCount += 1;
+        return {
+          supported: true,
+          enabled: true,
+          debuggerGranted: true,
+          hostname: 'portal.example.test',
+          activity: sliderReadCount === 1
+            ? { state: 'running', trigger: 'automatic', at: 1000 }
+            : { state: 'success', trigger: 'automatic', at: 1100 },
+        };
+      }
+      return { enabled: true };
+    });
+    const adapter: PopupControllerAdapter = {
+      tabs: { query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]), sendMessage: vi.fn(async () => ({ ok: true })) },
+      runtime: { sendMessage },
+      permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
+    };
+    startPopup(root, adapter, 'zh_CN');
+
+    await vi.waitFor(() => expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('正在自动拖动'));
+    expect(root.querySelector('[data-slider-panel]')?.getAttribute('data-state')).toBe('running');
+    expect(root.querySelector('[data-slider-state-mode]')?.textContent).toBe('自动接管');
+    await vi.waitFor(() => expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('已自动完成拖动'), { timeout: 1200 });
+    expect(root.querySelector('[data-slider-panel]')?.getAttribute('data-state')).toBe('success');
     root.remove();
   });
 });

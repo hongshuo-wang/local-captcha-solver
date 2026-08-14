@@ -18,11 +18,20 @@ export interface SliderRunResult {
   reason?: string;
 }
 
+export interface SliderActivity {
+  state: 'running' | SliderResultState;
+  trigger: 'manual' | 'automatic';
+  at: number;
+  confidence?: number;
+  reason?: string;
+}
+
 export interface SliderSiteState {
   supported: boolean;
   enabled: boolean;
   debuggerGranted: boolean;
   hostname?: string;
+  activity?: SliderActivity;
 }
 
 export interface SliderSolver {

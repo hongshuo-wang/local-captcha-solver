@@ -356,12 +356,12 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await options.close();
 });
 
-test('automatically handles a supported slider after the site is explicitly enabled', async () => {
+test('automatically handles a supported slider after the site is explicitly enabled', async ({}, testInfo) => {
   const page = await open('/slider.html');
   const popup = await openActionPopup(page);
   await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
   await expect(popup.locator('[data-run-slider]')).toBeEnabled();
-  await expect(popup.locator('[data-slider-status]')).toHaveText(/此网站未开启自动处理。|Automatic slider handling is disabled for this site\./);
+  await expect(popup.locator('[data-slider-state-title]')).toHaveText(/未接管此网站|This site is not taken over/);
   await popup.locator('[data-slider-enabled]').click();
   await expect(popup.locator('[data-slider-enabled]')).toBeChecked();
   await expect.poll(() => worker.evaluate(async () => {
@@ -369,6 +369,9 @@ test('automatically handles a supported slider after the site is explicitly enab
     return api?.permissions.contains({ permissions: ['debugger'] });
   })).toBe(true);
   await expect(page.locator('#status')).toHaveText('验证成功', { timeout: 15_000 });
+  await expect(popup.locator('[data-slider-state-title]')).toHaveText(/已自动完成拖动|Automatic drag completed/);
+  await expect(popup.locator('[data-slider-panel]')).toHaveAttribute('data-state', 'success');
+  await popup.locator('#app').screenshot({ path: testInfo.outputPath('captcha-helper-popup-slider-success.png') });
   await popup.close();
   await page.close();
 });

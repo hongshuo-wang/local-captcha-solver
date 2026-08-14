@@ -6,7 +6,7 @@ import { isInferenceRequest } from '../ocr/protocol';
 import type { RecognitionMode } from '../core/types';
 import type { EnableRegistrationOptions } from './content-registration';
 import type { DiagnosticContext, ModelStatusStore, WorkflowActivity, WorkflowActivityOutcome } from './model-status';
-import type { SliderSolver } from '../slider/types';
+import type { SliderActivity, SliderRunResult, SliderSolver } from '../slider/types';
 
 export interface RuntimeSender { tab?: { id?: number; url?: string; windowId?: number }; url?: string; }
 export interface RuntimeRouterAdapter {
@@ -142,6 +142,14 @@ function diagnosticContext(value: unknown): DiagnosticContext {
 }
 
 export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRouter {
+  interface TrackedSliderActivity extends SliderActivity {
+    generation: number;
+    pageUrl: string;
+  }
+
+  const sliderActivities = new Map<number, TrackedSliderActivity>();
+  const sliderActivityLifetimeMs = { running: 30_000, terminal: 120_000 } as const;
+  let sliderRunGeneration = 0;
   const startWarmup = (): void => {
     void runWarmup(adapter)?.catch(() => undefined);
   };
@@ -149,6 +157,35 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
     if (sender.tab !== undefined && !isExtensionDocumentUrl(sender.url)) return senderPage(sender);
     const tab = await adapter.activeTab();
     return typeof tab?.url === 'string' && pageOrigin(tab.url) !== undefined ? tab.url : undefined;
+  };
+  const sliderActivityFor = (tab: { id: number; url: string }): SliderActivity | undefined => {
+    const activity = sliderActivities.get(tab.id);
+    if (activity === undefined) return undefined;
+    const lifetime = activity.state === 'running' ? sliderActivityLifetimeMs.running : sliderActivityLifetimeMs.terminal;
+    if (activity.pageUrl !== tab.url || Date.now() - activity.at > lifetime) {
+      sliderActivities.delete(tab.id);
+      return undefined;
+    }
+    const { generation: _generation, pageUrl: _pageUrl, ...visible } = activity;
+    return visible;
+  };
+  const runSlider = async (
+    tab: { id: number; url: string; windowId?: number },
+    trigger: 'manual' | 'automatic',
+  ): Promise<SliderRunResult> => {
+    const generation = ++sliderRunGeneration;
+    sliderActivities.set(tab.id, { state: 'running', trigger, at: Date.now(), generation, pageUrl: tab.url });
+    let result: SliderRunResult;
+    try {
+      result = await adapter.sliderSolver!.solve(tab, trigger);
+    } catch (error) {
+      console.error('Slider solver failed', error);
+      result = { state: 'failed', reason: 'solver-error' };
+    }
+    if (sliderActivities.get(tab.id)?.generation === generation) {
+      sliderActivities.set(tab.id, { ...result, trigger, at: Date.now(), generation, pageUrl: tab.url });
+    }
+    return result;
   };
 
   return {
@@ -163,7 +200,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
           const hostname = hostnameForPage(tab.url);
           const enabled = await adapter.settings?.isSliderEnabled?.(tab.url) ?? false;
           const debuggerGranted = await adapter.permissions.contains({ permissions: ['debugger'] });
-          return { supported: true, enabled, debuggerGranted, hostname };
+          return { supported: true, enabled, debuggerGranted, hostname, activity: sliderActivityFor({ id: tab.id, url: tab.url }) };
         } catch { return { supported: false, enabled: false, debuggerGranted: false }; }
       }
       if (request.type === 'captcha:set-slider-enabled') {
@@ -177,6 +214,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
           if (request.enabled && !debuggerGranted) return { supported: true, enabled: false, debuggerGranted: false, hostname, reason: 'permission-denied' };
           if (adapter.settings?.setSliderEnabled === undefined) throw new Error('Slider settings are unavailable');
           await adapter.settings.setSliderEnabled(hostname, request.enabled);
+          sliderActivities.delete(tab.id);
           return { supported: true, enabled: request.enabled, debuggerGranted, hostname };
         } catch { return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' }; }
       }
@@ -186,22 +224,12 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { state: 'unsupported' };
         const pageOriginPermission = permissionOriginForPage(tab.url);
         if (pageOriginPermission === undefined || !await adapter.permissions.contains({ origins: [pageOriginPermission] })) return { state: 'permission-denied', reason: 'site-access-not-granted' };
-        try {
-          return await adapter.sliderSolver.solve({ id: tab.id, url: tab.url, windowId: tab.windowId }, 'manual');
-        } catch (error) {
-          console.error('Slider solver failed', error);
-          return { state: 'failed', reason: 'solver-error' };
-        }
+        return runSlider({ id: tab.id, url: tab.url, windowId: tab.windowId }, 'manual');
       }
       if (request.type === 'captcha:slider-auto-run') {
         const page = senderPage(sender);
         if (page === undefined || sender.tab?.id === undefined || adapter.sliderSolver === undefined || typeof request.revision !== 'string') return { state: 'permission-denied', reason: 'untrusted-sender' };
-        try {
-          return await adapter.sliderSolver.solve({ id: sender.tab.id, url: page, windowId: sender.tab.windowId }, 'automatic');
-        } catch (error) {
-          console.error('Slider solver failed', error);
-          return { state: 'failed', reason: 'solver-error' };
-        }
+        return runSlider({ id: sender.tab.id, url: sender.tab.url ?? page, windowId: sender.tab.windowId }, 'automatic');
       }
       if (request.type === 'captcha:get-preferences') {
         const settings = await adapter.settings?.read();
