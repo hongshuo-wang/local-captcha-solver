@@ -34,6 +34,7 @@ function required<T extends Element>(root: ParentNode, selector: string): T {
 function activityText(log: ModelLog | undefined, locale: UiLocale, t: Translator): string {
   if (log === undefined) return t('noActivity');
   if (locale === 'zh_CN') return log.message;
+  if (log.kind === 'slider') return log.outcome === 'success' ? 'Slider verification completed' : 'Slider verification did not complete';
   if (log.outcome === 'failure') return 'Recognition failed';
   if (log.outcome === 'skipped') return 'No safe automatic action';
   if (log.kind === 'warmup') return log.outcome === 'success' ? 'Local model is ready' : 'Preparing the local model';

@@ -9,7 +9,7 @@ function harness() {
   const remove = vi.fn(async () => true);
   const contains = vi.fn(async (_details: { origins: string[] }) => false);
   let retrying = false;
-  const sendMessage = vi.fn(async (message: { type?: string }) => {
+  const sendMessage = vi.fn(async (message: { type?: string }): Promise<unknown> => {
     if (message.type === 'captcha:retry-model-warmup') {
       retrying = true;
       return { status: 'loading', progress: 50, message: 'loading', logs: [] };
@@ -98,6 +98,52 @@ describe('options entrypoint', () => {
     await vi.waitFor(() => expect(app.sendMessage).toHaveBeenCalledWith({ type: 'captcha:clear-diagnostics' }));
     await vi.waitFor(() => expect(root.textContent).toContain('暂无诊断记录'));
 
+    root.remove();
+    location.hash = '';
+  });
+
+  it('shows slider result and drag geometry in local diagnostics', async () => {
+    const app = harness();
+    app.sendMessage.mockImplementation(async (message: { type?: string }) => message.type === 'captcha:get-model-status'
+      ? {
+          status: 'ready', progress: 100, message: 'ready', logs: [{
+            at: 1000,
+            kind: 'slider',
+            outcome: 'failure',
+            message: '滑块验证未通过',
+            site: '2captcha.com',
+            trigger: 'automatic',
+            sliderState: 'failed',
+            provider: 'geetest-v4',
+            confidence: .72,
+            durationMs: 812,
+            gapX: 184.25,
+            gapY: 31,
+            pieceOffsetX: 7.5,
+            imageWidth: 300,
+            imageHeight: 180,
+            trackWidth: 300,
+            handleWidth: 40,
+            scaleX: 2,
+            scaleY: 2,
+            startX: 20,
+            requestedEndX: 196.75,
+            endX: 196.75,
+            releaseX: 196.75,
+          }],
+        }
+      : { reconciled: true });
+    location.hash = 'diagnostics';
+    const root = document.createElement('div');
+    document.body.append(root);
+
+    await startOptions(root, app.extension);
+
+    expect(root.textContent).toContain('provider=geetest-v4');
+    expect(root.textContent).toContain('result=failed');
+    expect(root.textContent).toContain('gapX=184.25');
+    expect(root.textContent).toContain('requestedEndX=196.75');
+    expect(root.textContent).toContain('releaseX=196.75');
     root.remove();
     location.hash = '';
   });

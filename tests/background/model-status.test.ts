@@ -130,13 +130,71 @@ describe('ModelStatusStore', () => {
     ]);
   });
 
+  it('sanitizes and records persistent numerical slider diagnostics without page data', async () => {
+    const write = vi.fn(async (_value: { version: 1; logs: readonly ModelLog[] }) => undefined);
+    const store = createModelStatusStore(() => 1000, { read: vi.fn(async () => undefined), write });
+    const activity = {
+      state: 'failed' as const,
+      trigger: 'automatic' as const,
+      site: 'https://2captcha.com/demo/geetest-v4?token=SECRET',
+      provider: 'geetest-v4' as const,
+      confidence: .72,
+      reason: 'challenge-rejected',
+      durationMs: 812.4,
+      gapX: 184.25,
+      gapY: 31,
+      pieceOffsetX: 7.5,
+      imageWidth: 300,
+      imageHeight: 180,
+      trackWidth: 300,
+      handleWidth: 40,
+      scaleX: 2,
+      scaleY: 2,
+      startX: 20,
+      requestedEndX: 196.75,
+      endX: 196.75,
+      releaseX: 196.75,
+      backgroundDataUrl: 'data:image/png;base64,SECRET',
+      pageText: 'SECRET PAGE CONTENT',
+    };
+
+    store.sliderCompleted(activity);
+
+    expect(store.snapshot().logs).toEqual([expect.objectContaining({
+      kind: 'slider',
+      outcome: 'failure',
+      message: '滑块验证未通过',
+      site: '2captcha.com',
+      trigger: 'automatic',
+      sliderState: 'failed',
+      provider: 'geetest-v4',
+      confidence: .72,
+      durationMs: 812.4,
+      gapX: 184.25,
+      requestedEndX: 196.75,
+      releaseX: 196.75,
+    })]);
+    await vi.waitFor(() => expect(write).toHaveBeenCalled());
+    const persisted = JSON.stringify(write.mock.calls.at(-1)?.[0]);
+    expect(persisted).not.toContain('SECRET');
+    expect(persisted).not.toContain('backgroundDataUrl');
+    expect(persisted).not.toContain('pageText');
+  });
+
   it('hydrates, caps, persists, and clears local diagnostic records', async () => {
     const write = vi.fn(async (_value: { version: 1; logs: readonly ModelLog[] }) => undefined);
-    const read = vi.fn(async () => ({ version: 1, logs: [{ at: 900, kind: 'workflow', outcome: 'success', message: '旧记录', site: 'saved.example' }] }));
+    const read = vi.fn(async () => ({ version: 1, logs: [
+      { at: 850, kind: 'slider', outcome: 'failure', message: '滑块定位置信度不足', site: 'saved.example/path?token=ignored', trigger: 'manual', sliderState: 'low-confidence', provider: 'geetest', gapX: 175, releaseX: Number.POSITIVE_INFINITY },
+      { at: 900, kind: 'workflow', outcome: 'success', message: '旧记录', site: 'saved.example' },
+    ] }));
     const store = createModelStatusStore(() => 1000, { read, write });
 
     await store.hydrate();
-    expect(store.snapshot().logs).toEqual([expect.objectContaining({ message: '旧记录', site: 'saved.example' })]);
+    expect(store.snapshot().logs).toEqual([
+      expect.objectContaining({ kind: 'slider', site: 'saved.example', trigger: 'manual', sliderState: 'low-confidence', provider: 'geetest', gapX: 175 }),
+      expect.objectContaining({ message: '旧记录', site: 'saved.example' }),
+    ]);
+    expect(store.snapshot().logs[0]).not.toHaveProperty('releaseX');
     store.workflowCompleted({ outcome: 'skipped', reason: 'below_threshold', score: 54 });
     await vi.waitFor(() => expect(write).toHaveBeenCalled());
     expect(write.mock.calls.at(-1)?.[0]).toMatchObject({ version: 1, logs: expect.arrayContaining([expect.objectContaining({ reason: 'below_threshold', score: 54 })]) });

@@ -1,8 +1,10 @@
+import { SLIDER_RESULT_STATES, type SliderProvider, type SliderResultState, type SliderRunDiagnostic } from '../slider/types';
+
 export type ModelStatus = 'loading' | 'ready' | 'error';
-export type DiagnosticTrigger = 'automatic' | 'explicit' | 'context';
+export type DiagnosticTrigger = 'automatic' | 'manual' | 'explicit' | 'context';
 export type DiagnosticFieldMatch = 'unique' | 'ambiguous' | 'none';
 
-export interface DiagnosticContext {
+export interface DiagnosticContext extends SliderRunDiagnostic {
   readonly site?: string;
   readonly trigger?: DiagnosticTrigger;
   readonly candidateId?: string;
@@ -14,13 +16,14 @@ export interface DiagnosticContext {
   readonly fillValue?: string;
   readonly confidence?: number;
   readonly match?: DiagnosticFieldMatch;
+  readonly sliderState?: SliderResultState;
   readonly reason?: string;
   readonly error?: string;
 }
 
 export interface ModelLog extends DiagnosticContext {
   readonly at: number;
-  readonly kind: 'warmup' | 'recognition' | 'workflow';
+  readonly kind: 'warmup' | 'recognition' | 'workflow' | 'slider';
   readonly outcome: 'started' | 'success' | 'failure' | 'skipped';
   readonly message: string;
   readonly durationMs?: number;
@@ -28,6 +31,14 @@ export interface ModelLog extends DiagnosticContext {
 
 export type WorkflowActivityOutcome = 'filled' | 'confirmation' | 'copied' | 'no_field' | 'failed' | 'skipped';
 export interface WorkflowActivity extends DiagnosticContext { readonly outcome: WorkflowActivityOutcome }
+export interface SliderDiagnosticActivity extends SliderRunDiagnostic {
+  readonly site?: string;
+  readonly trigger: 'manual' | 'automatic';
+  readonly state: SliderResultState;
+  readonly confidence?: number;
+  readonly reason?: string;
+  readonly durationMs: number;
+}
 
 export interface ModelStatusSnapshot {
   readonly status: ModelStatus;
@@ -55,6 +66,7 @@ export interface ModelStatusStore {
   recognitionSucceeded(durationMs: number, confidence: number, context?: DiagnosticContext): void;
   recognitionFailed(message: string, durationMs: number, modelUnavailable: boolean, context?: DiagnosticContext): void;
   workflowCompleted(activity: WorkflowActivityOutcome | WorkflowActivity): void;
+  sliderCompleted(activity: SliderDiagnosticActivity): void;
 }
 
 type Listener = (snapshot: ModelStatusSnapshot) => void;
@@ -92,30 +104,70 @@ function cleanSource(value: unknown): string | undefined {
   } catch { return cleanText(withoutParameters, 120); }
 }
 
+function cleanSite(value: unknown): string | undefined {
+  const site = cleanText(value, 120);
+  if (site === undefined) return undefined;
+  try { return cleanText(new URL(site).hostname, 120); } catch {
+    return cleanText(site.split(/[/?#]/, 1)[0], 120);
+  }
+}
+
 function sanitizeContext(context: DiagnosticContext = {}): DiagnosticContext {
-  const trigger = context.trigger === 'automatic' || context.trigger === 'explicit' || context.trigger === 'context' ? context.trigger : undefined;
+  const trigger = context.trigger === 'automatic' || context.trigger === 'manual' || context.trigger === 'explicit' || context.trigger === 'context' ? context.trigger : undefined;
   const match = context.match === 'unique' || context.match === 'ambiguous' || context.match === 'none' ? context.match : undefined;
+  const provider: SliderProvider | undefined = context.provider === 'geetest' || context.provider === 'geetest-v4' || context.provider === 'generic' ? context.provider : undefined;
+  const sliderState = context.sliderState !== undefined && SLIDER_RESULT_STATES.includes(context.sliderState) ? context.sliderState : undefined;
+  const coordinate = (value: unknown) => finiteNumber(value, -10_000, 10_000);
+  const dimension = (value: unknown) => finiteNumber(value, 0, 10_000);
+  const scale = (value: unknown) => finiteNumber(value, 0.01, 100);
+  const site = cleanSite(context.site);
+  const candidateId = cleanText(context.candidateId, 80);
+  const width = dimension(context.width);
+  const height = dimension(context.height);
+  const source = cleanSource(context.source);
+  const score = finiteNumber(context.score, 0, 100);
+  const recognizedText = cleanText(context.recognizedText, 160);
+  const fillValue = cleanText(context.fillValue, 160);
+  const confidence = finiteNumber(context.confidence, 0, 1);
+  const reason = cleanText(context.reason, 120);
+  const error = cleanText(context.error);
   return {
-    ...(cleanText(context.site, 120) === undefined ? {} : { site: cleanText(context.site, 120) }),
+    ...(site === undefined ? {} : { site }),
     ...(trigger === undefined ? {} : { trigger }),
-    ...(cleanText(context.candidateId, 80) === undefined ? {} : { candidateId: cleanText(context.candidateId, 80) }),
-    ...(finiteNumber(context.width, 0, 10_000) === undefined ? {} : { width: finiteNumber(context.width, 0, 10_000) }),
-    ...(finiteNumber(context.height, 0, 10_000) === undefined ? {} : { height: finiteNumber(context.height, 0, 10_000) }),
-    ...(cleanSource(context.source) === undefined ? {} : { source: cleanSource(context.source) }),
-    ...(finiteNumber(context.score, 0, 100) === undefined ? {} : { score: finiteNumber(context.score, 0, 100) }),
-    ...(cleanText(context.recognizedText, 160) === undefined ? {} : { recognizedText: cleanText(context.recognizedText, 160) }),
-    ...(cleanText(context.fillValue, 160) === undefined ? {} : { fillValue: cleanText(context.fillValue, 160) }),
-    ...(finiteNumber(context.confidence, 0, 1) === undefined ? {} : { confidence: finiteNumber(context.confidence, 0, 1) }),
+    ...(candidateId === undefined ? {} : { candidateId }),
+    ...(width === undefined ? {} : { width }),
+    ...(height === undefined ? {} : { height }),
+    ...(source === undefined ? {} : { source }),
+    ...(score === undefined ? {} : { score }),
+    ...(recognizedText === undefined ? {} : { recognizedText }),
+    ...(fillValue === undefined ? {} : { fillValue }),
+    ...(confidence === undefined ? {} : { confidence }),
     ...(match === undefined ? {} : { match }),
-    ...(cleanText(context.reason, 120) === undefined ? {} : { reason: cleanText(context.reason, 120) }),
-    ...(cleanText(context.error) === undefined ? {} : { error: cleanText(context.error) }),
+    ...(provider === undefined ? {} : { provider }),
+    ...(sliderState === undefined ? {} : { sliderState }),
+    ...(coordinate(context.gapX) === undefined ? {} : { gapX: coordinate(context.gapX) }),
+    ...(coordinate(context.gapY) === undefined ? {} : { gapY: coordinate(context.gapY) }),
+    ...(coordinate(context.pieceOffsetX) === undefined ? {} : { pieceOffsetX: coordinate(context.pieceOffsetX) }),
+    ...(coordinate(context.pieceOffsetY) === undefined ? {} : { pieceOffsetY: coordinate(context.pieceOffsetY) }),
+    ...(dimension(context.imageWidth) === undefined ? {} : { imageWidth: dimension(context.imageWidth) }),
+    ...(dimension(context.imageHeight) === undefined ? {} : { imageHeight: dimension(context.imageHeight) }),
+    ...(dimension(context.trackWidth) === undefined ? {} : { trackWidth: dimension(context.trackWidth) }),
+    ...(dimension(context.handleWidth) === undefined ? {} : { handleWidth: dimension(context.handleWidth) }),
+    ...(scale(context.scaleX) === undefined ? {} : { scaleX: scale(context.scaleX) }),
+    ...(scale(context.scaleY) === undefined ? {} : { scaleY: scale(context.scaleY) }),
+    ...(coordinate(context.startX) === undefined ? {} : { startX: coordinate(context.startX) }),
+    ...(coordinate(context.requestedEndX) === undefined ? {} : { requestedEndX: coordinate(context.requestedEndX) }),
+    ...(coordinate(context.endX) === undefined ? {} : { endX: coordinate(context.endX) }),
+    ...(coordinate(context.releaseX) === undefined ? {} : { releaseX: coordinate(context.releaseX) }),
+    ...(reason === undefined ? {} : { reason }),
+    ...(error === undefined ? {} : { error }),
   };
 }
 
 function parseLog(value: unknown): ModelLog | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
   const candidate = value as Partial<ModelLog>;
-  const kind = candidate.kind === 'warmup' || candidate.kind === 'recognition' || candidate.kind === 'workflow' ? candidate.kind : undefined;
+  const kind = candidate.kind === 'warmup' || candidate.kind === 'recognition' || candidate.kind === 'workflow' || candidate.kind === 'slider' ? candidate.kind : undefined;
   const outcome = candidate.outcome === 'started' || candidate.outcome === 'success' || candidate.outcome === 'failure' || candidate.outcome === 'skipped' ? candidate.outcome : undefined;
   const at = finiteNumber(candidate.at, 0, Number.MAX_SAFE_INTEGER);
   const message = cleanText(candidate.message, 160);
@@ -251,6 +303,23 @@ export function createModelStatusStore(now: () => number = Date.now, persistence
       };
       const outcome = entry.outcome === 'failed' ? 'failure' : entry.outcome === 'skipped' ? 'skipped' : 'success';
       record('workflow', outcome, messages[entry.outcome], undefined, entry);
+    },
+
+    sliderCompleted(activity) {
+      const messages: Record<SliderResultState, string> = {
+        success: '滑块验证已通过',
+        'not-found': '当前页面未找到唯一滑块',
+        unsupported: '当前滑块暂不支持',
+        'low-confidence': '滑块定位置信度不足',
+        'permission-denied': '滑块处理权限不足',
+        'page-inactive': '页面未处于可处理状态',
+        'user-active': '检测到用户正在操作滑块',
+        failed: '滑块验证未通过',
+        uncertain: '无法确认滑块验证结果',
+      };
+      const skipped = activity.state === 'not-found' || activity.state === 'unsupported' || activity.state === 'permission-denied' || activity.state === 'page-inactive' || activity.state === 'user-active';
+      const outcome = activity.state === 'success' ? 'success' : skipped ? 'skipped' : 'failure';
+      record('slider', outcome, messages[activity.state], activity.durationMs, { ...activity, sliderState: activity.state });
     },
   };
 }

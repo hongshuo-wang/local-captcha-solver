@@ -154,7 +154,7 @@ function isModelLog(value: unknown): value is ModelLog {
   if (typeof value !== 'object' || value === null) return false;
   const log = value as Partial<ModelLog>;
   return typeof log.at === 'number' && Number.isFinite(log.at) &&
-    (log.kind === 'warmup' || log.kind === 'recognition' || log.kind === 'workflow') &&
+    (log.kind === 'warmup' || log.kind === 'recognition' || log.kind === 'workflow' || log.kind === 'slider') &&
     (log.outcome === 'started' || log.outcome === 'success' || log.outcome === 'failure' || log.outcome === 'skipped') &&
     typeof log.message === 'string' &&
     (log.durationMs === undefined || (typeof log.durationMs === 'number' && Number.isFinite(log.durationMs)));

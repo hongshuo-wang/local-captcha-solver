@@ -1,5 +1,5 @@
 import { createExtensionBrowserAdapter, type ExtensionBrowserStoragePermissions } from '../../src/background/extension-browser';
-import type { ModelStatusSnapshot } from '../../src/background/model-status';
+import type { ModelLog, ModelStatusSnapshot } from '../../src/background/model-status';
 import { GLOBAL_HTTP_ORIGINS, originsForPage, originsForSelectedSite } from '../../src/platform/permissions';
 import {
   createSettingsStore,
@@ -48,6 +48,48 @@ function required<T extends Element>(root: ParentNode, selector: string): T {
   const element = root.querySelector<T>(selector);
   if (element === null) throw new Error(`Options view is missing ${selector}`);
   return element;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!);
+}
+
+function diagnosticNumber(value: number | undefined): string | undefined {
+  return value === undefined ? undefined : String(Math.round(value * 100) / 100);
+}
+
+function diagnosticDetails(log: ModelLog): string {
+  const common = [
+    log.site,
+    log.recognizedText,
+    log.fillValue,
+    log.durationMs === undefined ? undefined : `${Math.round(log.durationMs)} ms`,
+  ];
+  if (log.kind !== 'slider') return common.filter((value): value is string => value !== undefined && value !== '').map(escapeHtml).join(' · ');
+  const fields: Array<[string, string | undefined]> = [
+    ['provider', log.provider],
+    ['trigger', log.trigger],
+    ['result', log.sliderState],
+    ['confidence', diagnosticNumber(log.confidence)],
+    ['gapX', diagnosticNumber(log.gapX)],
+    ['gapY', diagnosticNumber(log.gapY)],
+    ['pieceOffsetX', diagnosticNumber(log.pieceOffsetX)],
+    ['pieceOffsetY', diagnosticNumber(log.pieceOffsetY)],
+    ['imageWidth', diagnosticNumber(log.imageWidth)],
+    ['imageHeight', diagnosticNumber(log.imageHeight)],
+    ['trackWidth', diagnosticNumber(log.trackWidth)],
+    ['handleWidth', diagnosticNumber(log.handleWidth)],
+    ['scaleX', diagnosticNumber(log.scaleX)],
+    ['scaleY', diagnosticNumber(log.scaleY)],
+    ['startX', diagnosticNumber(log.startX)],
+    ['requestedEndX', diagnosticNumber(log.requestedEndX)],
+    ['endX', diagnosticNumber(log.endX)],
+    ['releaseX', diagnosticNumber(log.releaseX)],
+  ];
+  return [...common, ...fields.map(([name, value]) => value === undefined ? undefined : `${name}=${value}`)]
+    .filter((value): value is string => value !== undefined && value !== '')
+    .map(escapeHtml)
+    .join(' · ');
 }
 
 function parseHostname(value: string): string {
@@ -177,7 +219,7 @@ function diagnosticsMarkup(snapshot: ModelStatusSnapshot | undefined, t: Transla
   const logs = snapshot?.logs.slice().reverse() ?? [];
   return `${pageHeading(t('navDiagnostics'), t('diagnosticsHeading'), t('diagnosticsBody'))}
     <section class="content-section diagnostics-summary"><div><span class="model-state" data-state="${snapshot?.status ?? 'loading'}"></span><div><strong>${snapshot?.message ?? t('modelLoading')}</strong><progress value="${snapshot?.progress ?? 0}" max="100"></progress></div></div><div class="toolbar"><button type="button" class="secondary-button" data-retry-model>${t('retryModel')}</button><button type="button" class="secondary-button" data-copy-diagnostics>${t('copyDiagnostics')}</button><button type="button" class="text-button danger" data-clear-diagnostics>${t('clearDiagnostics')}</button></div></section>
-    <section class="content-section diagnostic-stream">${logs.length === 0 ? `<p class="empty-state">${t('noDiagnostics')}</p>` : `<ol>${logs.map((log) => `<li><time>${new Date(log.at).toLocaleString()}</time><div><strong>${log.message}</strong><p>${[log.site, log.recognizedText, log.fillValue, log.durationMs === undefined ? undefined : `${Math.round(log.durationMs)} ms`].filter(Boolean).join(' · ')}</p></div></li>`).join('')}</ol>`}</section>`;
+    <section class="content-section diagnostic-stream">${logs.length === 0 ? `<p class="empty-state">${t('noDiagnostics')}</p>` : `<ol>${logs.map((log) => `<li><time>${new Date(log.at).toLocaleString()}</time><div><strong>${escapeHtml(log.message)}</strong><p>${diagnosticDetails(log)}</p></div></li>`).join('')}</ol>`}</section>`;
 }
 
 function aboutMarkup(version: string, t: Translator): string {

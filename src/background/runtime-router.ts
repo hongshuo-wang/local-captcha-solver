@@ -173,6 +173,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
     tab: { id: number; url: string; windowId?: number },
     trigger: 'manual' | 'automatic',
   ): Promise<SliderRunResult> => {
+    const startedAt = performance.now();
     const generation = ++sliderRunGeneration;
     sliderActivities.set(tab.id, { state: 'running', trigger, at: Date.now(), generation, pageUrl: tab.url });
     let result: SliderRunResult;
@@ -182,8 +183,17 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       console.error('Slider solver failed', error);
       result = { state: 'failed', reason: 'solver-error' };
     }
+    adapter.modelStatus.sliderCompleted({
+      site: hostnameForPage(tab.url),
+      trigger,
+      ...result.diagnostic,
+      state: result.state,
+      confidence: result.confidence,
+      reason: result.reason,
+      durationMs: performance.now() - startedAt,
+    });
     if (sliderActivities.get(tab.id)?.generation === generation) {
-      sliderActivities.set(tab.id, { ...result, trigger, at: Date.now(), generation, pageUrl: tab.url });
+      sliderActivities.set(tab.id, { state: result.state, confidence: result.confidence, reason: result.reason, trigger, at: Date.now(), generation, pageUrl: tab.url });
     }
     return result;
   };

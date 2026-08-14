@@ -22,6 +22,10 @@ function screenshot(): PixelImage {
   return { width, height, data };
 }
 
+function blankScreenshot(): PixelImage {
+  return { width: 260, height: 170, data: new Uint8ClampedArray(260 * 170 * 4) };
+}
+
 const challenge = {
   revision: 'challenge-1', provider: 'geetest-v4' as const,
   challenge: { x: 0, y: 0, width: 260, height: 160 },
@@ -31,7 +35,7 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; image?: PixelImage } = {}) {
   let discoveries = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
@@ -51,7 +55,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
     permissions: { contains: vi.fn(async () => options.granted ?? true) },
     tabs: { sendMessage },
     debugger: { attach, detach, sendCommand },
-    decodeImage: vi.fn(async () => screenshot()),
+    decodeImage: vi.fn(async () => options.image ?? screenshot()),
     delay: vi.fn(async () => undefined),
     random: () => .5,
   });
@@ -61,7 +65,27 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
 describe('slider solver', () => {
   it('executes a guarded drag and always detaches after success', async () => {
     const app = harness();
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success', confidence: expect.any(Number) });
+    const result = await app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic');
+    expect(result).toMatchObject({
+      state: 'success',
+      confidence: expect.any(Number),
+      diagnostic: {
+        provider: 'geetest-v4',
+        gapX: expect.any(Number),
+        gapY: expect.any(Number),
+        imageWidth: 260,
+        imageHeight: 110,
+        trackWidth: 260,
+        handleWidth: 38,
+        scaleX: 1,
+        scaleY: 1,
+        startX: 19,
+        requestedEndX: expect.any(Number),
+        endX: expect.any(Number),
+        releaseX: expect.any(Number),
+      },
+    });
+    expect(result.diagnostic?.releaseX).toBe(result.diagnostic?.endX);
     expect(app.attach).toHaveBeenCalledOnce();
     expect(app.detach).toHaveBeenCalledOnce();
     expect(app.sendCommand.mock.calls.at(0)?.[1]).toBe('Page.captureScreenshot');
@@ -83,7 +107,11 @@ describe('slider solver', () => {
 
   it('stops when the challenge changes between localization and execution', async () => {
     const app = harness({ changed: true });
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toEqual({ state: 'uncertain', reason: 'challenge-changed' });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({
+      state: 'uncertain',
+      reason: 'challenge-changed',
+      diagnostic: { provider: 'geetest-v4', gapX: expect.any(Number), imageWidth: 260, trackWidth: 260 },
+    });
     expect(app.attach).toHaveBeenCalledOnce();
     expect(app.detach).toHaveBeenCalledOnce();
     expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(false);
@@ -93,6 +121,24 @@ describe('slider solver', () => {
     const app = harness({ granted: false });
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toEqual({ state: 'permission-denied', reason: 'debugger-not-granted' });
     expect(app.attach).not.toHaveBeenCalled();
+  });
+
+  it('keeps provider and image geometry when localization confidence is too low', async () => {
+    const app = harness({ image: blankScreenshot() });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({
+      state: 'low-confidence',
+      confidence: 0,
+      diagnostic: {
+        provider: 'geetest-v4',
+        imageWidth: 260,
+        imageHeight: 110,
+        trackWidth: 260,
+        handleWidth: 38,
+        scaleX: 1,
+        scaleY: 1,
+      },
+    });
+    expect(app.detach).toHaveBeenCalledOnce();
   });
 
   it('opens one collapsed challenge before locating and dragging it manually', async () => {

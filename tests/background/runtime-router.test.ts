@@ -331,6 +331,57 @@ describe('background runtime router', () => {
     });
   });
 
+  it('records manual and automatic slider results with site, duration, and geometry', async () => {
+    const app = harness({ pagePermission: true });
+    const modelStatus = createModelStatusStore(() => 1000);
+    const solve = vi.fn(async (_tab: { id: number; url: string }, trigger: 'manual' | 'automatic') => ({
+      state: trigger === 'manual' ? 'failed' as const : 'success' as const,
+      confidence: .81,
+      ...(trigger === 'manual' ? { reason: 'challenge-rejected' } : {}),
+      diagnostic: {
+        provider: 'geetest-v4' as const,
+        gapX: 184,
+        gapY: 27,
+        pieceOffsetX: 8,
+        imageWidth: 300,
+        imageHeight: 180,
+        trackWidth: 300,
+        handleWidth: 40,
+        scaleX: 2,
+        scaleY: 2,
+        startX: 20,
+        requestedEndX: 196,
+        endX: 196,
+        releaseX: 196,
+      },
+    }));
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus,
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => true),
+        setSliderEnabled: vi.fn(async () => undefined),
+      },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+
+    await router.handle({ type: 'captcha:run-slider' }, {});
+    await router.handle({ type: 'captcha:slider-auto-run', revision: 'challenge-1' }, sender);
+
+    expect(modelStatus.snapshot().logs).toEqual([
+      expect.objectContaining({ kind: 'slider', sliderState: 'failed', outcome: 'failure', site: 'portal.example.test', trigger: 'manual', reason: 'challenge-rejected', durationMs: expect.any(Number), gapX: 184, requestedEndX: 196, releaseX: 196 }),
+      expect.objectContaining({ kind: 'slider', sliderState: 'success', outcome: 'success', site: 'portal.example.test', trigger: 'automatic', durationMs: expect.any(Number), provider: 'geetest-v4' }),
+    ]);
+  });
+
   it('does not expose slider activity after the active tab navigates', async () => {
     const app = harness({ pagePermission: true });
     const router = createRuntimeRouter({

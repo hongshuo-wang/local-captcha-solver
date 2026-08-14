@@ -1,6 +1,6 @@
 import type { SliderChallengeSnapshot } from './challenge-discovery';
 import { locateSliderGap, type PixelImage } from './gap-locator';
-import type { SliderRunResult, SliderSolver } from './types';
+import type { SliderResultState, SliderRunDiagnostic, SliderRunResult, SliderSolver } from './types';
 
 type ContentDiscovery =
   | { state: 'ready'; challenge: SliderChallengeSnapshot; recentUserInput: boolean; pageVisible: boolean; pageFocused: boolean }
@@ -139,21 +139,37 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
 
   return {
     async solve(tab, trigger): Promise<SliderRunResult> {
-      if (trigger === 'automatic' && !await adapter.settings.isSliderEnabled(tab.url)) return { state: 'permission-denied', reason: 'site-not-enabled' };
-      if (!await adapter.permissions.contains({ permissions: ['debugger'] })) return { state: 'permission-denied', reason: 'debugger-not-granted' };
+      let diagnostic: SliderRunDiagnostic = {};
+      const result = (state: SliderResultState, details: Omit<SliderRunResult, 'state' | 'diagnostic'> = {}): SliderRunResult => ({
+        state,
+        ...details,
+        ...(Object.keys(diagnostic).length === 0 ? {} : { diagnostic: { ...diagnostic } }),
+      });
+      if (trigger === 'automatic' && !await adapter.settings.isSliderEnabled(tab.url)) return result('permission-denied', { reason: 'site-not-enabled' });
+      if (!await adapter.permissions.contains({ permissions: ['debugger'] })) return result('permission-denied', { reason: 'debugger-not-granted' });
       const initialDiscovery = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
-      if (!isDiscovery(initialDiscovery)) return { state: 'failed', reason: 'content-unavailable' };
+      if (!isDiscovery(initialDiscovery)) return result('failed', { reason: 'content-unavailable' });
       let discoveryValue: ContentDiscovery = initialDiscovery;
       if (discoveryValue.state === 'activatable') {
-        if (!discoveryValue.pageVisible || (trigger === 'automatic' && !discoveryValue.pageFocused)) return { state: 'page-inactive' };
-        if (discoveryValue.recentUserInput) return { state: 'user-active' };
+        diagnostic = { provider: discoveryValue.activator.provider };
+        if (!discoveryValue.pageVisible || (trigger === 'automatic' && !discoveryValue.pageFocused)) return result('page-inactive');
+        if (discoveryValue.recentUserInput) return result('user-active');
         discoveryValue = await activateChallenge(adapter, tab.id, discoveryValue, delay);
       }
-      if (discoveryValue.state !== 'ready') return { state: discoveryValue.state === 'not-found' ? 'not-found' : 'unsupported', reason: discoveryValue.state };
-      if (!discoveryValue.pageVisible) return { state: 'page-inactive' };
-      if (trigger === 'automatic' && !discoveryValue.pageFocused) return { state: 'page-inactive' };
-      if (discoveryValue.recentUserInput) return { state: 'user-active' };
+      if (discoveryValue.state !== 'ready') return result(discoveryValue.state === 'not-found' ? 'not-found' : 'unsupported', { reason: discoveryValue.state });
+      if (!discoveryValue.pageVisible) return result('page-inactive');
+      if (trigger === 'automatic' && !discoveryValue.pageFocused) return result('page-inactive');
+      if (discoveryValue.recentUserInput) return result('user-active');
       const before = discoveryValue.challenge;
+      const pieceOffsetX = before.pieceMask?.offsetX ?? (before.piece === undefined ? undefined : before.piece.x - before.image.x);
+      const pieceOffsetY = before.pieceMask?.offsetY ?? (before.piece === undefined ? undefined : before.piece.y - before.image.y);
+      diagnostic = {
+        provider: before.provider,
+        trackWidth: before.track.width,
+        handleWidth: before.handle.width,
+        ...(pieceOffsetX === undefined ? {} : { pieceOffsetX }),
+        ...(pieceOffsetY === undefined ? {} : { pieceOffsetY }),
+      };
       let confidence: number | undefined;
       let attached = false;
       try {
@@ -163,28 +179,37 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const screenshotData = typeof screenshotResult === 'object' && screenshotResult !== null && typeof (screenshotResult as { data?: unknown }).data === 'string'
           ? (screenshotResult as { data: string }).data
           : undefined;
-        if (screenshotData === undefined) return { state: 'failed', reason: 'screenshot-failed' };
+        if (screenshotData === undefined) return result('failed', { reason: 'screenshot-failed' });
         const pixels = await adapter.decodeImage(`data:image/png;base64,${screenshotData}`).catch(() => undefined);
-        if (pixels === undefined) return { state: 'failed', reason: 'screenshot-invalid' };
+        if (pixels === undefined) return result('failed', { reason: 'screenshot-invalid' });
         const cleanBackground = before.backgroundDataUrl === undefined ? undefined : await adapter.decodeImage(before.backgroundDataUrl).catch(() => undefined);
         const cropped = cleanBackground === undefined
           ? crop(pixels, before.image, before.viewport)
           : { image: cleanBackground, scaleX: cleanBackground.width / before.image.width, scaleY: cleanBackground.height / before.image.height };
-        if (cropped === undefined) return { state: 'unsupported', reason: 'image-outside-viewport' };
+        if (cropped === undefined) return result('unsupported', { reason: 'image-outside-viewport' });
+        diagnostic = {
+          ...diagnostic,
+          imageWidth: cropped.image.width,
+          imageHeight: cropped.image.height,
+          scaleX: cropped.scaleX,
+          scaleY: cropped.scaleY,
+        };
         const expectedSize = before.piece === undefined ? Math.max(before.handle.width, before.handle.height) : Math.max(before.piece.width, before.piece.height);
         const pieceMask = scaledPieceMask(before, cropped.scaleX, cropped.scaleY);
         const location = locateSliderGap({ image: cropped.image, expectedSize: expectedSize * (cropped.scaleX + cropped.scaleY) / 2, minimumX: cropped.image.width * .2, ...(pieceMask === undefined ? {} : { pieceMask }) });
-        if (location === undefined || location.confidence < MINIMUM_CONFIDENCE) return { state: 'low-confidence', confidence: location?.confidence ?? 0 };
+        if (location !== undefined) diagnostic = { ...diagnostic, gapX: location.x, gapY: location.y };
+        if (location === undefined || location.confidence < MINIMUM_CONFIDENCE) return result('low-confidence', { confidence: location?.confidence ?? 0 });
         confidence = location.confidence;
         const verifyValue = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
         if (!isDiscovery(verifyValue) || verifyValue.state !== 'ready' || verifyValue.challenge.revision !== before.revision || !verifyValue.pageVisible || (trigger === 'automatic' && !verifyValue.pageFocused) || verifyValue.recentUserInput) {
-          return { state: 'uncertain', reason: 'challenge-changed' };
+          return result('uncertain', { confidence, reason: 'challenge-changed' });
         }
         const start = { x: before.handle.x + before.handle.width / 2, y: before.handle.y + before.handle.height / 2 };
         const requestedEndX = pieceMask === undefined
           ? start.x + (location.x + location.width / 2) / cropped.scaleX - expectedSize / 2
           : start.x + location.x / cropped.scaleX - before.pieceMask!.offsetX;
         const endX = Math.max(before.track.x + before.handle.width / 2, Math.min(before.track.x + before.track.width - before.handle.width / 2, requestedEndX));
+        diagnostic = { ...diagnostic, startX: start.x, requestedEndX, endX };
         const points = dragPoints(start, endX, random);
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.x, y: start.y });
         await delay(45 + Math.round(random() * 45));
@@ -198,19 +223,20 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const end = points.at(-1) ?? { x: endX, y: start.y };
         await delay(55 + Math.round(random() * 45));
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1 });
+        diagnostic = { ...diagnostic, releaseX: end.x };
       } catch {
-        return { state: 'failed', reason: attached ? 'input-failed' : 'debugger-unavailable' };
+        return result('failed', { confidence, reason: attached ? 'input-failed' : 'debugger-unavailable' });
       } finally {
         if (attached) await adapter.debugger.detach(target(tab.id)).catch(() => undefined);
       }
       for (const wait of [250, 500, 750]) {
         await delay(wait);
         const current = outcome(await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-outcome', revision: before.revision }).catch(() => undefined));
-        if (current === 'success') return { state: 'success', confidence };
-        if (current === 'failure') return { state: 'failed', confidence, reason: 'challenge-rejected' };
-        if (current === 'uncertain') return { state: 'uncertain', confidence };
+        if (current === 'success') return result('success', { confidence });
+        if (current === 'failure') return result('failed', { confidence, reason: 'challenge-rejected' });
+        if (current === 'uncertain') return result('uncertain', { confidence });
       }
-      return { state: 'uncertain', confidence, reason: 'outcome-timeout' };
+      return result('uncertain', { confidence, reason: 'outcome-timeout' });
     },
   };
 }
