@@ -20,6 +20,10 @@ export interface SliderRunDiagnostic {
   readonly gapY?: number;
   readonly pieceOffsetX?: number;
   readonly pieceOffsetY?: number;
+  readonly desiredPieceOffsetX?: number;
+  readonly actualPieceOffsetX?: number;
+  readonly pieceErrorX?: number;
+  readonly correctionX?: number;
   readonly imageWidth?: number;
   readonly imageHeight?: number;
   readonly trackWidth?: number;

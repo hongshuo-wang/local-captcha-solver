@@ -84,6 +84,10 @@ function scaledPieceMask(challenge: SliderChallengeSnapshot, scaleX: number, sca
   return { offsetY: mask.offsetY * scaleY, width, height, alpha, luminance };
 }
 
+function pieceOffsetX(challenge: SliderChallengeSnapshot): number | undefined {
+  return challenge.pieceMask?.offsetX ?? (challenge.piece === undefined ? undefined : challenge.piece.x - challenge.image.x);
+}
+
 async function activateChallenge(adapter: SliderSolverAdapter, tabId: number, discovery: Extract<ContentDiscovery, { state: 'activatable' }>, delay: (durationMs: number) => Promise<void>): Promise<ContentDiscovery> {
   const target = { tabId };
   const x = discovery.activator.rect.x + discovery.activator.rect.width / 2;
@@ -161,13 +165,13 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       if (trigger === 'automatic' && !discoveryValue.pageFocused) return result('page-inactive');
       if (discoveryValue.recentUserInput) return result('user-active');
       const before = discoveryValue.challenge;
-      const pieceOffsetX = before.pieceMask?.offsetX ?? (before.piece === undefined ? undefined : before.piece.x - before.image.x);
+      const initialPieceOffsetX = pieceOffsetX(before);
       const pieceOffsetY = before.pieceMask?.offsetY ?? (before.piece === undefined ? undefined : before.piece.y - before.image.y);
       diagnostic = {
         provider: before.provider,
         trackWidth: before.track.width,
         handleWidth: before.handle.width,
-        ...(pieceOffsetX === undefined ? {} : { pieceOffsetX }),
+        ...(initialPieceOffsetX === undefined ? {} : { pieceOffsetX: initialPieceOffsetX }),
         ...(pieceOffsetY === undefined ? {} : { pieceOffsetY }),
       };
       let confidence: number | undefined;
@@ -205,11 +209,14 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
           return result('uncertain', { confidence, reason: 'challenge-changed' });
         }
         const start = { x: before.handle.x + before.handle.width / 2, y: before.handle.y + before.handle.height / 2 };
-        const requestedEndX = pieceMask === undefined
-          ? start.x + (location.x + location.width / 2) / cropped.scaleX - expectedSize / 2
-          : start.x + location.x / cropped.scaleX - before.pieceMask!.offsetX;
-        const endX = Math.max(before.track.x + before.handle.width / 2, Math.min(before.track.x + before.track.width - before.handle.width / 2, requestedEndX));
-        diagnostic = { ...diagnostic, startX: start.x, requestedEndX, endX };
+        const desiredPieceOffsetX = pieceMask === undefined
+          ? (location.x + location.width / 2) / cropped.scaleX - expectedSize / 2
+          : location.x / cropped.scaleX;
+        const requestedEndX = start.x + desiredPieceOffsetX - (initialPieceOffsetX ?? 0);
+        const minimumEndX = before.track.x + before.handle.width / 2;
+        const maximumEndX = before.track.x + before.track.width - before.handle.width / 2;
+        const endX = Math.max(minimumEndX, Math.min(maximumEndX, requestedEndX));
+        diagnostic = { ...diagnostic, desiredPieceOffsetX, startX: start.x, requestedEndX, endX };
         const points = dragPoints(start, endX, random);
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.x, y: start.y });
         await delay(45 + Math.round(random() * 45));
@@ -220,7 +227,22 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
           await delay(16 + Math.round(random() * 16));
           if (index === Math.floor(points.length * .72)) await delay(35 + Math.round(random() * 45));
         }
-        const end = points.at(-1) ?? { x: endX, y: start.y };
+        let end = points.at(-1) ?? { x: endX, y: start.y };
+        for (let measurement = 0; measurement < 2; measurement += 1) {
+          await delay(45);
+          const feedbackValue = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
+          if (!isDiscovery(feedbackValue) || feedbackValue.state !== 'ready' || feedbackValue.challenge.revision !== before.revision) break;
+          const actualPieceOffsetX = pieceOffsetX(feedbackValue.challenge);
+          if (actualPieceOffsetX === undefined) break;
+          const pieceErrorX = desiredPieceOffsetX - actualPieceOffsetX;
+          diagnostic = { ...diagnostic, actualPieceOffsetX, pieceErrorX, correctionX: end.x - endX };
+          if (Math.abs(pieceErrorX) < .5 || measurement === 1) break;
+          const correctedX = Math.max(minimumEndX, Math.min(maximumEndX, end.x + pieceErrorX));
+          if (Math.abs(correctedX - end.x) < .05) break;
+          end = { x: correctedX, y: end.y };
+          diagnostic = { ...diagnostic, correctionX: end.x - endX };
+          await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: end.x, y: end.y, button: 'left', buttons: 1 });
+        }
         await delay(55 + Math.round(random() * 45));
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1 });
         diagnostic = { ...diagnostic, releaseX: end.x };

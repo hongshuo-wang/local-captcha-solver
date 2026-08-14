@@ -120,6 +120,10 @@ describe('options entrypoint', () => {
             gapX: 184.25,
             gapY: 31,
             pieceOffsetX: 7.5,
+            desiredPieceOffsetX: 184.25,
+            actualPieceOffsetX: 184,
+            pieceErrorX: .25,
+            correctionX: 1,
             imageWidth: 300,
             imageHeight: 180,
             trackWidth: 300,
@@ -142,6 +146,8 @@ describe('options entrypoint', () => {
     expect(root.textContent).toContain('provider=geetest-v4');
     expect(root.textContent).toContain('result=failed');
     expect(root.textContent).toContain('gapX=184.25');
+    expect(root.textContent).toContain('pieceErrorX=0.25');
+    expect(root.textContent).toContain('correctionX=1');
     expect(root.textContent).toContain('requestedEndX=196.75');
     expect(root.textContent).toContain('releaseX=196.75');
     root.remove();

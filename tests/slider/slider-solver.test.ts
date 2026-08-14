@@ -35,14 +35,26 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; image?: PixelImage } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; image?: PixelImage; feedbackPieceOffsets?: readonly number[] } = {}) {
   let discoveries = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
     if (type === 'captcha:slider-discover') {
       discoveries += 1;
       if (options.activatable && discoveries === 1) return { state: 'activatable', activator: { provider: 'geetest-v4', rect: { x: 80, y: 40, width: 260, height: 50 } }, recentUserInput: false, pageVisible: true, pageFocused: true };
-      return { state: 'ready', challenge: { ...challenge, revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision }, recentUserInput: options.recentUserInput ?? false, pageVisible: true, pageFocused: true };
+      const feedbackIndex = discoveries - 3;
+      const feedbackPieceOffset = feedbackIndex < 0 ? undefined : options.feedbackPieceOffsets?.[Math.min(feedbackIndex, options.feedbackPieceOffsets.length - 1)];
+      return {
+        state: 'ready',
+        challenge: {
+          ...challenge,
+          revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision,
+          ...(options.feedbackPieceOffsets === undefined ? {} : { piece: { x: feedbackPieceOffset ?? 0, y: 34, width: 38, height: 38 } }),
+        },
+        recentUserInput: options.recentUserInput ?? false,
+        pageVisible: true,
+        pageFocused: true,
+      };
     }
     if (type === 'captcha:slider-outcome') return { outcome: 'success' };
     return undefined;
@@ -139,6 +151,25 @@ describe('slider solver', () => {
       },
     });
     expect(app.detach).toHaveBeenCalledOnce();
+  });
+
+  it('measures and corrects the remaining piece error before releasing', async () => {
+    const app = harness({ feedbackPieceOffsets: [165, 166] });
+    const result = await app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic');
+
+    expect(result).toMatchObject({
+      state: 'success',
+      diagnostic: {
+        desiredPieceOffsetX: 166,
+        actualPieceOffsetX: 166,
+        pieceErrorX: 0,
+        correctionX: 1,
+        endX: 185,
+        releaseX: 186,
+      },
+    });
+    const heldMoves = app.sendCommand.mock.calls.filter((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string; buttons?: number })?.type === 'mouseMoved' && (call[2] as { buttons?: number })?.buttons === 1);
+    expect(heldMoves.at(-1)?.[2]).toMatchObject({ x: 186, buttons: 1 });
   });
 
   it('opens one collapsed challenge before locating and dragging it manually', async () => {
