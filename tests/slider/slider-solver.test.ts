@@ -35,13 +35,15 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; image?: PixelImage; feedbackPieceOffsets?: readonly number[] } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; feedbackPieceOffsets?: readonly number[] } = {}) {
   let discoveries = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
     if (type === 'captcha:slider-discover') {
       discoveries += 1;
       if (options.activatable && discoveries === 1) return { state: 'activatable', activator: { provider: 'geetest-v4', rect: { x: 80, y: 40, width: 260, height: 50 } }, recentUserInput: false, pageVisible: true, pageFocused: true };
+      const activationWidthIndex = options.activatable ? discoveries - 2 : -1;
+      const activationWidth = activationWidthIndex < 0 ? undefined : options.activationWidths?.[Math.min(activationWidthIndex, options.activationWidths.length - 1)];
       const feedbackIndex = discoveries - 3;
       const feedbackPieceOffset = feedbackIndex < 0 ? undefined : options.feedbackPieceOffsets?.[Math.min(feedbackIndex, options.feedbackPieceOffsets.length - 1)];
       return {
@@ -49,6 +51,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
         challenge: {
           ...challenge,
           revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision,
+          ...(activationWidth === undefined ? {} : { image: { ...challenge.image, width: activationWidth }, track: { ...challenge.track, width: activationWidth } }),
           ...(options.feedbackPieceOffsets === undefined ? {} : { piece: { x: feedbackPieceOffset ?? 0, y: 34, width: 38, height: 38 } }),
         },
         recentUserInput: options.recentUserInput ?? false,
@@ -62,16 +65,17 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
   const attach = vi.fn(async () => undefined);
   const detach = vi.fn(async () => undefined);
   const sendCommand = vi.fn(async (_target: { tabId: number }, method: string, _params?: Record<string, unknown>) => method === 'Page.captureScreenshot' ? { data: 'AA==' } : undefined);
+  const delay = vi.fn(async () => undefined);
   const solver = createSliderSolver({
     settings: { isSliderEnabled: vi.fn(async () => options.enabled ?? true) },
     permissions: { contains: vi.fn(async () => options.granted ?? true) },
     tabs: { sendMessage },
     debugger: { attach, detach, sendCommand },
     decodeImage: vi.fn(async () => options.image ?? screenshot()),
-    delay: vi.fn(async () => undefined),
+    delay,
     random: () => .5,
   });
-  return { solver, attach, detach, sendCommand };
+  return { solver, attach, detach, sendCommand, delay };
 }
 
 describe('slider solver', () => {
@@ -186,6 +190,12 @@ describe('slider solver', () => {
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success' });
     expect(app.attach).toHaveBeenCalledTimes(2);
     expect(app.detach).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits for an opened challenge to stop resizing before taking a screenshot', async () => {
+    const app = harness({ activatable: true, activationWidths: [238, 252, 260, 260] });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success' });
+    expect(app.delay.mock.calls.slice(0, 4)).toEqual([[250], [350], [500], [700]]);
   });
 
   it('does not inspect or open a collapsed challenge automatically on a disabled site', async () => {

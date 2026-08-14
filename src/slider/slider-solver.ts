@@ -88,6 +88,20 @@ function pieceOffsetX(challenge: SliderChallengeSnapshot): number | undefined {
   return challenge.pieceMask?.offsetX ?? (challenge.piece === undefined ? undefined : challenge.piece.x - challenge.image.x);
 }
 
+function stableChallengeGeometry(previous: SliderChallengeSnapshot, current: SliderChallengeSnapshot): boolean {
+  if (previous.revision !== current.revision) return false;
+  const rects = [
+    [previous.challenge, current.challenge],
+    [previous.image, current.image],
+    [previous.track, current.track],
+    [previous.handle, current.handle],
+  ] as const;
+  return rects.every(([left, right]) =>
+    Math.abs(left.x - right.x) <= .25 && Math.abs(left.y - right.y) <= .25 &&
+    Math.abs(left.width - right.width) <= .25 && Math.abs(left.height - right.height) <= .25,
+  );
+}
+
 async function activateChallenge(adapter: SliderSolverAdapter, tabId: number, discovery: Extract<ContentDiscovery, { state: 'activatable' }>, delay: (durationMs: number) => Promise<void>): Promise<ContentDiscovery> {
   const target = { tabId };
   const x = discovery.activator.rect.x + discovery.activator.rect.width / 2;
@@ -109,10 +123,10 @@ async function activateChallenge(adapter: SliderSolverAdapter, tabId: number, di
     await delay(wait);
     const current = await adapter.tabs.sendMessage(tabId, { type: 'captcha:slider-discover' }).catch(() => undefined);
     if (!isDiscovery(current)) continue;
+    if (current.state === 'ready' && !current.recentUserInput && latest?.state === 'ready' && stableChallengeGeometry(latest.challenge, current.challenge)) return current;
     latest = current;
-    if (current.state === 'ready' && !current.recentUserInput) return current;
   }
-  return latest?.state === 'ready' ? latest : { state: 'not-found' };
+  return { state: 'not-found' };
 }
 
 function outcome(value: unknown): 'success' | 'failure' | 'pending' | 'uncertain' {

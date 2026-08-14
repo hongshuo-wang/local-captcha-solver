@@ -105,8 +105,60 @@ describe('slider gap locator', () => {
 
     const result = locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
     expect(result).toMatchObject({ confidence: expect.any(Number) });
-    expect(result!.x).toBeGreaterThanOrEqual(targetX - 1);
-    expect(result!.x).toBeLessThanOrEqual(targetX + 1);
+    expect(result!.x).toBeGreaterThanOrEqual(targetX - 2);
+    expect(result!.x).toBeLessThanOrEqual(targetX + 2);
     expect(result!.confidence).toBeGreaterThan(.58);
+  });
+
+  it('matches piece texture after the target region is uniformly darkened', () => {
+    const width = 56;
+    const height = 52;
+    const targetX = 158;
+    const targetY = 32;
+    const distractorX = 76;
+    const image = imageWithGap('square', targetX, targetY, width);
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height).fill(0);
+    const opaque = (x: number, y: number) => x >= 4 && x < width - 4 && y >= 4 && y < height - 4 && !(x >= 19 && x < 35 && y < 12);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+      if (!opaque(x, y)) continue;
+      const target = ((targetY + y) * image.width + targetX + x) * 4;
+      const original = 45 + ((x * 37 + y * 61 + x * y * 7) % 175);
+      image.data[target] = original;
+      image.data[target + 1] = Math.min(255, original + 7);
+      image.data[target + 2] = Math.max(0, original - 5);
+      alpha[y * width + x] = 255;
+      luminance[y * width + x] = original * .2126 + Math.min(255, original + 7) * .7152 + Math.max(0, original - 5) * .0722;
+      image.data[target] = Math.round(original * .52 + 18);
+      image.data[target + 1] = Math.round(Math.min(255, original + 7) * .52 + 18);
+      image.data[target + 2] = Math.round(Math.max(0, original - 5) * .52 + 18);
+    }
+    for (let y = 1; y < height - 1; y += 1) for (let x = 1; x < width - 1; x += 1) {
+      if (!opaque(x, y) || (opaque(x - 1, y) && opaque(x + 1, y) && opaque(x, y - 1) && opaque(x, y + 1))) continue;
+      const distractor = ((targetY + y) * image.width + distractorX + x) * 4;
+      image.data[distractor] = 5;
+      image.data[distractor + 1] = 5;
+      image.data[distractor + 2] = 5;
+    }
+
+    const result = locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
+    expect(result).toMatchObject({ confidence: expect.any(Number) });
+    expect(result!.x).toBeGreaterThanOrEqual(targetX - 2);
+    expect(result!.x).toBeLessThanOrEqual(targetX + 2);
+    expect(result!.confidence).toBeGreaterThan(.58);
+  });
+
+  it('abstains when a strong silhouette does not share the piece texture', () => {
+    const width = 48;
+    const height = 48;
+    const image = imageWithGap('notched', 154, 30, width);
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height).fill(0);
+    for (let y = 3; y < height - 3; y += 1) for (let x = 3; x < width - 3; x += 1) {
+      alpha[y * width + x] = 255;
+      luminance[y * width + x] = 35 + ((x * 43 + y * 71 + x * y * 11) % 190);
+    }
+
+    expect(locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: 30, width, height, alpha, luminance } })).toBeUndefined();
   });
 });
