@@ -49,7 +49,7 @@ describe('content runtime messages', () => {
     const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
     activator.getBoundingClientRect = () => ({ x: 40, y: 30, left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
     let finishRun!: () => void;
-    const pendingRun = new Promise<void>((resolve) => { finishRun = resolve; });
+    const pendingRun = new Promise<{ state: 'success' }>((resolve) => { finishRun = () => resolve({ state: 'success' }); });
     const sendMessage = vi.fn((message: { type: string }) => message.type === 'captcha:slider-auto-run' ? pendingRun : Promise.resolve(undefined));
     let updateSettings!: (settings: unknown) => void;
     const { createRuntimeContent } = await import('../../entrypoints/content');
@@ -72,12 +72,15 @@ describe('content runtime messages', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:slider-auto-run', revision: 'activatable|geetest-v4|40:30:260:50' });
+    expect(statusText()).toContain('Captcha Helper 正在接管滑块');
     activator.classList.add('changed-once');
     await vi.advanceTimersByTimeAsync(250);
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
 
     finishRun();
     await pendingRun;
+    await Promise.resolve();
+    expect(statusText()).toContain('滑块已自动完成');
     activator.classList.add('changed-twice');
     await vi.advanceTimersByTimeAsync(250);
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);

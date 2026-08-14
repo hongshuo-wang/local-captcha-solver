@@ -1,7 +1,7 @@
 import { acquireImage } from '../src/content/image-source';
 import { imageRevision, isVisible, snapshotForImage, snapshotImages } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
-import { clearWorkflowStatus, setStatusUiLocale, showRecognizing, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
+import { clearWorkflowStatus, setStatusUiLocale, showRecognizing, showSliderStatus, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
 import { fillEmptyField, fillPlaceholderField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
 import { copyText } from '../src/content/clipboard';
@@ -11,6 +11,7 @@ import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
 import { discoverSliderChallenge, observeSliderOutcome, sliderDiscoveryKey } from '../src/slider/challenge-discovery';
+import { SLIDER_RESULT_STATES, type SliderResultState, type SliderRunResult } from '../src/slider/types';
 
 type Runtime = {
   sendMessage(message: unknown): Promise<unknown>;
@@ -22,6 +23,7 @@ function isOcrResults(value: unknown): value is readonly OcrResult[] { return Ar
 function isRecognitionError(value: unknown): value is { type: 'captcha:recognition-error'; code: 'model_unavailable' | 'recognition_failed' } { return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'captcha:recognition-error' && ((value as { code?: unknown }).code === 'model_unavailable' || (value as { code?: unknown }).code === 'recognition_failed'); }
 function isSiteState(value: unknown): value is { enabled: boolean } { return typeof value === 'object' && value !== null && typeof (value as { enabled?: unknown }).enabled === 'boolean'; }
 function isCopyPreference(value: unknown): value is { copyOnNoField: boolean } { return typeof value === 'object' && value !== null && typeof (value as { copyOnNoField?: unknown }).copyOnNoField === 'boolean'; }
+function isSliderRunResult(value: unknown): value is SliderRunResult { return typeof value === 'object' && value !== null && SLIDER_RESULT_STATES.includes((value as { state?: unknown }).state as SliderResultState); }
 function autoFillFromSettings(value: unknown): boolean { return typeof value !== 'object' || value === null || (value as { autoFill?: unknown }).autoFill !== false; }
 function shortcutFromSettings(value: unknown): RecognitionShortcut {
   if (typeof value !== 'object' || value === null) return 'middle';
@@ -371,10 +373,12 @@ export function createRuntimeContent(runtime: Runtime) {
     if (key === undefined || key === lastSliderAttempt || Date.now() - lastUserInputAt < 1200) return;
     lastSliderAttempt = key;
     sliderRunInFlight = true;
+    showSliderStatus({ state: 'running' });
     try {
-      await runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: key });
+      const result = await runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: key });
+      showSliderStatus(isSliderRunResult(result) ? result : { state: 'failed' });
     } catch {
-      // A new DOM revision is required before another automatic attempt.
+      showSliderStatus({ state: 'failed' });
     } finally {
       sliderRunInFlight = false;
       const current = await discoverSliderChallenge(document).catch(() => ({ state: 'not-found' as const }));

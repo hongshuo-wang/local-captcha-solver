@@ -369,6 +369,9 @@ test('automatically handles a supported slider after the site is explicitly enab
     return api?.permissions.contains({ permissions: ['debugger'] });
   })).toBe(true);
   await expect(page.locator('#status')).toHaveText('验证成功', { timeout: 15_000 });
+  await expect(page.locator('[data-local-captcha-status]')).toContainText(/滑块已自动完成|Slider drag completed/);
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: testInfo.outputPath('captcha-helper-slider-page-success.png'), fullPage: true });
   await expect(popup.locator('[data-slider-state-title]')).toHaveText(/已自动完成拖动|Automatic drag completed/);
   await expect(popup.locator('[data-slider-panel]')).toHaveAttribute('data-state', 'success');
   await popup.locator('#app').screenshot({ path: testInfo.outputPath('captcha-helper-popup-slider-success.png') });

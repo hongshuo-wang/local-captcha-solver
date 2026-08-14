@@ -1,5 +1,6 @@
 import type { WorkflowResult } from '../core/types';
 import type { UiLocale } from '../platform/i18n';
+import type { SliderResultState, SliderRunResult } from '../slider/types';
 
 export type CopyOutcome = 'copied' | 'disabled' | 'failed';
 export type StatusTone = 'running' | 'success' | 'warning' | 'error' | 'neutral';
@@ -169,6 +170,7 @@ function show(
       .message { color: inherit; font-size: 13px; font-weight: 600; line-height: 1.45; }
       .detail { margin-top: 3px; color: #646d67; font-size: 12px; line-height: 1.45; }
       .close { width: 28px; height: 28px; display: grid; place-items: center; margin: 0; padding: 0; border: 0; border-radius: 6px; color: #68716b; background: transparent; cursor: pointer; font: 18px/1 ui-sans-serif, sans-serif; transition: background .16s ease, color .16s ease, transform .16s ease; }
+      .close[hidden] { display: none; }
       .close:hover { color: #202522; background: #edf0ee; }
       .close:active { transform: translateY(1px); }
       .close:focus-visible, button.action:focus-visible { outline: 2px solid #47725a; outline-offset: 2px; }
@@ -286,6 +288,30 @@ export function showWorkflowStatus(
     onDismiss: options.onDismiss,
     presentation: persistent ? 'panel' : 'toast',
   });
+}
+
+export function showSliderStatus(result: SliderRunResult | { state: 'running' }): void {
+  const state = result.state;
+  const message = state === 'running' ? localized('Captcha Helper 正在接管滑块', 'Captcha Helper is taking over the slider')
+    : state === 'success' ? localized('滑块已自动完成', 'Slider drag completed')
+      : state === 'low-confidence' ? localized('未执行自动拖动', 'Automatic drag was not sent')
+        : state === 'page-inactive' ? localized('已等待页面恢复', 'Waiting for the page to become active')
+          : state === 'user-active' ? localized('已暂停自动拖动', 'Automatic drag paused')
+            : state === 'permission-denied' ? localized('自动拖动权限不可用', 'Automatic drag permission is unavailable')
+              : state === 'not-found' || state === 'unsupported' ? localized('滑块已变化，本次未拖动', 'The slider changed before it could be dragged')
+                : localized('本次自动拖动未完成', 'Automatic drag did not complete');
+  const detail = state === 'running' ? localized('正在自动定位并拖动，请稍候。', 'Locating and dragging automatically.')
+    : state === 'success' ? localized('Captcha Helper 已完成本次拖动。', 'Captcha Helper completed this drag.')
+      : state === 'low-confidence' ? localized('定位结果不够确定，为避免误操作已停止。', 'The location was uncertain, so the extension stopped to avoid a wrong action.')
+        : state === 'page-inactive' ? localized('返回当前页面后会再次检测。', 'The slider will be checked again when this page is active.')
+          : state === 'user-active' ? localized('检测到你正在操作页面，本次没有接管。', 'You were interacting with the page, so takeover was skipped.')
+            : state === 'permission-denied' ? localized('没有向页面发送拖动操作。', 'No drag input was sent to the page.')
+              : state === 'not-found' || state === 'unsupported' ? localized('没有向页面发送拖动操作。', 'No drag input was sent to the page.')
+                : localized('操作已停止，可以手动完成当前验证。', 'The operation stopped; complete the current verification manually.');
+  const warningStates: readonly SliderResultState[] = ['low-confidence', 'page-inactive', 'user-active', 'not-found', 'unsupported', 'uncertain'];
+  const tone: StatusTone = state === 'running' ? 'running' : state === 'success' ? 'success' : warningStates.includes(state as SliderResultState) ? 'warning' : 'error';
+  const timeoutMs = state === 'running' ? 0 : state === 'success' ? 2400 : state === 'permission-denied' ? 5000 : 4000;
+  show(message, undefined, tone, [], { detail, timeoutMs, presentation: 'toast' });
 }
 
 export function clearWorkflowStatus(): void { clearCurrent(); }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearWorkflowStatus, showRecognizing, showWorkflowStatus } from '../../src/content/status-ui';
+import { clearWorkflowStatus, showRecognizing, showSliderStatus, showWorkflowStatus } from '../../src/content/status-ui';
 
 const host = () => document.querySelector<HTMLElement>('[data-local-captcha-status]');
 const shadow = () => host()?.shadowRoot;
@@ -64,5 +64,25 @@ describe('status UI', () => {
     (shadow()?.querySelector('.close') as HTMLButtonElement).click();
     expect(onDismiss).toHaveBeenCalledOnce();
     expect(host()).toBeNull();
+  });
+
+  it('shows slider takeover progress and replaces it with a short completion toast', async () => {
+    vi.useFakeTimers();
+    showSliderStatus({ state: 'running' });
+    expect(shadow()?.textContent).toContain('Captcha Helper 正在接管滑块');
+    expect(host()?.dataset.presentation).toBe('toast');
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(host()).not.toBeNull();
+
+    showSliderStatus({ state: 'success', confidence: .82 });
+    expect(shadow()?.textContent).toContain('滑块已自动完成');
+    await vi.advanceTimersByTimeAsync(2400);
+    expect(host()).toBeNull();
+  });
+
+  it('explains when uncertain slider location prevents a drag', () => {
+    showSliderStatus({ state: 'low-confidence', confidence: .41 });
+    expect(shadow()?.textContent).toContain('未执行自动拖动');
+    expect(shadow()?.textContent).toContain('为避免误操作已停止');
   });
 });
