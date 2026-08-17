@@ -111,8 +111,10 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
   const reconcileInternal = async (): Promise<void> => {
       const settings = await adapter.settings.read();
       const desired: Required<RegisteredContentScript>[] = [];
+      let globalAccess = false;
       if (settings.accessMode === 'all') {
-        if (await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS })) desired.push(globalScript());
+        globalAccess = await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS });
+        if (globalAccess) desired.push(globalScript());
       } else {
         for (const rule of settings.selectedSites) {
           const origins = originsForSelectedSite(rule);
@@ -120,6 +122,20 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
         }
       }
       for (const hostname of settings.sliderEnabledHosts) {
+        if (globalAccess) continue;
+        let coveredBySelectedSite = false;
+        if (settings.accessMode === 'selected') {
+          for (const rule of settings.selectedSites) {
+            if (!selectedSiteMatches(rule, hostname)) continue;
+            try {
+              if (await adapter.permissions.contains({ origins: originsForSelectedSite(rule) })) {
+                coveredBySelectedSite = true;
+                break;
+              }
+            } catch { /* An unavailable rule does not cover the slider host. */ }
+          }
+        }
+        if (coveredBySelectedSite) continue;
         const origins = exactOrigins(hostname);
         if (await adapter.permissions.contains({ origins })) desired.push(await exactSliderScript(hostname));
       }

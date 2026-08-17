@@ -39,6 +39,13 @@ describe('content registration', () => {
     expect(app.registerContentScripts).toHaveBeenCalledWith([{ id: GLOBAL_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: ['content-scripts/content.js'], persistAcrossSessions: true }]);
   });
 
+  it('does not register a second slider content script when global access already covers the host', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { ...defaults, sliderEnabledHosts: ['portal.example.test'] });
+    await app.registration.reconcile();
+    expect(app.registerContentScripts).toHaveBeenCalledWith([{ id: GLOBAL_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: ['content-scripts/content.js'], persistAcrossSessions: true }]);
+  });
+
   it('removes old per-site registrations and stays unregistered without global access', async () => {
     const app = harness({ permitted: false, registrations: [{ id: 'captcha-auto-old', matches: ['https://old.example.test/*'], js: ['content-scripts/content.js'], persistAcrossSessions: true }] });
     await app.registration.reconcile();
@@ -117,5 +124,18 @@ describe('content registration', () => {
     await app.registration.reconcile();
     expect(app.registerContentScripts).toHaveBeenCalledWith([expect.objectContaining({ matches: ['http://portal.example.test/*', 'https://portal.example.test/*'] })]);
     expect(app.registerContentScripts.mock.calls[0]?.[0]?.[0]?.id).toBe('captcha-auto-aad516fbeda76e37');
+  });
+
+  it('does not duplicate a granted selected-site content script for an enabled slider host', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, {
+      ...defaults,
+      accessMode: 'selected',
+      selectedSites: [{ hostname: 'portal.example.test', includeSubdomains: true }],
+      sliderEnabledHosts: ['login.portal.example.test'],
+    });
+    await app.registration.reconcile();
+    expect(app.registerContentScripts).toHaveBeenCalledWith([expect.objectContaining({ matches: ['http://*.portal.example.test/*', 'https://*.portal.example.test/*'] })]);
+    expect(app.registerContentScripts.mock.calls[0]?.[0]).toHaveLength(1);
   });
 });
