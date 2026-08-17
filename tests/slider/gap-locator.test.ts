@@ -148,6 +148,34 @@ describe('slider gap locator', () => {
     expect(result!.confidence).toBeGreaterThan(.58);
   });
 
+  it('uses guarded geometry when piece texture is not preserved by the renderer', () => {
+    const width = 48;
+    const height = 48;
+    const targetX = 154;
+    const targetY = 30;
+    const image = imageWithGap('notched', targetX, targetY, width);
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height).fill(0);
+    const opaque = (x: number, y: number) => x >= 3 && x < width - 3 && y >= 3 && y < height - 3;
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+      const value = 25 + ((x * 17 + y * 31 + x * y * 5) % 220);
+      luminance[y * width + x] = value;
+      if (!opaque(x, y)) continue;
+      alpha[y * width + x] = 255;
+      const target = ((targetY + y) * image.width + targetX + x) * 4;
+      image.data[target] = 45;
+      image.data[target + 1] = 45;
+      image.data[target + 2] = 45;
+    }
+
+    const result = locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
+    expect(result).toMatchObject({ confidence: expect.any(Number) });
+    expect(result!.x).toBeGreaterThanOrEqual(targetX - 2);
+    expect(result!.x).toBeLessThanOrEqual(targetX + 2);
+    expect(result!.confidence).toBeGreaterThan(.58);
+    expect(result!.confidence).toBeLessThanOrEqual(.72);
+  });
+
   it('abstains when a strong silhouette does not share the piece texture', () => {
     const width = 48;
     const height = 48;

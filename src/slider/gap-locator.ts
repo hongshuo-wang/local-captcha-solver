@@ -27,6 +27,9 @@ export interface GapLocation {
 }
 
 const MINIMUM_TEXTURE_CORRELATION = .52;
+const MINIMUM_GEOMETRY_EVIDENCE = .42;
+const MINIMUM_GEOMETRY_SEPARATION = .18;
+const GEOMETRY_CONFIDENCE_CAP = .72;
 
 function luminance(image: PixelImage): Float32Array {
   const output = new Float32Array(image.width * image.height);
@@ -219,7 +222,7 @@ function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient
   }
   candidates.sort((left, right) => right.score - left.score);
   const best = candidates[0];
-  if (best === undefined || (hasPieceTexture && (best.textureScore ?? -1) < MINIMUM_TEXTURE_CORRELATION)) return undefined;
+  if (best === undefined) return undefined;
   const competing = candidates.find((candidate) => Math.hypot(candidate.x - best.x, candidate.y - best.y) >= Math.max(mask.width, mask.height) * .75);
   const competitorScore = Math.max(0, competing?.score ?? 0);
   const separation = (best.score - competitorScore) / Math.max(best.score, 1);
@@ -249,6 +252,22 @@ function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient
   const combinedConfidence = separation * .6 + evidence[0]! * .4;
   const corroboratedConfidence = evidence[1]! < .35 || separation < .12 ? 0 : evidence[0]! * .55 + evidence[1]! * .45;
   const confidence = Math.min(1, Math.max(edgeConfidence, textureConfidence, regionConfidence, combinedConfidence, corroboratedConfidence));
+  if (hasPieceTexture && (best.textureScore ?? -1) < MINIMUM_TEXTURE_CORRELATION) {
+    const geometryCandidates = [...candidates].sort((left, right) => {
+      const leftScore = left.edgeEvidence * .55 + left.regionEvidence * .45;
+      const rightScore = right.edgeEvidence * .55 + right.regionEvidence * .45;
+      return rightScore - leftScore;
+    });
+    const geometryBest = geometryCandidates[0];
+    if (geometryBest === undefined || geometryBest.regionScore === undefined) return undefined;
+    const geometryScore = geometryBest.edgeEvidence * .55 + geometryBest.regionEvidence * .45;
+    const geometryCompetitor = geometryCandidates.find((candidate) => Math.hypot(candidate.x - geometryBest.x, candidate.y - geometryBest.y) >= Math.max(mask.width, mask.height) * .75);
+    const geometryCompetitorScore = geometryCompetitor === undefined ? 0 : geometryCompetitor.edgeEvidence * .55 + geometryCompetitor.regionEvidence * .45;
+    const geometrySeparation = (geometryScore - geometryCompetitorScore) / Math.max(geometryScore, 1);
+    const geometryConfidence = geometrySeparation * .6 + geometryScore * .4;
+    if (geometryBest.edgeEvidence < MINIMUM_GEOMETRY_EVIDENCE || geometryBest.regionEvidence < MINIMUM_GEOMETRY_EVIDENCE || geometrySeparation < MINIMUM_GEOMETRY_SEPARATION || geometryConfidence < MINIMUM_TEXTURE_CORRELATION) return undefined;
+    return { x: geometryBest.x, y: geometryBest.y, width: mask.width, height: mask.height, confidence: Math.min(GEOMETRY_CONFIDENCE_CAP, geometryConfidence), score: geometryBest.score };
+  }
   if (confidence === 0) return undefined;
   return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score };
 }
