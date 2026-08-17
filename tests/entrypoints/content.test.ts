@@ -102,6 +102,19 @@ describe('content runtime messages', () => {
     activator.classList.add('changed-twice');
     await vi.advanceTimersByTimeAsync(250);
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
+
+    activator.getBoundingClientRect = () => ({ x: 70, y: 30, left: 70, top: 30, right: 330, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    activator.classList.add('new-challenge-without-user');
+    await vi.advanceTimersByTimeAsync(250);
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
+
+    const activation = new PointerEvent('pointerdown', { bubbles: true });
+    Object.defineProperty(activation, 'isTrusted', { configurable: true, value: true });
+    activator.dispatchEvent(activation);
+    activator.classList.add('user-opened-new-challenge');
+    await vi.advanceTimersByTimeAsync(1_200);
+    await Promise.resolve();
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(2);
     updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [] });
   });
   it('reconciles automatic state when a dynamically registered new document starts', async () => {

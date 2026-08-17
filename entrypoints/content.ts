@@ -85,6 +85,8 @@ export function createRuntimeContent(runtime: Runtime) {
   let sliderAutomaticEnabled = false;
   let lastSliderAttempt: string | undefined;
   let sliderRunInFlight = false;
+  let sliderAutoBlockedAfterSuccessAt = 0;
+  let lastSliderRearmAt = 0;
   let lastUserInputAt = 0;
   let sliderObserver: MutationObserver | undefined;
   let text = CONTENT_TEXT[uiLocale];
@@ -281,6 +283,8 @@ export function createRuntimeContent(runtime: Runtime) {
       sliderObserver?.disconnect();
       sliderObserver = undefined;
       lastSliderAttempt = undefined;
+      sliderAutoBlockedAfterSuccessAt = 0;
+      lastSliderRearmAt = 0;
     }
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
@@ -302,7 +306,11 @@ export function createRuntimeContent(runtime: Runtime) {
   window.addEventListener('click', suppressShortcutDefault, true);
   window.addEventListener('auxclick', suppressShortcutDefault, true);
   const noteUserInput = (event: Event): void => {
-    if ((event as Event & { isTrusted?: boolean }).isTrusted !== false) lastUserInputAt = Date.now();
+    if ((event as Event & { isTrusted?: boolean }).isTrusted === false) return;
+    const at = Date.now();
+    lastUserInputAt = at;
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-slider-captcha], [data-slider-handle], .geetest_btn_click, .geetest_radar_btn, .geetest_slider_button, [role="slider"]') !== null) lastSliderRearmAt = at;
   };
   window.addEventListener('pointerdown', noteUserInput, true);
   window.addEventListener('keydown', noteUserInput, true);
@@ -368,15 +376,25 @@ export function createRuntimeContent(runtime: Runtime) {
   const scanSlider = async (): Promise<void> => {
     sliderTimer = undefined;
     if (!sliderAutomaticEnabled || sliderRunInFlight || document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    if (sliderAutoBlockedAfterSuccessAt > 0) {
+      if (lastSliderRearmAt <= sliderAutoBlockedAfterSuccessAt) return;
+      sliderAutoBlockedAfterSuccessAt = 0;
+    }
+    const userCooldown = 1200 - (Date.now() - lastUserInputAt);
+    if (userCooldown > 0) {
+      sliderTimer = setTimeout(() => { void scanSlider(); }, userCooldown);
+      return;
+    }
     const discovery = await discoverSliderChallenge(document);
     const key = sliderDiscoveryKey(discovery);
-    if (key === undefined || key === lastSliderAttempt || Date.now() - lastUserInputAt < 1200) return;
+    if (key === undefined || key === lastSliderAttempt) return;
     lastSliderAttempt = key;
     sliderRunInFlight = true;
     showSliderStatus({ state: 'running' });
     try {
       const result = await runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: key });
       showSliderStatus(isSliderRunResult(result) ? result : { state: 'failed' });
+      if (isSliderRunResult(result) && result.state === 'success') sliderAutoBlockedAfterSuccessAt = Date.now();
     } catch {
       showSliderStatus({ state: 'failed' });
     } finally {
