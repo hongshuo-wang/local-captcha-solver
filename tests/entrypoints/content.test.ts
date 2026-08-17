@@ -6,6 +6,24 @@ afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.resetModules(); v
 const statusHost = () => document.querySelector<HTMLElement>('[data-local-captcha-status]');
 const statusText = () => statusHost()?.shadowRoot?.textContent ?? '';
 describe('content runtime messages', () => {
+  it('does not initialize duplicate injected content runtimes in one frame', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    const onMessage = { addListener: vi.fn() };
+    vi.stubGlobal('browser', {
+      runtime: { onMessage, sendMessage: vi.fn() },
+      i18n: { getUILanguage: () => 'zh-CN' },
+      storage: { local: { get: vi.fn(async () => ({})) }, onChanged: { addListener: vi.fn(), removeListener: vi.fn() } },
+    });
+    const { default: contentScript } = await import('../../entrypoints/content');
+    const context = {} as NonNullable<Parameters<typeof contentScript.main>[0]>;
+    contentScript.main(context);
+    contentScript.main(context);
+    expect(onMessage.addListener).toHaveBeenCalledOnce();
+    const documentWithCleanup = document as Document & { __localCaptchaShortcutCleanup?: () => void };
+    documentWithCleanup.__localCaptchaShortcutCleanup?.();
+    delete documentWithCleanup.__localCaptchaShortcutCleanup;
+  });
+
   it('guards unknown messages and distinguishes zero from ambiguous visible image matches', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value);
     const { createRuntimeContent } = await import('../../entrypoints/content');

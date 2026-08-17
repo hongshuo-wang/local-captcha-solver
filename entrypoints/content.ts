@@ -403,6 +403,9 @@ export function createRuntimeContent(runtime: Runtime) {
 }
 
 export default defineContentScript({ matches: [], registration: 'runtime', main() {
+  const runtimeState = globalThis as typeof globalThis & { __localCaptchaContentRuntimeStarted?: boolean };
+  if (runtimeState.__localCaptchaContentRuntimeStarted) return;
+  runtimeState.__localCaptchaContentRuntimeStarted = true;
   const runtime = browser.runtime;
   createRuntimeContent({
     sendMessage: (message) => sendRuntimeMessage(runtime, message),
