@@ -247,6 +247,7 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         };
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.x, y: start.y });
         await delay(45 + Math.round(random() * 45));
+        await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-automation-press' }).catch(() => undefined);
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mousePressed', x: start.x, y: start.y, button: 'left', buttons: 1, clickCount: 1 });
         pointerPressed = true;
         await delay(70 + Math.round(random() * 70));

@@ -89,6 +89,7 @@ export function createRuntimeContent(runtime: Runtime) {
   let sliderRunInFlight = false;
   let sliderAutoBlockedAfterSuccessAt = 0;
   let lastSliderRearmAt = 0;
+  let automationHandlePressArmedUntil = 0;
   let lastUserInputAt = 0;
   let sliderObserver: MutationObserver | undefined;
   let text = CONTENT_TEXT[uiLocale];
@@ -287,6 +288,7 @@ export function createRuntimeContent(runtime: Runtime) {
       lastSliderAttempt = undefined;
       sliderAutoBlockedAfterSuccessAt = 0;
       lastSliderRearmAt = 0;
+      automationHandlePressArmedUntil = 0;
     }
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
@@ -315,8 +317,11 @@ export function createRuntimeContent(runtime: Runtime) {
     const targetElement = target instanceof Element ? target : undefined;
     const isSliderHandle = targetElement !== undefined && targetElement.closest(SLIDER_HANDLE_SELECTOR) !== null;
     if (sliderRunInFlight && event.type === 'pointerdown' && isSliderHandle) {
-      lastUserInputAt = at - 1200;
-      return;
+      if (at <= automationHandlePressArmedUntil) {
+        automationHandlePressArmedUntil = 0;
+        lastUserInputAt = at - 1200;
+        return;
+      }
     }
     if (targetElement?.closest(SLIDER_REARM_SELECTOR) !== null) lastSliderRearmAt = at;
   };
@@ -334,6 +339,7 @@ export function createRuntimeContent(runtime: Runtime) {
     document.removeEventListener('visibilitychange', scheduleSliderScan);
     sliderObserver?.disconnect();
     if (sliderTimer !== undefined) clearTimeout(sliderTimer);
+    automationHandlePressArmedUntil = 0;
     unsubscribeSettings?.();
   };
   const enable = () => {
@@ -343,7 +349,7 @@ export function createRuntimeContent(runtime: Runtime) {
       onSkip: (skip) => { void Promise.resolve(runtime.sendMessage({ type: 'captcha:record-activity', outcome: 'skipped', diagnostic: { trigger: 'automatic', ...skip } })).catch(() => undefined); },
     });
   };
-  const disable = () => { lifecycleGeneration += 1; automaticEnabled = false; observer?.disconnect(); observer = undefined; workflow.cancelAll?.(); clearWorkflowStatus(); };
+  const disable = () => { lifecycleGeneration += 1; automaticEnabled = false; observer?.disconnect(); observer = undefined; workflow.cancelAll?.(); automationHandlePressArmedUntil = 0; clearWorkflowStatus(); };
   runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
     const type = (message as { type?: string }).type;
@@ -377,6 +383,10 @@ export function createRuntimeContent(runtime: Runtime) {
         : Promise.resolve({ outcome: 'uncertain' });
     }
     if (type === 'captcha:slider-user-active') return Promise.resolve({ active: Date.now() - lastUserInputAt < 1200 });
+    if (type === 'captcha:slider-automation-press') {
+      automationHandlePressArmedUntil = Date.now() + 500;
+      return Promise.resolve({ armed: true });
+    }
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
     return undefined;
