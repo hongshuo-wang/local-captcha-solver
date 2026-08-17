@@ -57,6 +57,16 @@ describe('content runtime messages', () => {
     const { createRuntimeContent } = await import('../../entrypoints/content'); createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } }); const handle = listener.mock.calls[0]?.[0] as (message: unknown) => unknown;
     await expect(handle({ type: 'captcha:get-status' })).resolves.toEqual({ enabled: false }); await expect(handle({ type: 'captcha:auto-enable' })).resolves.toEqual({ enabled: true }); await expect(handle({ type: 'captcha:auto-disable' })).resolves.toEqual({ enabled: false }); vi.useRealTimers();
   });
+  it('treats trusted wheel input as active user control for slider automation', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } });
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+    const wheel = new WheelEvent('wheel', { bubbles: true, deltaY: 120 });
+    Object.defineProperty(wheel, 'isTrusted', { configurable: true, value: true });
+    window.dispatchEvent(wheel);
+    await expect(handle({ type: 'captcha:slider-user-active' })).resolves.toEqual({ active: true });
+  });
   it('automatically requests one run for a collapsed slider on an explicitly enabled site', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('defineContentScript', (value: unknown) => value);

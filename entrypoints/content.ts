@@ -44,6 +44,8 @@ function sliderEnabledFromSettings(value: unknown): boolean {
   } catch { return false; }
 }
 const AUTOMATIC_MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
+const SLIDER_HANDLE_SELECTOR = '[data-slider-handle], .geetest_slider_button, .geetest_slider .geetest_btn, [role="slider"]';
+const SLIDER_REARM_SELECTOR = `[data-slider-captcha], ${SLIDER_HANDLE_SELECTOR}, .geetest_btn_click, .geetest_radar_btn`;
 function modesFromSettings(value: unknown): readonly RecognitionMode[] {
   try {
     const mode = recognitionModeFromSettings(value, location.href);
@@ -310,16 +312,24 @@ export function createRuntimeContent(runtime: Runtime) {
     const at = Date.now();
     lastUserInputAt = at;
     const target = event.target;
-    if (target instanceof Element && target.closest('[data-slider-captcha], [data-slider-handle], .geetest_btn_click, .geetest_radar_btn, .geetest_slider_button, [role="slider"]') !== null) lastSliderRearmAt = at;
+    const targetElement = target instanceof Element ? target : undefined;
+    const isSliderHandle = targetElement !== undefined && targetElement.closest(SLIDER_HANDLE_SELECTOR) !== null;
+    if (sliderRunInFlight && event.type === 'pointerdown' && isSliderHandle) {
+      lastUserInputAt = at - 1200;
+      return;
+    }
+    if (targetElement?.closest(SLIDER_REARM_SELECTOR) !== null) lastSliderRearmAt = at;
   };
   window.addEventListener('pointerdown', noteUserInput, true);
   window.addEventListener('keydown', noteUserInput, true);
+  window.addEventListener('wheel', noteUserInput, true);
   documentWithShortcut.__localCaptchaShortcutCleanup = () => {
     window.removeEventListener('mousedown', onShortcutDown, true);
     window.removeEventListener('click', suppressShortcutDefault, true);
     window.removeEventListener('auxclick', suppressShortcutDefault, true);
     window.removeEventListener('pointerdown', noteUserInput, true);
     window.removeEventListener('keydown', noteUserInput, true);
+    window.removeEventListener('wheel', noteUserInput, true);
     window.removeEventListener('focus', scheduleSliderScan);
     document.removeEventListener('visibilitychange', scheduleSliderScan);
     sliderObserver?.disconnect();
@@ -366,6 +376,7 @@ export function createRuntimeContent(runtime: Runtime) {
         ? observeSliderOutcome(revision, document).then((outcome) => ({ outcome }))
         : Promise.resolve({ outcome: 'uncertain' });
     }
+    if (type === 'captcha:slider-user-active') return Promise.resolve({ active: Date.now() - lastUserInputAt < 1200 });
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
     return undefined;

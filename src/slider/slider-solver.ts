@@ -190,6 +190,13 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       };
       let confidence: number | undefined;
       let attached = false;
+      let pointerPressed = false;
+      let lastPointer = { x: 0, y: 0 };
+      let releasePointer = async (): Promise<void> => undefined;
+      const userIsActive = async (): Promise<boolean> => {
+        const value = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-user-active' }).catch(() => undefined);
+        return typeof value === 'object' && value !== null && (value as { active?: unknown }).active === true;
+      };
       try {
         await adapter.debugger.attach(target(tab.id), '1.3');
         attached = true;
@@ -232,11 +239,25 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const endX = Math.max(minimumEndX, Math.min(maximumEndX, requestedEndX));
         diagnostic = { ...diagnostic, desiredPieceOffsetX, startX: start.x, requestedEndX, endX };
         const points = dragPoints(start, endX, random);
+        lastPointer = start;
+        releasePointer = async () => {
+          if (!attached || !pointerPressed) return;
+          await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: lastPointer.x, y: lastPointer.y, button: 'left', buttons: 0, clickCount: 1 }).catch(() => undefined);
+          pointerPressed = false;
+        };
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: start.x, y: start.y });
         await delay(45 + Math.round(random() * 45));
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mousePressed', x: start.x, y: start.y, button: 'left', buttons: 1, clickCount: 1 });
+        pointerPressed = true;
         await delay(70 + Math.round(random() * 70));
         for (const [index, point] of points.entries()) {
+          if (index % 4 === 0) {
+            if (await userIsActive()) {
+              await releasePointer();
+              return result('uncertain', { confidence, reason: 'user-interrupted' });
+            }
+          }
+          lastPointer = point;
           await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'left', buttons: 1 });
           await delay(16 + Math.round(random() * 16));
           if (index === Math.floor(points.length * .72)) await delay(35 + Math.round(random() * 45));
@@ -256,13 +277,21 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
           end = { x: correctedX, y: end.y };
           diagnostic = { ...diagnostic, correctionX: end.x - endX };
           await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: end.x, y: end.y, button: 'left', buttons: 1 });
+          lastPointer = end;
+        }
+        if (await userIsActive()) {
+          await releasePointer();
+          return result('uncertain', { confidence, reason: 'user-interrupted' });
         }
         await delay(55 + Math.round(random() * 45));
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1 });
+        pointerPressed = false;
         diagnostic = { ...diagnostic, releaseX: end.x };
       } catch {
+        await releasePointer();
         return result('failed', { confidence, reason: attached ? 'input-failed' : 'debugger-unavailable' });
       } finally {
+        await releasePointer();
         if (attached) await adapter.debugger.detach(target(tab.id)).catch(() => undefined);
       }
       for (const wait of [250, 500, 750]) {

@@ -35,10 +35,12 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; feedbackPieceOffsets?: readonly number[] } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number } = {}) {
   let discoveries = 0;
+  let inputEvents = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
+    if (type === 'captcha:slider-user-active') return { active: options.userActiveAfterInputEvents !== undefined && inputEvents >= options.userActiveAfterInputEvents };
     if (type === 'captcha:slider-discover') {
       discoveries += 1;
       if (options.activatable && discoveries === 1) return { state: 'activatable', activator: { provider: 'geetest-v4', rect: { x: 80, y: 40, width: 260, height: 50 } }, recentUserInput: false, pageVisible: true, pageFocused: true };
@@ -64,7 +66,10 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
   });
   const attach = vi.fn(async () => undefined);
   const detach = vi.fn(async () => undefined);
-  const sendCommand = vi.fn(async (_target: { tabId: number }, method: string, _params?: Record<string, unknown>) => method === 'Page.captureScreenshot' ? { data: 'AA==' } : undefined);
+  const sendCommand = vi.fn(async (_target: { tabId: number }, method: string, _params?: Record<string, unknown>) => {
+    if (method === 'Input.dispatchMouseEvent') inputEvents += 1;
+    return method === 'Page.captureScreenshot' ? { data: 'AA==' } : undefined;
+  });
   const delay = vi.fn(async () => undefined);
   const solver = createSliderSolver({
     settings: { isSliderEnabled: vi.fn(async () => options.enabled ?? true) },
@@ -131,6 +136,14 @@ describe('slider solver', () => {
     expect(app.attach).toHaveBeenCalledOnce();
     expect(app.detach).toHaveBeenCalledOnce();
     expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(false);
+  });
+
+  it('releases the pointer and stops when the user interrupts an automatic drag', async () => {
+    const app = harness({ userActiveAfterInputEvents: 2 });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'uncertain', reason: 'user-interrupted' });
+    const releases = app.sendCommand.mock.calls.filter((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string })?.type === 'mouseReleased');
+    expect(releases).toHaveLength(1);
+    expect(app.detach).toHaveBeenCalledOnce();
   });
 
   it('returns a permission result without attaching when debugger access is absent', async () => {
