@@ -33,12 +33,22 @@ interface ExtensionApi {
 
 let server: FixtureServer;
 let context: BrowserContext;
-let worker: Worker;
+let extensionPage: Page;
+let extensionOrigin: string;
 let profileDirectory: string | undefined;
 const extensionNetworkRequests: string[] = [];
 
+async function currentWorker(): Promise<Worker> {
+  await extensionPage.evaluate(async () => {
+    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
+    if (api === undefined) throw new Error('Extension API unavailable');
+    await api.runtime.sendMessage({ type: 'captcha:get-model-status' });
+  });
+  return context.serviceWorkers().at(-1) ?? await context.waitForEvent('serviceworker');
+}
+
 async function contentMessage(page: Page, request: unknown): Promise<unknown> {
-  return worker.evaluate(async ({ payload, pageUrl }) => {
+  return (await currentWorker()).evaluate(async ({ payload, pageUrl }) => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     const tab = (await api.tabs.query({})).find((candidate) => candidate.url === pageUrl);
@@ -79,7 +89,7 @@ async function fulfillFixtureRequest(route: Route): Promise<void> {
 
 async function openActionPopup(activePage: Page): Promise<Page> {
   await activePage.bringToFront();
-  const activeTabId = await worker.evaluate(async () => {
+  const activeTabId = await (await currentWorker()).evaluate(async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     const [tab] = await api.tabs.query({ active: true, currentWindow: true });
@@ -87,8 +97,8 @@ async function openActionPopup(activePage: Page): Promise<Page> {
     return tab.id;
   });
   const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${new URL(worker.url()).host}/popup.html`);
-  await worker.evaluate(async ({ tabId }) => {
+  await popup.goto(`${extensionOrigin}/popup.html`);
+  await (await currentWorker()).evaluate(async ({ tabId }) => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     await api.tabs.update(tabId, { active: true });
@@ -99,13 +109,13 @@ async function openActionPopup(activePage: Page): Promise<Page> {
 
 async function openOptionsPage(): Promise<Page> {
   const page = await context.newPage();
-  await page.goto(`chrome-extension://${new URL(worker.url()).host}/options.html`);
+  await page.goto(`${extensionOrigin}/options.html`);
   return page;
 }
 
 async function openOnboardingPage(): Promise<Page> {
   const page = await context.newPage();
-  await page.goto(`chrome-extension://${new URL(worker.url()).host}/onboarding.html`);
+  await page.goto(`${extensionOrigin}/onboarding.html`);
   return page;
 }
 
@@ -139,7 +149,10 @@ test.beforeAll(async () => {
   }
   server = await startFixtureServer();
   await context.route(`${server.origin}/**`, fulfillFixtureRequest);
-  worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
+  const initialWorker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
+  extensionOrigin = `chrome-extension://${new URL(initialWorker.url()).host}`;
+  extensionPage = await context.newPage();
+  await extensionPage.goto(`${extensionOrigin}/options.html`);
   context.on('request', (request) => {
     const url = request.url();
     if (/^https?:/.test(url) && !url.startsWith(server.origin)) extensionNetworkRequests.push(url);
@@ -153,7 +166,7 @@ test.afterAll(async () => {
 });
 
 test('registers globally and automatically fills after all-site access is explicitly selected', async () => {
-  await worker.evaluate(async () => {
+  await (await currentWorker()).evaluate(async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     await api.storage.local.set({
@@ -171,17 +184,7 @@ test('registers globally and automatically fills after all-site access is explic
       },
     });
   });
-  await expect.poll(() => worker.evaluate(async () => {
-    const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
-    if (api === undefined) throw new Error('Extension API unavailable');
-    try {
-      await api.runtime.sendMessage({ type: 'captcha:reconcile-access' });
-      return true;
-    } catch {
-      return false;
-    }
-  })).toBe(true);
-  await expect.poll(() => worker.evaluate(async () => {
+  await expect.poll(async () => (await currentWorker()).evaluate(async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     if (api === undefined) throw new Error('Extension API unavailable');
     return (await api.scripting.getRegisteredContentScripts()).map((script) => script.id);
@@ -244,7 +247,7 @@ test('recognizes already-loaded CAPTCHA data offline and keeps popup unsupported
   await expect(popup.locator('[data-popup-status]')).toHaveText(/当前页面不支持自动识别。|This page is not supported\./);
   await expect(popup.locator('.brand-mark')).toHaveJSProperty('complete', true);
   await expect(popup.locator('h1')).toHaveText('Captcha Helper');
-  expect(await popup.locator('#app').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }))).toEqual({ clientWidth: 360, scrollWidth: 360 });
+  expect(await popup.locator('#app').evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }))).toEqual({ clientWidth: 384, scrollWidth: 384 });
   await popup.locator('#app').screenshot({ path: testInfo.outputPath('captcha-helper-popup.png') });
   await page.close();
   await popup.close();
@@ -255,31 +258,37 @@ test('recognizes already-loaded CAPTCHA data offline and keeps popup unsupported
 });
 
 test('renders standalone onboarding and settings without horizontal overflow', async ({}, testInfo) => {
-  await expect.poll(() => context.pages().some((page) => page.url().endsWith('/onboarding.html'))).toBe(true);
-  expect(await worker.evaluate(() => {
+  expect(await (await currentWorker()).evaluate(() => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     return api?.runtime.getManifest().options_ui?.open_in_tab;
   })).toBe(true);
   const onboarding = await openOnboardingPage();
   await expect(onboarding).toHaveURL(/onboarding\.html/);
-  await expect(onboarding.locator('[data-step="1"] h1')).toHaveText(/选择网站访问范围|Choose site access/);
-  await expect(onboarding.locator('[data-next]')).toBeDisabled();
+  await expect(onboarding.locator('[data-page="overview"] h1')).toHaveText(/先用一分钟完成本地识别设置|Set up local recognition in one minute/);
+  await expect(onboarding.locator('[data-primary]')).toBeEnabled();
   expect(await onboarding.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-access.png'), fullPage: true });
 
   await onboarding.setViewportSize({ width: 390, height: 844 });
   expect(await onboarding.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-access-mobile.png'), fullPage: true });
+  await onboarding.setViewportSize({ width: 1024, height: 720 });
+  await expect.poll(() => onboarding.evaluate(() => ({
+    width: document.documentElement.clientWidth,
+    height: document.documentElement.clientHeight,
+    scrollHeight: document.documentElement.scrollHeight,
+  }))).toEqual({ width: 1024, height: 720, scrollHeight: 720 });
   await onboarding.setViewportSize({ width: 1280, height: 720 });
 
   await onboarding.locator('[data-language]').selectOption('zh_CN');
-  await expect(onboarding.locator('[data-step="1"] h1')).toHaveText('选择网站访问范围');
+  await expect(onboarding.locator('[data-page="overview"] h1')).toHaveText('先用一分钟完成本地识别设置');
 
+  await onboarding.locator('[data-primary]').click();
+  await expect(onboarding.locator('[data-page="static-settings"]')).toBeVisible();
+  await expect(onboarding.locator('[data-primary]')).toBeDisabled();
   await onboarding.locator('[data-onboarding-mode="selected"]').click();
-  await expect(onboarding.locator('[data-next]')).toBeEnabled();
-  await onboarding.locator('[data-next]').click();
-  await expect(onboarding.locator('[data-step="2"]')).toBeVisible();
-  await onboarding.locator('[data-next]').click();
+  await expect(onboarding.locator('[data-primary]')).toBeEnabled();
+  await onboarding.locator('[data-primary]').click();
   await expect(onboarding.locator('[data-demo-canvas]')).toBeVisible();
   expect(await onboarding.locator('[data-demo-canvas]').evaluate((canvas) => {
     const context2d = (canvas as HTMLCanvasElement).getContext('2d');
@@ -295,20 +304,24 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await expect(onboarding.locator('[data-demo-status]')).toHaveAttribute('data-state', 'success', { timeout: 30_000 });
   await expect(onboarding.locator('[data-demo-status]')).toContainText('识别结果：');
   await onboarding.screenshot({ path: testInfo.outputPath('captcha-helper-onboarding-complete-zh.png'), fullPage: true });
+  await onboarding.locator('[data-primary]').click();
+  await expect(onboarding.locator('[data-page="slider-settings"]')).toBeVisible();
+  await onboarding.locator('[data-skip-slider]').click();
+  await expect(onboarding.locator('[data-page="slider-demo"]')).toBeVisible();
   await onboarding.locator('[data-language]').selectOption('en');
-  await expect(onboarding.locator('[data-finish-guide]')).toHaveText('Finish setup and close');
+  await expect(onboarding.locator('[data-primary]')).toHaveText('Finish setup and close');
   const onboardingClosed = onboarding.waitForEvent('close');
-  await onboarding.locator('[data-finish-guide]').click();
+  await onboarding.locator('[data-primary]').click();
   await onboardingClosed;
 
   const options = await openOptionsPage();
-  await expect(options.locator('[data-view="access"]')).toBeVisible();
+  await expect(options.locator('[data-view="static"]')).toBeVisible();
   await expect(options.locator('[data-access-mode]')).toBeVisible();
   expect(await options.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  await options.screenshot({ path: testInfo.outputPath('captcha-helper-options-access.png'), fullPage: true });
+  await options.screenshot({ path: testInfo.outputPath('captcha-helper-options-static.png'), fullPage: true });
 
-  await options.locator('[data-nav="behavior"]').click();
-  await expect(options.locator('[data-view="behavior"]')).toBeVisible();
+  await options.locator('[data-nav="slider"]').click();
+  await expect(options.locator('[data-view="slider"]')).toBeVisible();
   await expect(options.locator('#interface-locale')).toBeVisible();
 
   await options.locator('[data-nav="diagnostics"]').click();
@@ -344,27 +357,29 @@ test('renders standalone onboarding and settings without horizontal overflow', a
   await manualPage.close();
 
   await options.bringToFront();
-  await options.locator('.settings-nav [data-nav="access"]').click();
-  await expect(options.locator('.status-dot')).toHaveAttribute('data-granted', 'false');
+  await options.locator('.settings-nav [data-nav="static"]').click();
+  await expect(options.locator('.access-section .status-dot')).toHaveAttribute('data-granted', 'false');
 
-  await options.locator('[data-nav="behavior"]').click();
-  await expect(options.locator('[data-view="behavior"]')).toBeVisible();
+  await options.locator('[data-nav="slider"]').click();
+  await expect(options.locator('[data-view="slider"]')).toBeVisible();
 
   await options.setViewportSize({ width: 390, height: 844 });
   expect(await options.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  await options.screenshot({ path: testInfo.outputPath('captcha-helper-options-behavior-mobile.png'), fullPage: true });
+  await options.screenshot({ path: testInfo.outputPath('captcha-helper-options-slider-mobile.png'), fullPage: true });
   await options.close();
 });
 
 test('automatically handles a supported slider after the site is explicitly enabled', async ({}, testInfo) => {
   const page = await open('/slider.html');
   const popup = await openActionPopup(page);
+  await popup.locator('[data-popup-tab="slider"]').click();
+  await expect(popup.locator('[data-popup-panel="slider"]')).toBeVisible();
   await expect(popup.locator('[data-slider-enabled]')).toBeEnabled();
   await expect(popup.locator('[data-run-slider]')).toBeEnabled();
   await expect(popup.locator('[data-slider-state-title]')).toHaveText(/未接管此网站|This site is not taken over/);
   await popup.locator('[data-slider-enabled]').click();
   await expect(popup.locator('[data-slider-enabled]')).toBeChecked();
-  await expect.poll(() => worker.evaluate(async () => {
+  await expect.poll(async () => (await currentWorker()).evaluate(async () => {
     const api = (globalThis as { browser?: ExtensionApi; chrome?: ExtensionApi }).browser ?? (globalThis as { chrome?: ExtensionApi }).chrome;
     return api?.permissions.contains({ permissions: ['debugger'] });
   })).toBe(true);

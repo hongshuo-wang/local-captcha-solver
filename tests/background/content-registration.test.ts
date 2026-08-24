@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { GLOBAL_REGISTRATION_ID, contentScriptRegistrationId, createContentRegistration } from '../../src/background/content-registration';
+import { GLOBAL_REGISTRATION_ID, GLOBAL_SLIDER_REGISTRATION_ID, contentScriptRegistrationId, createContentRegistration } from '../../src/background/content-registration';
 import { GLOBAL_HTTP_ORIGINS } from '../../src/platform/permissions';
 import { createSettingsStore, DEFAULT_SETTINGS, SETTINGS_STORAGE_KEY } from '../../src/platform/settings-store';
 
@@ -137,5 +137,12 @@ describe('content registration', () => {
     await app.registration.reconcile();
     expect(app.registerContentScripts).toHaveBeenCalledWith([expect.objectContaining({ matches: ['http://*.portal.example.test/*', 'https://*.portal.example.test/*'] })]);
     expect(app.registerContentScripts.mock.calls[0]?.[0]).toHaveLength(1);
+  });
+
+  it('registers a separate global slider script when slider access is global but OCR access is selected', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { ...defaults, accessMode: 'selected', sliderAccessMode: 'all' });
+    await app.registration.reconcile();
+    expect(app.registerContentScripts).toHaveBeenCalledWith([expect.objectContaining({ id: GLOBAL_SLIDER_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS] })]);
   });
 });

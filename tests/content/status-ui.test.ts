@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearWorkflowStatus, showRecognizing, showSliderStatus, showWorkflowStatus } from '../../src/content/status-ui';
+import { clearSliderStatus, clearWorkflowStatus, showRecognizing, showSliderStatus, showWorkflowStatus } from '../../src/content/status-ui';
 
 const host = () => document.querySelector<HTMLElement>('[data-local-captcha-status]');
 const shadow = () => host()?.shadowRoot;
 
-afterEach(() => { clearWorkflowStatus(); vi.useRealTimers(); });
+afterEach(() => { clearWorkflowStatus(); clearSliderStatus(); vi.useRealTimers(); });
 
 describe('status UI', () => {
   it('isolates an accessible live region and keeps ambiguous states until dismissed', async () => {
@@ -80,9 +80,49 @@ describe('status UI', () => {
     expect(host()).toBeNull();
   });
 
+  it('clears workflow and slider feedback independently', () => {
+    showSliderStatus({ state: 'running' });
+    clearWorkflowStatus();
+    expect(shadow()?.textContent).toContain('Captcha Helper 正在接管滑块');
+    clearSliderStatus();
+    expect(host()).toBeNull();
+
+    showWorkflowStatus({ state: 'recognition_failed', candidateId: 'image-1' });
+    clearSliderStatus();
+    expect(shadow()?.textContent).toContain('验证码识别失败');
+  });
+
   it('explains when uncertain slider location prevents a drag', () => {
     showSliderStatus({ state: 'low-confidence', confidence: .41 });
     expect(shadow()?.textContent).toContain('未执行自动拖动');
     expect(shadow()?.textContent).toContain('为避免误操作已停止');
+  });
+
+  it('highlights the current slider without intercepting user input', () => {
+    const challenge = document.createElement('div');
+    challenge.dataset.sliderCaptcha = 'true';
+    const image = document.createElement('img');
+    image.dataset.sliderImage = 'true';
+    const track = document.createElement('div');
+    track.dataset.sliderTrack = 'true';
+    const handle = document.createElement('button');
+    handle.dataset.sliderHandle = 'true';
+    challenge.append(image, track, handle);
+    document.body.append(challenge);
+    image.getBoundingClientRect = () => ({ left: 40, top: 20, right: 300, bottom: 120, width: 260, height: 100, x: 40, y: 20, toJSON: () => ({}) });
+    track.getBoundingClientRect = () => ({ left: 40, top: 130, right: 300, bottom: 170, width: 260, height: 40, x: 40, y: 130, toJSON: () => ({}) });
+    handle.getBoundingClientRect = () => ({ left: 80, top: 120, right: 132, bottom: 172, width: 52, height: 52, x: 80, y: 120, toJSON: () => ({}) });
+
+    showSliderStatus({ state: 'user-active' });
+
+    expect(shadow()?.textContent).toContain('已暂停自动拖动');
+    expect(shadow()?.textContent).toContain('停止操作后会继续检测滑块');
+    expect(host()?.dataset.presentation).toBe('panel');
+    expect(host()?.style.pointerEvents).toBe('none');
+    expect(shadow()?.querySelector('[data-status-kind="slider-user-active"]')).not.toBeNull();
+    expect(document.querySelector('[data-local-captcha-slider-highlight]')).not.toBeNull();
+
+    clearSliderStatus();
+    expect(document.querySelector('[data-local-captcha-slider-highlight]')).toBeNull();
   });
 });

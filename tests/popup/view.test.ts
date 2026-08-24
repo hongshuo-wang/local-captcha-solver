@@ -24,6 +24,30 @@ describe('popup view', () => {
     root.remove();
   });
 
+  it('switches between the static and slider workspaces with tabs and arrow keys', () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    createPopupView(root);
+    const staticTab = root.querySelector<HTMLButtonElement>('[data-popup-tab="static"]')!;
+    const sliderTab = root.querySelector<HTMLButtonElement>('[data-popup-tab="slider"]')!;
+    const staticPanel = root.querySelector<HTMLElement>('[data-popup-panel="static"]')!;
+    const sliderPanel = root.querySelector<HTMLElement>('[data-popup-panel="slider"]')!;
+
+    expect(staticTab.getAttribute('aria-selected')).toBe('true');
+    expect(staticPanel.hidden).toBe(false);
+    expect(sliderPanel.hidden).toBe(true);
+    sliderTab.click();
+    expect(sliderTab.getAttribute('aria-selected')).toBe('true');
+    expect(staticTab.tabIndex).toBe(-1);
+    expect(staticPanel.hidden).toBe(true);
+    expect(sliderPanel.hidden).toBe(false);
+
+    sliderTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    expect(staticTab.getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(staticTab);
+    root.remove();
+  });
+
   it('adapts the permission action to all-site and selected-site modes', () => {
     const root = document.createElement('main');
     document.body.append(root);
@@ -182,9 +206,12 @@ describe('popup view', () => {
 
     await vi.waitFor(() => expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('正在自动拖动'));
     expect(root.querySelector('[data-slider-panel]')?.getAttribute('data-state')).toBe('running');
+    expect(root.querySelector('[data-popup-tab="slider"]')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector('[data-slider-tab-status]')?.textContent).toBe('正在处理');
     expect(root.querySelector('[data-slider-state-mode]')?.textContent).toBe('自动接管');
     await vi.waitFor(() => expect(root.querySelector('[data-slider-state-title]')?.textContent).toBe('已自动完成拖动'), { timeout: 1200 });
     expect(root.querySelector('[data-slider-panel]')?.getAttribute('data-state')).toBe('success');
+    expect(root.querySelector('[data-slider-tab-status]')?.textContent).toBe('最近已完成');
     root.remove();
   });
 });

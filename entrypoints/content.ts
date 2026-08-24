@@ -1,7 +1,7 @@
 import { acquireImage } from '../src/content/image-source';
 import { imageRevision, isVisible, snapshotForImage, snapshotImages } from '../src/content/dom-snapshot';
 import { observeCaptchaImages } from '../src/content/observer';
-import { clearWorkflowStatus, setStatusUiLocale, showRecognizing, showSliderStatus, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
+import { clearSliderStatus, clearSliderUserActivityStatus, clearWorkflowStatus, setStatusUiLocale, showRecognizing, showSliderStatus, showWorkflowStatus, type CopyOutcome, type StatusAction } from '../src/content/status-ui';
 import { createCaptchaWorkflow } from '../src/content/workflow';
 import { fillEmptyField, fillPlaceholderField, isEligibleField, replaceField, type TextFieldElement } from '../src/content/field-fill';
 import { copyText } from '../src/content/clipboard';
@@ -10,7 +10,7 @@ import type { OcrResult, RecognitionMode, WorkflowResult } from '../src/core/typ
 import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
 import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
-import { discoverSliderChallenge, observeSliderOutcome, sliderDiscoveryKey } from '../src/slider/challenge-discovery';
+import { discoverSliderChallenge, observeSliderOutcome, sliderDiscoveryKey, visibleSliderInteractionTarget } from '../src/slider/challenge-discovery';
 import { SLIDER_RESULT_STATES, type SliderResultState, type SliderRunResult } from '../src/slider/types';
 
 type Runtime = {
@@ -37,15 +37,15 @@ function localeFromSettings(value: unknown, browserLanguage: string): UiLocale {
   return resolveUiLocale(preference, browserLanguage);
 }
 function sliderEnabledFromSettings(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as { sliderEnabledHosts?: unknown }).sliderEnabledHosts)) return false;
+  if (typeof value !== 'object' || value === null) return false;
   try {
     const hostname = new URL(location.href).hostname.toLowerCase();
-    return (value as { sliderEnabledHosts: unknown[] }).sliderEnabledHosts.includes(hostname);
+    const settings = value as { sliderAccessMode?: unknown; sliderEnabledHosts?: unknown };
+    return settings.sliderAccessMode === 'all' || (Array.isArray(settings.sliderEnabledHosts) && settings.sliderEnabledHosts.includes(hostname));
   } catch { return false; }
 }
 const AUTOMATIC_MODES: readonly RecognitionMode[] = ['digits', 'letters', 'alphanumeric', 'arithmetic'];
-const SLIDER_HANDLE_SELECTOR = '[data-slider-handle], .geetest_slider_button, .geetest_slider .geetest_btn, [role="slider"]';
-const SLIDER_REARM_SELECTOR = `[data-slider-captcha], ${SLIDER_HANDLE_SELECTOR}, .geetest_btn_click, .geetest_radar_btn`;
+const SLIDER_USER_INPUT_COOLDOWN_MS = 1200;
 function modesFromSettings(value: unknown): readonly RecognitionMode[] {
   try {
     const mode = recognitionModeFromSettings(value, location.href);
@@ -86,12 +86,17 @@ export function createRuntimeContent(runtime: Runtime) {
   let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
   let sliderAutomaticEnabled = false;
   let lastSliderAttempt: string | undefined;
-  let sliderRunInFlight = false;
+  let sliderRunGeneration: number | undefined;
   let sliderAutoBlockedAfterSuccessAt = 0;
   let lastSliderRearmAt = 0;
-  let automationHandlePressArmedUntil = 0;
+  let automationPointerPressArmedUntil = 0;
   let lastUserInputAt = 0;
+  let sliderUserActivityTimer: ReturnType<typeof setTimeout> | undefined;
+  let sliderGeneration = 0;
+  let sliderRetryAfterUserActivity = false;
+  let sliderInterruptedByUser = false;
   let sliderObserver: MutationObserver | undefined;
+  let sliderTimer: ReturnType<typeof setTimeout> | undefined;
   let text = CONTENT_TEXT[uiLocale];
   setStatusUiLocale(uiLocale);
   const workflow = createCaptchaWorkflow({
@@ -280,15 +285,25 @@ export function createRuntimeContent(runtime: Runtime) {
     uiLocale = localeFromSettings(settings, runtime.uiLanguage ?? 'zh-CN');
     text = CONTENT_TEXT[uiLocale];
     setStatusUiLocale(uiLocale);
-    sliderAutomaticEnabled = sliderEnabledFromSettings(settings);
+    const nextSliderEnabled = sliderEnabledFromSettings(settings);
+    if (nextSliderEnabled !== sliderAutomaticEnabled) sliderGeneration += 1;
+    sliderAutomaticEnabled = nextSliderEnabled;
     if (sliderAutomaticEnabled) startSliderObserver();
     else {
       sliderObserver?.disconnect();
       sliderObserver = undefined;
+      if (sliderTimer !== undefined) clearTimeout(sliderTimer);
+      sliderTimer = undefined;
       lastSliderAttempt = undefined;
+      sliderRunGeneration = undefined;
+      sliderRetryAfterUserActivity = false;
+      sliderInterruptedByUser = false;
       sliderAutoBlockedAfterSuccessAt = 0;
       lastSliderRearmAt = 0;
-      automationHandlePressArmedUntil = 0;
+      automationPointerPressArmedUntil = 0;
+      if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
+      sliderUserActivityTimer = undefined;
+      clearSliderStatus();
     }
   });
   const documentWithShortcut = document as Document & { __localCaptchaShortcutCleanup?: () => void };
@@ -315,20 +330,41 @@ export function createRuntimeContent(runtime: Runtime) {
     lastUserInputAt = at;
     const target = event.target;
     const targetElement = target instanceof Element ? target : undefined;
-    const isSliderHandle = targetElement !== undefined && targetElement.closest(SLIDER_HANDLE_SELECTOR) !== null;
-    if (sliderRunInFlight && event.type === 'pointerdown' && isSliderHandle) {
-      if (at <= automationHandlePressArmedUntil) {
-        automationHandlePressArmedUntil = 0;
-        lastUserInputAt = at - 1200;
-        return;
-      }
+    const sliderTarget = visibleSliderInteractionTarget(document);
+    const isSliderControl = targetElement !== undefined && sliderTarget !== undefined && (sliderTarget === targetElement || sliderTarget.contains(targetElement));
+    if (event.type === 'pointerdown' && isSliderControl && at <= automationPointerPressArmedUntil) {
+      automationPointerPressArmedUntil = 0;
+      lastUserInputAt = at - SLIDER_USER_INPUT_COOLDOWN_MS;
+      return;
     }
-    if (targetElement?.closest(SLIDER_REARM_SELECTOR) !== null) lastSliderRearmAt = at;
+    if (sliderAutomaticEnabled && isSliderControl) {
+      lastSliderRearmAt = at;
+      if (sliderAutoBlockedAfterSuccessAt > 0) lastSliderAttempt = undefined;
+    }
+    if (sliderAutomaticEnabled && sliderAutoBlockedAfterSuccessAt === 0 && sliderRunGeneration !== undefined) {
+      sliderInterruptedByUser = true;
+      showSliderStatus({ state: 'user-active' });
+      if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
+      const releaseUserActivity = (): void => {
+        sliderUserActivityTimer = undefined;
+        const remaining = SLIDER_USER_INPUT_COOLDOWN_MS - (Date.now() - lastUserInputAt);
+        if (remaining > 0) {
+          sliderUserActivityTimer = setTimeout(releaseUserActivity, remaining);
+          return;
+        }
+        clearSliderUserActivityStatus();
+        lastSliderAttempt = undefined;
+        sliderRetryAfterUserActivity = true;
+        sliderTimer = setTimeout(() => { void scanSlider(); }, 0);
+      };
+      sliderUserActivityTimer = setTimeout(releaseUserActivity, SLIDER_USER_INPUT_COOLDOWN_MS);
+    }
   };
   window.addEventListener('pointerdown', noteUserInput, true);
   window.addEventListener('keydown', noteUserInput, true);
   window.addEventListener('wheel', noteUserInput, true);
   documentWithShortcut.__localCaptchaShortcutCleanup = () => {
+    sliderGeneration += 1;
     window.removeEventListener('mousedown', onShortcutDown, true);
     window.removeEventListener('click', suppressShortcutDefault, true);
     window.removeEventListener('auxclick', suppressShortcutDefault, true);
@@ -339,7 +375,13 @@ export function createRuntimeContent(runtime: Runtime) {
     document.removeEventListener('visibilitychange', scheduleSliderScan);
     sliderObserver?.disconnect();
     if (sliderTimer !== undefined) clearTimeout(sliderTimer);
-    automationHandlePressArmedUntil = 0;
+    sliderTimer = undefined;
+    if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
+    sliderUserActivityTimer = undefined;
+    sliderRetryAfterUserActivity = false;
+    sliderInterruptedByUser = false;
+    clearSliderStatus();
+    automationPointerPressArmedUntil = 0;
     unsubscribeSettings?.();
   };
   const enable = () => {
@@ -349,7 +391,14 @@ export function createRuntimeContent(runtime: Runtime) {
       onSkip: (skip) => { void Promise.resolve(runtime.sendMessage({ type: 'captcha:record-activity', outcome: 'skipped', diagnostic: { trigger: 'automatic', ...skip } })).catch(() => undefined); },
     });
   };
-  const disable = () => { lifecycleGeneration += 1; automaticEnabled = false; observer?.disconnect(); observer = undefined; workflow.cancelAll?.(); automationHandlePressArmedUntil = 0; clearWorkflowStatus(); };
+  const disable = () => {
+    lifecycleGeneration += 1;
+    automaticEnabled = false;
+    observer?.disconnect();
+    observer = undefined;
+    workflow.cancelAll?.();
+    clearWorkflowStatus();
+  };
   runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
     const type = (message as { type?: string }).type;
@@ -373,7 +422,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:slider-discover') {
       return discoverSliderChallenge(document).then((discovery) => {
         if (discovery.state !== 'ready' && discovery.state !== 'activatable') return discovery;
-        return { ...discovery, recentUserInput: Date.now() - lastUserInputAt < 1200, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() };
+        return { ...discovery, recentUserInput: Date.now() - lastUserInputAt < SLIDER_USER_INPUT_COOLDOWN_MS, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() };
       });
     }
     if (type === 'captcha:slider-outcome') {
@@ -382,10 +431,14 @@ export function createRuntimeContent(runtime: Runtime) {
         ? observeSliderOutcome(revision, document).then((outcome) => ({ outcome }))
         : Promise.resolve({ outcome: 'uncertain' });
     }
-    if (type === 'captcha:slider-user-active') return Promise.resolve({ active: Date.now() - lastUserInputAt < 1200 });
+    if (type === 'captcha:slider-user-active') return Promise.resolve({ active: Date.now() - lastUserInputAt < SLIDER_USER_INPUT_COOLDOWN_MS });
     if (type === 'captcha:slider-automation-press') {
-      automationHandlePressArmedUntil = Date.now() + 500;
+      automationPointerPressArmedUntil = Date.now() + 1500;
       return Promise.resolve({ armed: true });
+    }
+    if (type === 'captcha:slider-automation-disarm') {
+      automationPointerPressArmedUntil = 0;
+      return Promise.resolve({ armed: false });
     }
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
@@ -393,35 +446,53 @@ export function createRuntimeContent(runtime: Runtime) {
   });
   const initialGeneration = lifecycleGeneration;
   void Promise.resolve(runtime.sendMessage({ type: 'captcha:get-site-state' })).then((state) => { if (isSiteState(state) && state.enabled && lifecycleGeneration === initialGeneration) enable(); }).catch(() => undefined);
-  let sliderTimer: ReturnType<typeof setTimeout> | undefined;
   const scanSlider = async (): Promise<void> => {
     sliderTimer = undefined;
-    if (!sliderAutomaticEnabled || sliderRunInFlight || document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    if (!sliderAutomaticEnabled || sliderRunGeneration !== undefined || document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    const generation = sliderGeneration;
     if (sliderAutoBlockedAfterSuccessAt > 0) {
       if (lastSliderRearmAt <= sliderAutoBlockedAfterSuccessAt) return;
       sliderAutoBlockedAfterSuccessAt = 0;
     }
-    const userCooldown = 1200 - (Date.now() - lastUserInputAt);
+    const userCooldown = SLIDER_USER_INPUT_COOLDOWN_MS - (Date.now() - lastUserInputAt);
     if (userCooldown > 0) {
       sliderTimer = setTimeout(() => { void scanSlider(); }, userCooldown);
       return;
     }
     const discovery = await discoverSliderChallenge(document);
+    if (generation !== sliderGeneration || !sliderAutomaticEnabled) return;
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
+    const cooldownAfterDiscovery = SLIDER_USER_INPUT_COOLDOWN_MS - (Date.now() - lastUserInputAt);
+    if (cooldownAfterDiscovery > 0) {
+      sliderTimer = setTimeout(() => { void scanSlider(); }, cooldownAfterDiscovery);
+      return;
+    }
     const key = sliderDiscoveryKey(discovery);
     if (key === undefined || key === lastSliderAttempt) return;
     lastSliderAttempt = key;
-    sliderRunInFlight = true;
+    sliderRetryAfterUserActivity = false;
+    sliderRunGeneration = generation;
+    sliderInterruptedByUser = false;
     showSliderStatus({ state: 'running' });
     try {
       const result = await runtime.sendMessage({ type: 'captcha:slider-auto-run', revision: key });
-      showSliderStatus(isSliderRunResult(result) ? result : { state: 'failed' });
-      if (isSliderRunResult(result) && result.state === 'success') sliderAutoBlockedAfterSuccessAt = Date.now();
+      if (generation !== sliderGeneration || !sliderAutomaticEnabled) return;
+      const sliderResult = isSliderRunResult(result) ? result : { state: 'failed' as const };
+      if (sliderInterruptedByUser && sliderResult.state !== 'success') {
+        // The user-active panel owns feedback until its cooldown clears it.
+      } else if (sliderResult.state === 'user-active' && Date.now() - lastUserInputAt >= SLIDER_USER_INPUT_COOLDOWN_MS) clearSliderUserActivityStatus();
+      else showSliderStatus(sliderResult);
+      if (sliderResult.state === 'success') sliderAutoBlockedAfterSuccessAt = Date.now();
     } catch {
-      showSliderStatus({ state: 'failed' });
+      if (generation === sliderGeneration && sliderAutomaticEnabled) showSliderStatus({ state: 'failed' });
     } finally {
-      sliderRunInFlight = false;
-      const current = await discoverSliderChallenge(document).catch(() => ({ state: 'not-found' as const }));
-      lastSliderAttempt = sliderDiscoveryKey(current);
+      if (sliderRunGeneration === generation) sliderRunGeneration = undefined;
+      if (generation !== sliderGeneration || !sliderAutomaticEnabled) return;
+      if (sliderRetryAfterUserActivity) {
+        lastSliderAttempt = undefined;
+        sliderRetryAfterUserActivity = false;
+      }
+      scheduleSliderScan();
     }
   };
   function scheduleSliderScan(): void {

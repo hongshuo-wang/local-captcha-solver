@@ -173,7 +173,7 @@ describe('createSettingsStore', () => {
 
   it('migrates existing settings without enabling slider automation on any site', async () => {
     const store = createSettingsStore(adapterWith({ ...defaults, version: 4, sliderEnabledHosts: undefined }));
-    await expect(store.read()).resolves.toMatchObject({ version: 5, sliderEnabledHosts: [] });
+    await expect(store.read()).resolves.toMatchObject({ version: 7, sliderEnabledHosts: [], sliderAccessMode: 'selected', sliderOnboardingChoice: undefined, lastSeenUpgradeGuide: null });
   });
 
   it('stores slider automation as an exact-host permission independent of OCR access', async () => {
@@ -184,5 +184,25 @@ describe('createSettingsStore', () => {
     await expect(store.read()).resolves.toMatchObject({ sliderEnabledHosts: ['login.example.test'] });
     await store.setSliderEnabled('login.example.test', false);
     await expect(store.isSliderEnabled('https://login.example.test/captcha')).resolves.toBe(false);
+  });
+
+  it('supports global slider automation without changing OCR access mode', async () => {
+    const store = createSettingsStore(adapterWith({ ...defaults, accessMode: 'selected' }));
+    await store.setSliderAccessMode('all');
+    await expect(store.isSliderEnabled('https://any.example.test/captcha')).resolves.toBe(true);
+    await expect(store.read()).resolves.toMatchObject({ accessMode: 'selected', sliderAccessMode: 'all' });
+    await store.setSliderAccessMode('selected');
+    await expect(store.isSliderEnabled('https://any.example.test/captcha')).resolves.toBe(false);
+  });
+
+  it('keeps slider onboarding choice empty until the user explicitly chooses a scope', async () => {
+    const store = createSettingsStore(adapterWith({ ...defaults, version: 6, sliderAccessMode: 'all' }));
+    await expect(store.read()).resolves.toMatchObject({ version: 7, sliderAccessMode: 'all', sliderOnboardingChoice: undefined, lastSeenUpgradeGuide: null });
+    await store.setSliderOnboardingChoice('selected');
+    await store.setLastSeenUpgradeGuide('1.2.0');
+    await expect(store.read()).resolves.toMatchObject({ sliderOnboardingChoice: 'selected', lastSeenUpgradeGuide: '1.2.0' });
+    await store.setSliderOnboardingChoice(undefined);
+    await store.setLastSeenUpgradeGuide(null);
+    await expect(store.read()).resolves.toMatchObject({ sliderOnboardingChoice: undefined, lastSeenUpgradeGuide: null });
   });
 });

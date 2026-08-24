@@ -11,7 +11,7 @@
       p { margin: 0 0 16px; color: #617067; font-size: 13px; line-height: 1.45; }
       .challenge { position: relative; width: 320px; height: 210px; }
       #background { position: absolute; inset: 0 auto auto 0; width: 320px; height: 160px; border: 1px solid #b5c4ba; }
-      .track { position: absolute; left: 0; right: 0; top: 177px; height: 30px; border-radius: 15px; background: #e3ebe5; }
+      .drag-track { position: absolute; left: 0; right: 0; top: 177px; height: 30px; border-radius: 15px; background: #e3ebe5; }
       #handle { position: absolute; left: 0; top: 172px; width: 40px; height: 40px; border: 0; border-radius: 8px; background: #286a49; cursor: grab; touch-action: none; }
       #handle:active { cursor: grabbing; }
       #status { min-height: 20px; margin: 12px 0 0; color: #286a49; font-weight: 650; }
@@ -19,13 +19,13 @@
     </style>
   </head>
   <body>
-    <main data-slider-captcha>
+    <main>
       <h1>本地滑块测试页</h1>
       <p>用于验证 Captcha Helper Beta 的本地定位、逐站授权和真实拖动。此页不会提交表单。</p>
       <div class="challenge">
-        <canvas id="background" data-slider-image width="320" height="160"></canvas>
-        <div class="track" data-slider-track></div>
-        <button id="handle" data-slider-handle aria-label="滑块"></button>
+        <canvas id="background" class="puzzle-background" width="320" height="160"></canvas>
+        <div class="drag-track"></div>
+        <button id="handle" class="drag-thumb" aria-label="滑块"></button>
       </div>
       <div id="status" role="status" aria-live="polite"></div>
       <button id="reset" type="button">刷新挑战</button>

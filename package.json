@@ -1,7 +1,7 @@
 {
   "name": "local-captcha-solver",
-  "version": "1.1.0",
-  "description": "Local, privacy-first recognition for common static CAPTCHAs.",
+  "version": "1.2.0",
+  "description": "Local, privacy-first recognition for common CAPTCHAs with puzzle-slider support.",
   "private": true,
   "type": "module",
   "license": "MIT",

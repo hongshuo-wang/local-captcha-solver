@@ -41,8 +41,8 @@ describe('options entrypoint', () => {
     const root = document.createElement('div');
     document.body.append(root);
     await startOptions(root, app.extension);
-    expect(root.textContent).toContain('网站访问');
-    expect(root.textContent).toContain('网站与权限');
+    expect(root.textContent).toContain('静态验证码');
+    expect(root.textContent).toContain('访问模式');
     expect(root.querySelector('[data-mode="selected"]')?.getAttribute('aria-pressed')).toBe('true');
     (root.querySelector('[data-mode="all"]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(app.request).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
@@ -166,9 +166,10 @@ describe('options entrypoint', () => {
     document.body.append(root);
     await startOptions(root, app.extension);
 
-    expect(root.textContent).toContain('已授权 1/1 个指定网站');
-    expect(root.textContent).toContain('已授权 · 仅此主机名');
-    expect(root.textContent).not.toContain('尚未获得网站访问权限');
+    const staticView = root.querySelector('[data-view="static"]') as HTMLElement;
+    expect(staticView.textContent).toContain('已授权 1/1 个指定网站');
+    expect(staticView.textContent).toContain('已授权 · 仅此主机名');
+    expect(staticView.textContent).not.toContain('尚未获得网站访问权限');
 
     root.remove();
   });
@@ -179,7 +180,7 @@ describe('options entrypoint', () => {
       ...DEFAULT_SETTINGS,
       siteRecognitionModes: [{ hostname: 'portal.example.test', mode: 'letters' }],
     });
-    location.hash = 'behavior';
+    location.hash = 'static';
     const root = document.createElement('div');
     document.body.append(root);
     await startOptions(root, app.extension);
@@ -190,5 +191,39 @@ describe('options entrypoint', () => {
     await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ siteRecognitionModes: [] }));
     root.remove();
     location.hash = '';
+  });
+
+  it('configures slider handling globally or for selected sites from Slider settings', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { ...DEFAULT_SETTINGS, accessMode: 'selected', sliderAccessMode: 'selected' });
+    location.hash = 'slider';
+    const root = document.createElement('div');
+    document.body.append(root);
+    await startOptions(root, app.extension);
+    expect(root.textContent).toContain('拼图滑块处理');
+    expect(root.querySelector('[data-slider-mode="selected"]')?.getAttribute('aria-pressed')).toBe('true');
+    (root.querySelector('[data-slider-mode="all"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(app.request).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
+    await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ sliderAccessMode: 'all' }));
+    (root.querySelector('[data-slider-mode="selected"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ sliderAccessMode: 'selected' }));
+    root.remove();
+    location.hash = '';
+  });
+
+  it('opens the standalone slider upgrade guide from Settings without resetting OCR onboarding', async () => {
+    const app = harness();
+    app.values.set(SETTINGS_STORAGE_KEY, { ...DEFAULT_SETTINGS, onboardingComplete: true });
+    const navigate = vi.fn();
+    const createTab = vi.fn(async () => undefined);
+    app.extension.tabs = { create: createTab };
+    const root = document.createElement('div');
+    document.body.append(root);
+    await startOptions(root, app.extension, navigate);
+    (root.querySelector('[data-open-guide]') as HTMLButtonElement).click();
+    expect(createTab).toHaveBeenCalledWith({ url: 'chrome-extension://test/onboarding.html?flow=upgrade&version=1.0.0&manual=1' });
+    expect(navigate).not.toHaveBeenCalled();
+    expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ onboardingComplete: true });
+    root.remove();
   });
 });

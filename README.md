@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper logo">
   <h1>Captcha Helper</h1>
-  <p>Local, privacy-first recognition for common static CAPTCHAs.</p>
+  <p>Local, privacy-first recognition for common CAPTCHAs, including a puzzle-slider beta.</p>
   <p><a href="README.zh-CN.md">简体中文</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI status"></a>
@@ -12,9 +12,9 @@
   </p>
 </div>
 
-![Captcha Helper site-access settings](docs/assets/screenshot-global-1280x800.png)
+![Captcha Helper onboarding overview for static CAPTCHAs and puzzle sliders](docs/assets/screenshot-global-1280x800.png)
 
-Captcha Helper is an open-source Chromium extension that recognizes common static text CAPTCHAs entirely on the user's device. It can fill a reliable result into one matching empty field, but it never clicks a submit button or submits a form.
+Captcha Helper is an open-source Chromium extension that recognizes common static text CAPTCHAs entirely on the user's device and can optionally handle single-gap puzzle sliders. It can fill a reliable text result into one matching empty field, but it never clicks a submit button or submits a form.
 
 There is no account, advertising, telemetry, remote OCR service, or runtime model download. Users can authorize every HTTP/HTTPS site or maintain an exact list of allowed sites.
 
@@ -27,7 +27,9 @@ The project intentionally supports one static image containing:
 - alphanumeric strings; or
 - one-step integer arithmetic using `+`, `-`, `*`, `/`, `x`, `X`, `×`, or `÷`.
 
-Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces nonnegative answers and division must be exact. Image selection, animation, behavioral challenges, non-Latin scripts, decimals, remainders, negative results, and multi-step mathematics are outside the static OCR scope. A separate slider Beta supports only desktop Chrome/Edge single-gap horizontal puzzle challenges with stable visible image resources. It requires exact-host per-site authorization and never offers global automatic mode because it sends browser-level drag input that could affect a page control after a false detection. GeeTest V4 support is limited to compatible puzzle-slider challenges, not the whole adaptive verification product.
+Arithmetic images may end in `=?`, `=`, `?`, or no suffix. Subtraction produces nonnegative answers and division must be exact. Image selection, animation, behavioral challenges, non-Latin scripts, decimals, remainders, negative results, and multi-step mathematics are outside the static OCR scope.
+
+The separate puzzle-slider Beta supports desktop Chrome/Edge single-gap horizontal challenges with stable visible image resources. It is provider-neutral and has been checked with the [GeeTest demo](https://2captcha.com/demo/geetest). In Settings, slider handling can be configured for all HTTP/HTTPS sites or for an exact list of sites. It uses the browser `debugger` permission to send trusted drag input, and the browser may show a confirmation prompt during installation or an upgrade. Ambiguous, changing, low-confidence, or rejected challenges are left for the user.
 
 ## Installation
 
@@ -62,6 +64,19 @@ Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**,
 3. Start recognition from the popup, an image context menu, or the configured mouse shortcut.
 4. Review the result when the extension cannot identify one safe, empty input field.
 
+### Puzzle sliders
+
+1. Open Settings -> Puzzle sliders.
+2. Choose `All sites` or `Selected sites only`. The selected-site mode is the safer default and lets you add exact hostnames.
+3. Confirm the browser `debugger` permission if the browser requests it. It is used only during a manual run or an automatic run on an enabled site, then detached.
+4. Test with the [GeeTest demo](https://2captcha.com/demo/geetest).
+
+The extension monitors enabled sites for a unique visible slider, waits for the page and user input to settle, verifies the challenge again before dragging, and stops instead of guessing when the geometry or result is uncertain. Manual handling from the popup is available even when automatic slider handling is off, subject to site access and debugger permission.
+
+### Upgrading to 1.2.0
+
+Users upgrading from an earlier version see one standalone upgrade tab for the new slider feature. Configure the slider site scope, review the permission summary, and open the GeeTest demo in a separate tab. Existing static OCR settings continue unchanged.
+
 Recognition and automatic filling are separate decisions. Automatic filling requires a result above the category-specific confidence threshold and one unique eligible empty field. Existing input is never replaced without confirmation. Structurally ambiguous arithmetic and low-confidence results are rejected instead of guessed.
 
 For sites with a known CAPTCHA alphabet, the popup can store an exact-host override for digits, English letters, alphanumeric text, or arithmetic. The selected alphabet constrains CTC decoding directly; it does not rewrite characters after recognition. Overrides apply to automatic, popup, shortcut, and context-menu recognition and can be restored to automatic detection from Settings.
@@ -79,7 +94,7 @@ CAPTCHA images, recognition results, settings, and sanitized diagnostics remain 
 | `offscreen` | Run the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
 | `scripting` | Install the page helper after the user grants access. |
 | `storage` | Store settings, permission state, model state, and up to 20 sanitized diagnostic records locally. |
-| Optional HTTP/HTTPS hosts | Let the user grant all-site or exact-site access. |
+| Optional HTTP/HTTPS hosts | Let the user grant all-site or exact-site access independently for OCR and puzzle-slider monitoring. |
 
 ## Model
 

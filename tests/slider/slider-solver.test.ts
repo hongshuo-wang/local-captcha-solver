@@ -35,9 +35,10 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; cleanImage?: PixelImage; visibleImage?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number; outcomes?: readonly ('success' | 'failure' | 'pending' | 'absent' | 'uncertain')[] } = {}) {
   let discoveries = 0;
   let inputEvents = 0;
+  let outcomeChecks = 0;
   const sendMessage = vi.fn(async (_tabId: number, message: unknown) => {
     const type = (message as { type?: string }).type;
     if (type === 'captcha:slider-user-active') return { active: options.userActiveAfterInputEvents !== undefined && inputEvents >= options.userActiveAfterInputEvents };
@@ -52,6 +53,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
         state: 'ready',
         challenge: {
           ...challenge,
+          ...(options.cleanImage === undefined ? {} : { backgroundDataUrl: 'data:image/png;base64,CLEAN' }),
           revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision,
           ...(activationWidth === undefined ? {} : { image: { ...challenge.image, width: activationWidth }, track: { ...challenge.track, width: activationWidth } }),
           ...(options.feedbackPieceOffsets === undefined ? {} : { piece: { x: feedbackPieceOffset ?? 0, y: 34, width: 38, height: 38 } }),
@@ -61,7 +63,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
         pageFocused: true,
       };
     }
-    if (type === 'captcha:slider-outcome') return { outcome: 'success' };
+    if (type === 'captcha:slider-outcome') return { outcome: options.outcomes?.[Math.min(outcomeChecks++, options.outcomes.length - 1)] ?? 'success' };
     return undefined;
   });
   const attach = vi.fn(async () => undefined);
@@ -70,13 +72,13 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
     if (method === 'Input.dispatchMouseEvent') inputEvents += 1;
     return method === 'Page.captureScreenshot' ? { data: 'AA==' } : undefined;
   });
-  const delay = vi.fn(async () => undefined);
+  const delay = vi.fn(async (_durationMs: number) => undefined);
   const solver = createSliderSolver({
     settings: { isSliderEnabled: vi.fn(async () => options.enabled ?? true) },
     permissions: { contains: vi.fn(async () => options.granted ?? true) },
     tabs: { sendMessage },
     debugger: { attach, detach, sendCommand },
-    decodeImage: vi.fn(async () => options.image ?? screenshot()),
+    decodeImage: vi.fn(async (dataUrl) => dataUrl === 'data:image/png;base64,AA==' ? options.image ?? options.visibleImage ?? screenshot() : options.cleanImage ?? options.image ?? screenshot()),
     delay,
     random: () => .5,
   });
@@ -114,6 +116,13 @@ describe('slider solver', () => {
     expect(app.sendCommand.mock.calls.at(-1)?.[2]).toMatchObject({ type: 'mouseReleased', button: 'left', buttons: 0 });
   });
 
+  it('treats a stably removed challenge as successful without provider-specific markup', async () => {
+    const app = harness({ outcomes: ['absent', 'absent'] });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success' });
+    const checks = app.delay.mock.calls.filter(([duration]) => duration === 250 || duration === 500 || duration === 750);
+    expect(checks).toEqual([[250], [500]]);
+  });
+
   it('does not inspect or drag an automatic challenge on a site that is not enabled', async () => {
     const app = harness({ enabled: false });
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toEqual({ state: 'permission-denied', reason: 'site-not-enabled' });
@@ -138,9 +147,36 @@ describe('slider solver', () => {
     expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(false);
   });
 
+  it('rejects a stale automatic request before attaching the debugger', async () => {
+    const app = harness();
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic', 'older-challenge')).resolves.toEqual({
+      state: 'uncertain',
+      reason: 'challenge-changed',
+    });
+    expect(app.attach).not.toHaveBeenCalled();
+  });
+
   it('releases the pointer and stops when the user interrupts an automatic drag', async () => {
     const app = harness({ userActiveAfterInputEvents: 2 });
     await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'uncertain', reason: 'user-interrupted' });
+    const releases = app.sendCommand.mock.calls.filter((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string })?.type === 'mouseReleased');
+    expect(releases).toHaveLength(1);
+    expect(app.detach).toHaveBeenCalledOnce();
+  });
+
+  it('releases the pointer when an automatic run is cancelled while dragging', async () => {
+    const app = harness();
+    let inputEvents = 0;
+    app.sendCommand.mockImplementation(async (_target, method) => {
+      if (method === 'Page.captureScreenshot') return { data: 'AA==' };
+      if (method === 'Input.dispatchMouseEvent' && ++inputEvents === 3) app.solver.cancel?.(7);
+      return undefined;
+    });
+
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({
+      state: 'permission-denied',
+      reason: 'run-cancelled',
+    });
     const releases = app.sendCommand.mock.calls.filter((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string })?.type === 'mouseReleased');
     expect(releases).toHaveLength(1);
     expect(app.detach).toHaveBeenCalledOnce();
@@ -168,6 +204,25 @@ describe('slider solver', () => {
       },
     });
     expect(app.detach).toHaveBeenCalledOnce();
+  });
+
+  it('uses the visible gap when clean-background texture is inconclusive', async () => {
+    const app = harness({ image: screenshot(), cleanImage: blankScreenshot() });
+
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({
+      state: 'success',
+      confidence: expect.any(Number),
+      diagnostic: { gapX: expect.any(Number), gapY: expect.any(Number) },
+    });
+  });
+
+  it('selects the stronger view when both image sources are usable', async () => {
+    const app = harness({ image: screenshot(), cleanImage: blankScreenshot(), visibleImage: screenshot() });
+
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({
+      state: 'success',
+      confidence: expect.any(Number),
+    });
   });
 
   it('measures and corrects the remaining piece error before releasing', async () => {

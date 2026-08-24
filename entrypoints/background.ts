@@ -56,8 +56,9 @@ interface BackgroundBrowser {
       addListener(listener: (message: unknown, sender: { tab?: { id?: number; url?: string; windowId?: number }; url?: string }, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
     };
     onStartup: { addListener(listener: () => void): void };
-    onInstalled: { addListener(listener: (details: { reason: string }) => void): void };
+    onInstalled: { addListener(listener: (details: { reason: string; previousVersion?: string }) => void): void };
     getURL(path: string): string;
+    getManifest(): { version: string };
   };
 }
 
@@ -114,7 +115,8 @@ export default defineBackground(() => {
       setBadgeBackgroundColor: extension.action.setBadgeBackgroundColor.bind(extension.action),
     },
   });
-  registerInstallExperience(extension.runtime, extension.tabs);
-  void modelStatus.hydrate().then(() => runtimeApp.start());
+  registerInstallExperience(extension.runtime, extension.tabs, runtime.getManifest().version);
+  void modelStatus.hydrate();
+  void runtimeApp.start();
   console.info('Captcha Helper background ready');
 });

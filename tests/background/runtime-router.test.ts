@@ -271,6 +271,27 @@ describe('background runtime router', () => {
     expect(solve).not.toHaveBeenCalled();
   });
 
+  it('does not start a manual drag after the active tab navigates', async () => {
+    const app = harness({ pagePermission: true });
+    app.activeTab
+      .mockResolvedValueOnce({ id: 4, url: 'https://portal.example.test/login' })
+      .mockResolvedValueOnce({ id: 4, url: 'https://portal.example.test/other' });
+    const solve = vi.fn(async () => ({ state: 'success' as const }));
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: { read: app.readSettings, setCopyOnNoField: app.setCopyOnNoField, setAutoFill: app.setAutoFill, setRecognitionShortcut: app.setRecognitionShortcut },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+
+    await expect(router.handle({ type: 'captcha:run-slider' }, {})).resolves.toEqual({ state: 'page-inactive', reason: 'page-changed' });
+    expect(solve).not.toHaveBeenCalled();
+  });
+
   it('trusts Edge extension pages for slider popup commands', async () => {
     const app = harness({ pagePermission: true });
     const solve = vi.fn(async () => ({ state: 'success' as const }));
@@ -292,6 +313,33 @@ describe('background runtime router', () => {
       activeTab: app.activeTab,
     });
     await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({ supported: true });
+  });
+
+  it('cancels the active tab run when slider automation is disabled', async () => {
+    const app = harness({ pagePermission: true });
+    const cancel = vi.fn();
+    const setSliderEnabled = vi.fn(async () => undefined);
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => true),
+        setSliderEnabled,
+      },
+      sliderSolver: { solve: vi.fn(async () => ({ state: 'success' as const })), cancel },
+      activeTab: app.activeTab,
+    });
+
+    await expect(router.handle({ type: 'captcha:set-slider-enabled', enabled: false, hostname: 'portal.example.test' }, {})).resolves.toMatchObject({ enabled: false });
+    expect(setSliderEnabled).toHaveBeenCalledWith('portal.example.test', false);
+    expect(cancel).toHaveBeenCalledWith(4);
   });
 
   it('exposes automatic slider progress and its terminal result to the popup', async () => {
@@ -329,6 +377,40 @@ describe('background runtime router', () => {
     await expect(router.handle({ type: 'captcha:get-slider-state' }, { url: 'edge-extension://test/popup.html' })).resolves.toMatchObject({
       activity: { state: 'success', trigger: 'automatic', confidence: .82, at: expect.any(Number) },
     });
+  });
+
+  it('serializes manual and automatic slider runs in the same tab', async () => {
+    const app = harness({ pagePermission: true });
+    let finish!: (value: { state: 'success' }) => void;
+    const solve = vi.fn()
+      .mockImplementationOnce(() => new Promise<{ state: 'success' }>((resolve) => { finish = resolve; }))
+      .mockResolvedValue({ state: 'success' });
+    const router = createRuntimeRouter({
+      permissions: { contains: app.contains },
+      imageFetcher: { fetch: app.fetch },
+      inferenceHost: { recognize: app.recognize, warmup: app.warmup },
+      modelStatus: createModelStatusStore(() => 1000),
+      siteState: { isEnabled: vi.fn(async () => false), enablePage: app.enablePage, disablePage: app.disablePage },
+      settings: {
+        read: app.readSettings,
+        setCopyOnNoField: app.setCopyOnNoField,
+        setAutoFill: app.setAutoFill,
+        setRecognitionShortcut: app.setRecognitionShortcut,
+        isSliderEnabled: vi.fn(async () => true),
+        setSliderEnabled: vi.fn(async () => undefined),
+      },
+      sliderSolver: { solve },
+      activeTab: app.activeTab,
+    });
+
+    const first = router.handle({ type: 'captcha:slider-auto-run', revision: 'challenge-1' }, sender);
+    await vi.waitFor(() => expect(solve).toHaveBeenCalledOnce());
+    const joined = router.handle({ type: 'captcha:run-slider' }, {});
+    expect(solve).toHaveBeenCalledOnce();
+    finish({ state: 'success' });
+    await expect(first).resolves.toEqual({ state: 'success' });
+    await expect(joined).resolves.toEqual({ state: 'success' });
+    expect(solve.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it('records manual and automatic slider results with site, duration, and geometry', async () => {

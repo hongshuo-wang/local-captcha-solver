@@ -16,7 +16,7 @@ The production model recognizes one static image containing:
 
 Subtraction samples use nonnegative answers and division samples divide exactly. Negative answers, decimals, remainders, multi-step expressions, parentheses, text questions, non-Latin scripts, animated CAPTCHA, image selection, sliders, and behavioral challenges are outside the core model.
 
-The repository also contains a separate experimental dynamic-slider Beta. It is not part of the OCR model or its training data. The Beta uses local visual edge scoring for single-gap horizontal puzzle challenges, does not upload images or call remote solving services, and stores exact-host slider authorization separately from OCR website access.
+The repository also contains a separate experimental dynamic-slider Beta. It is not part of the OCR model or its training data. The Beta uses local visual edge scoring for single-gap horizontal puzzle challenges, does not upload images or call remote solving services, and stores slider authorization separately from OCR website access. Slider authorization supports either all HTTP/HTTPS sites or an exact hostname list.
 
 ## Contributing a scenario
 

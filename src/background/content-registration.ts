@@ -4,6 +4,7 @@ import { GLOBAL_HTTP_ORIGINS, originsForPage, originsForSelectedSite, permission
 export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
 const REGISTRATION_PREFIX = 'captcha-auto-';
 export const GLOBAL_REGISTRATION_ID = `${REGISTRATION_PREFIX}global`;
+export const GLOBAL_SLIDER_REGISTRATION_ID = `${REGISTRATION_PREFIX}slider-global`;
 
 export interface RegisteredContentScript {
   id: string;
@@ -55,6 +56,10 @@ export async function contentScriptRegistrationId(hostname: string, includeSubdo
 
 function globalScript(): Required<RegisteredContentScript> {
   return { id: GLOBAL_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: [CONTENT_SCRIPT_FILE], persistAcrossSessions: true };
+}
+
+function globalSliderScript(): Required<RegisteredContentScript> {
+  return { id: GLOBAL_SLIDER_REGISTRATION_ID, matches: [...GLOBAL_HTTP_ORIGINS], js: [CONTENT_SCRIPT_FILE], persistAcrossSessions: true };
 }
 
 async function selectedScript(rule: SelectedSiteRule): Promise<Required<RegisteredContentScript>> {
@@ -121,8 +126,10 @@ export function createContentRegistration(adapter: ContentRegistrationAdapter): 
           if (await adapter.permissions.contains({ origins })) desired.push(await selectedScript(rule));
         }
       }
+      const sliderGlobalAccess = settings.sliderAccessMode === 'all' && await adapter.permissions.contains({ origins: GLOBAL_HTTP_ORIGINS });
+      if (sliderGlobalAccess && !globalAccess) desired.push(globalSliderScript());
       for (const hostname of settings.sliderEnabledHosts) {
-        if (globalAccess) continue;
+        if (globalAccess || sliderGlobalAccess) continue;
         let coveredBySelectedSite = false;
         if (settings.accessMode === 'selected') {
           for (const rule of settings.selectedSites) {

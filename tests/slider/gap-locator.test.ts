@@ -176,6 +176,33 @@ describe('slider gap locator', () => {
     expect(result!.confidence).toBeLessThanOrEqual(.72);
   });
 
+  it('uses a distinctive non-rectangular silhouette when flat texture provides no match', () => {
+    const width = 48;
+    const height = 48;
+    const targetX = 154;
+    const targetY = 30;
+    const image = imageWithGap('square', targetX, targetY, width);
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height).fill(110);
+    const opaque = (x: number, y: number) => x >= 2 && x < width - 2 && y >= 2 && y < height - 2 && !(x >= 17 && x < 31 && y < 11);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) alpha[y * width + x] = opaque(x, y) ? 255 : 0;
+    for (let y = 1; y < height - 1; y += 1) for (let x = 1; x < width - 1; x += 1) {
+      if (!opaque(x, y) || (opaque(x - 1, y) && opaque(x + 1, y) && opaque(x, y - 1) && opaque(x, y + 1))) continue;
+      const target = ((targetY + y) * image.width + targetX + x) * 4;
+      image.data[target] = 8;
+      image.data[target + 1] = 8;
+      image.data[target + 2] = 8;
+    }
+
+    const result = locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
+
+    expect(result).toMatchObject({ confidence: expect.any(Number) });
+    expect(result!.x).toBeGreaterThanOrEqual(targetX - 2);
+    expect(result!.x).toBeLessThanOrEqual(targetX + 2);
+    expect(result!.confidence).toBeGreaterThan(.58);
+    expect(result!.confidence).toBeLessThanOrEqual(.68);
+  });
+
   it('abstains when a strong silhouette does not share the piece texture', () => {
     const width = 48;
     const height = 48;

@@ -30,6 +30,10 @@ const MINIMUM_TEXTURE_CORRELATION = .52;
 const MINIMUM_GEOMETRY_EVIDENCE = .42;
 const MINIMUM_GEOMETRY_SEPARATION = .18;
 const GEOMETRY_CONFIDENCE_CAP = .72;
+const MINIMUM_SHAPE_COMPLEXITY = .035;
+const MINIMUM_SHAPE_EDGE_EVIDENCE = .58;
+const MINIMUM_SHAPE_EDGE_SEPARATION = .25;
+const SHAPE_CONFIDENCE_CAP = .68;
 
 function luminance(image: PixelImage): Float32Array {
   const output = new Float32Array(image.width * image.height);
@@ -89,6 +93,27 @@ function maskEdges(mask: NonNullable<GapLocatorInput['pieceMask']>): Array<{ x: 
     if (opaque(x, y) && (!opaque(x - 1, y) || !opaque(x + 1, y) || !opaque(x, y - 1) || !opaque(x, y + 1))) edges.push({ x, y });
   }
   return edges;
+}
+
+function maskShapeComplexity(mask: NonNullable<GapLocatorInput['pieceMask']>): number {
+  let minimumX = mask.width;
+  let minimumY = mask.height;
+  let maximumX = -1;
+  let maximumY = -1;
+  for (let y = 0; y < mask.height; y += 1) for (let x = 0; x < mask.width; x += 1) {
+    if (mask.alpha[y * mask.width + x]! <= 20) continue;
+    minimumX = Math.min(minimumX, x);
+    minimumY = Math.min(minimumY, y);
+    maximumX = Math.max(maximumX, x);
+    maximumY = Math.max(maximumY, y);
+  }
+  if (maximumX < minimumX || maximumY < minimumY) return 0;
+  let transparent = 0;
+  const area = (maximumX - minimumX + 1) * (maximumY - minimumY + 1);
+  for (let y = minimumY; y <= maximumY; y += 1) for (let x = minimumX; x <= maximumX; x += 1) {
+    if (mask.alpha[y * mask.width + x]! <= 20) transparent += 1;
+  }
+  return transparent / area;
 }
 
 function shapeEdgeScore(gradient: Float32Array, imageWidth: number, x: number, y: number, edges: readonly { x: number; y: number }[]): number {
@@ -253,6 +278,17 @@ function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient
   const corroboratedConfidence = evidence[1]! < .35 || separation < .12 ? 0 : evidence[0]! * .55 + evidence[1]! * .45;
   const confidence = Math.min(1, Math.max(edgeConfidence, textureConfidence, regionConfidence, combinedConfidence, corroboratedConfidence));
   if (hasPieceTexture && (best.textureScore ?? -1) < MINIMUM_TEXTURE_CORRELATION) {
+    const shapeComplexity = maskShapeComplexity(mask);
+    const shapeCandidates = [...candidates].sort((left, right) => right.edgeEvidence - left.edgeEvidence);
+    const shapeBest = shapeCandidates[0];
+    if (shapeBest !== undefined && shapeComplexity >= MINIMUM_SHAPE_COMPLEXITY) {
+      const shapeCompetitor = shapeCandidates.find((candidate) => Math.hypot(candidate.x - shapeBest.x, candidate.y - shapeBest.y) >= Math.max(mask.width, mask.height) * .75);
+      const shapeSeparation = (shapeBest.edgeEvidence - (shapeCompetitor?.edgeEvidence ?? 0)) / Math.max(shapeBest.edgeEvidence, .01);
+      const shapeConfidence = shapeSeparation * .6 + shapeBest.edgeEvidence * .4;
+      if (shapeBest.edgeEvidence >= MINIMUM_SHAPE_EDGE_EVIDENCE && shapeSeparation >= MINIMUM_SHAPE_EDGE_SEPARATION && shapeConfidence >= MINIMUM_TEXTURE_CORRELATION) {
+        return { x: shapeBest.x, y: shapeBest.y, width: mask.width, height: mask.height, confidence: Math.min(SHAPE_CONFIDENCE_CAP, shapeConfidence), score: shapeBest.score };
+      }
+    }
     const geometryCandidates = [...candidates].sort((left, right) => {
       const leftScore = left.edgeEvidence * .55 + left.regionEvidence * .45;
       const rightScore = right.edgeEvidence * .55 + right.regionEvidence * .45;

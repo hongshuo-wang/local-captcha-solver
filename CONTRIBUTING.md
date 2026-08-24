@@ -33,7 +33,7 @@ npm run test:e2e:extension
 
 Core recognition is limited to static, single-image CAPTCHAs containing digits, English letters, alphanumeric strings, or one-step integer arithmetic. Arithmetic supports `+`, `-`, `*`, `/`, `x`, `X`, `×`, and `÷`.
 
-Do not add image selection, sliders, puzzles, animation, behavioral challenges, niche scripts, or multi-step mathematics without an explicit product decision.
+Do not expand the core OCR model to image selection, sliders, puzzles, animation, behavioral challenges, niche scripts, or multi-step mathematics without an explicit product decision. The separately implemented puzzle-slider Beta may evolve as an independently authorized browser-interaction path, but it must remain outside OCR training data and preserve explicit user-controlled site scope.
 
 Automatic filling must remain conservative. Ambiguous arithmetic and weak operator evidence must abstain rather than fall back to a digit result. The extension must never submit a form.
 

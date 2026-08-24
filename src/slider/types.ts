@@ -60,5 +60,6 @@ export interface SliderSiteState {
 }
 
 export interface SliderSolver {
-  solve(tab: { id: number; url: string; windowId?: number }, trigger: 'manual' | 'automatic'): Promise<SliderRunResult>;
+  solve(tab: { id: number; url: string; windowId?: number }, trigger: 'manual' | 'automatic', expectedRevision?: string): Promise<SliderRunResult>;
+  cancel?(tabId: number): void;
 }

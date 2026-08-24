@@ -148,6 +148,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
   }
 
   const sliderActivities = new Map<number, TrackedSliderActivity>();
+  const sliderRuns = new Map<number, Promise<SliderRunResult>>();
   const sliderActivityLifetimeMs = { running: 30_000, terminal: 120_000 } as const;
   let sliderRunGeneration = 0;
   const startWarmup = (): void => {
@@ -169,16 +170,17 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
     const { generation: _generation, pageUrl: _pageUrl, ...visible } = activity;
     return visible;
   };
-  const runSlider = async (
+  const executeSlider = async (
     tab: { id: number; url: string; windowId?: number },
     trigger: 'manual' | 'automatic',
+    expectedRevision?: string,
   ): Promise<SliderRunResult> => {
     const startedAt = performance.now();
     const generation = ++sliderRunGeneration;
     sliderActivities.set(tab.id, { state: 'running', trigger, at: Date.now(), generation, pageUrl: tab.url });
     let result: SliderRunResult;
     try {
-      result = await adapter.sliderSolver!.solve(tab, trigger);
+      result = await adapter.sliderSolver!.solve(tab, trigger, expectedRevision);
     } catch (error) {
       console.error('Slider solver failed', error);
       result = { state: 'failed', reason: 'solver-error' };
@@ -196,6 +198,21 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       sliderActivities.set(tab.id, { state: result.state, confidence: result.confidence, reason: result.reason, trigger, at: Date.now(), generation, pageUrl: tab.url });
     }
     return result;
+  };
+  const runSlider = (
+    tab: { id: number; url: string; windowId?: number },
+    trigger: 'manual' | 'automatic',
+    expectedRevision?: string,
+  ): Promise<SliderRunResult> => {
+    const active = sliderRuns.get(tab.id);
+    if (active !== undefined) return active;
+    const pending = executeSlider(tab, trigger, expectedRevision);
+    sliderRuns.set(tab.id, pending);
+    pending.then(
+      () => { if (sliderRuns.get(tab.id) === pending) sliderRuns.delete(tab.id); },
+      () => { if (sliderRuns.get(tab.id) === pending) sliderRuns.delete(tab.id); },
+    );
+    return pending;
   };
 
   return {
@@ -224,6 +241,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
           if (request.enabled && !debuggerGranted) return { supported: true, enabled: false, debuggerGranted: false, hostname, reason: 'permission-denied' };
           if (adapter.settings?.setSliderEnabled === undefined) throw new Error('Slider settings are unavailable');
           await adapter.settings.setSliderEnabled(hostname, request.enabled);
+          if (!request.enabled) adapter.sliderSolver?.cancel?.(tab.id);
           sliderActivities.delete(tab.id);
           return { supported: true, enabled: request.enabled, debuggerGranted, hostname };
         } catch { return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' }; }
@@ -234,12 +252,14 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { state: 'unsupported' };
         const pageOriginPermission = permissionOriginForPage(tab.url);
         if (pageOriginPermission === undefined || !await adapter.permissions.contains({ origins: [pageOriginPermission] })) return { state: 'permission-denied', reason: 'site-access-not-granted' };
+        const currentTab = await adapter.activeTab();
+        if (currentTab?.id !== tab.id || currentTab.url !== tab.url) return { state: 'page-inactive', reason: 'page-changed' };
         return runSlider({ id: tab.id, url: tab.url, windowId: tab.windowId }, 'manual');
       }
       if (request.type === 'captcha:slider-auto-run') {
         const page = senderPage(sender);
         if (page === undefined || sender.tab?.id === undefined || adapter.sliderSolver === undefined || typeof request.revision !== 'string') return { state: 'permission-denied', reason: 'untrusted-sender' };
-        return runSlider({ id: sender.tab.id, url: sender.tab.url ?? page, windowId: sender.tab.windowId }, 'automatic');
+        return runSlider({ id: sender.tab.id, url: sender.tab.url ?? page, windowId: sender.tab.windowId }, 'automatic', request.revision);
       }
       if (request.type === 'captcha:get-preferences') {
         const settings = await adapter.settings?.read();

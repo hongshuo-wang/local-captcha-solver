@@ -67,6 +67,75 @@ describe('content runtime messages', () => {
     window.dispatchEvent(wheel);
     await expect(handle({ type: 'captcha:slider-user-active' })).resolves.toEqual({ active: true });
   });
+  it('does not show takeover feedback when a visible slider is idle', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<div data-slider-captcha><img data-slider-image><div data-slider-track></div><button data-slider-handle>drag</button></div>';
+    const imageElement = document.querySelector<HTMLElement>('[data-slider-image]')!;
+    const trackElement = document.querySelector<HTMLElement>('[data-slider-track]')!;
+    const handleElement = document.querySelector<HTMLElement>('[data-slider-handle]')!;
+    imageElement.getBoundingClientRect = () => ({ left: 40, top: 20, right: 300, bottom: 120, width: 260, height: 100, x: 40, y: 20, toJSON: () => ({}) });
+    trackElement.getBoundingClientRect = () => ({ left: 40, top: 130, right: 300, bottom: 170, width: 260, height: 40, x: 40, y: 130, toJSON: () => ({}) });
+    handleElement.getBoundingClientRect = () => ({ left: 40, top: 124, right: 92, bottom: 176, width: 52, height: 52, x: 40, y: 124, toJSON: () => ({}) });
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage: vi.fn(),
+      onMessage: { addListener: listener },
+      settings: { read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }), subscribe: () => vi.fn() },
+    });
+    await Promise.resolve();
+    const event = new WheelEvent('wheel', { bubbles: true, deltaY: 100 });
+    Object.defineProperty(event, 'isTrusted', { configurable: true, value: true });
+    window.dispatchEvent(event);
+    expect(statusText()).not.toContain('已暂停自动拖动');
+    expect(document.querySelector('[data-local-captcha-slider-highlight]')).toBeNull();
+  });
+  it('does not treat an armed automation activation click as user input', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<button class="geetest_btn_click">verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, x: 40, y: 30, toJSON: () => ({}) });
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage: vi.fn(),
+      onMessage: { addListener: listener },
+      settings: { read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }), subscribe: () => vi.fn() },
+    });
+    await Promise.resolve();
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+    await expect(handle({ type: 'captcha:slider-automation-press' })).resolves.toEqual({ armed: true });
+    const activation = new PointerEvent('pointerdown', { bubbles: true });
+    Object.defineProperty(activation, 'isTrusted', { configurable: true, value: true });
+    activator.dispatchEvent(activation);
+    expect(statusText()).not.toContain('已暂停自动拖动');
+  });
+  it('does not treat an armed automation press as applying to an ancestor page target', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<button class="geetest_btn_click">verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, x: 40, y: 30, toJSON: () => ({}) });
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } });
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+    await expect(handle({ type: 'captcha:slider-automation-press' })).resolves.toEqual({ armed: true });
+    const userClick = new PointerEvent('pointerdown', { bubbles: true });
+    Object.defineProperty(userClick, 'isTrusted', { configurable: true, value: true });
+    document.body.dispatchEvent(userClick);
+    await expect(handle({ type: 'captcha:slider-user-active' })).resolves.toEqual({ active: true });
+  });
+  it('ignores an injected manual slider press even when automatic slider mode is disabled', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    document.body.innerHTML = '<button class="geetest_btn_click">verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, x: 40, y: 30, toJSON: () => ({}) });
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } });
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown) => Promise<unknown>;
+    await expect(handle({ type: 'captcha:slider-automation-press' })).resolves.toEqual({ armed: true });
+    const injectedPress = new PointerEvent('pointerdown', { bubbles: true });
+    Object.defineProperty(injectedPress, 'isTrusted', { configurable: true, value: true });
+    activator.dispatchEvent(injectedPress);
+    await expect(handle({ type: 'captcha:slider-user-active' })).resolves.toEqual({ active: false });
+  });
   it('automatically requests one run for a collapsed slider on an explicitly enabled site', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('defineContentScript', (value: unknown) => value);
@@ -101,6 +170,14 @@ describe('content runtime messages', () => {
     await Promise.resolve();
     expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:slider-auto-run', revision: 'activatable|geetest-v4|40:30:260:50' });
     expect(statusText()).toContain('Captcha Helper 正在接管滑块');
+    const interruption = new WheelEvent('wheel', { bubbles: true, deltaY: 100 });
+    Object.defineProperty(interruption, 'isTrusted', { configurable: true, value: true });
+    window.dispatchEvent(interruption);
+    expect(statusText()).toContain('已暂停自动拖动');
+    expect(document.querySelector('[data-local-captcha-slider-highlight]')).not.toBeNull();
+    expect(statusHost()?.style.pointerEvents).toBe('none');
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(document.querySelector('[data-local-captcha-slider-highlight]')).toBeNull();
     activator.classList.add('changed-once');
     await vi.advanceTimersByTimeAsync(250);
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
@@ -109,6 +186,10 @@ describe('content runtime messages', () => {
     await pendingRun;
     await Promise.resolve();
     expect(statusText()).toContain('滑块已自动完成');
+    const unrelatedClick = new PointerEvent('pointerdown', { bubbles: true });
+    Object.defineProperty(unrelatedClick, 'isTrusted', { configurable: true, value: true });
+    document.body.dispatchEvent(unrelatedClick);
+    expect(statusText()).not.toContain('已暂停自动拖动');
     activator.classList.add('changed-twice');
     await vi.advanceTimersByTimeAsync(250);
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
@@ -121,11 +202,173 @@ describe('content runtime messages', () => {
     const activation = new PointerEvent('pointerdown', { bubbles: true });
     Object.defineProperty(activation, 'isTrusted', { configurable: true, value: true });
     activator.dispatchEvent(activation);
+    expect(statusText()).not.toContain('已暂停自动拖动');
     activator.classList.add('user-opened-new-challenge');
     await vi.advanceTimersByTimeAsync(1_200);
     await Promise.resolve();
     expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(2);
     updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [] });
+  });
+
+  it('retries the same challenge after a user interruption finishes', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    let pageFocused = true;
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => pageFocused);
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.body.innerHTML = '<button class="geetest_btn_click">Click to verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ x: 40, y: 30, left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    let releaseFirst!: (result: { state: 'uncertain' }) => void;
+    const firstRun = new Promise<{ state: 'uncertain' }>((resolve) => { releaseFirst = resolve; });
+    let runs = 0;
+    const sendMessage = vi.fn((message: { type: string }) => {
+      if (message.type !== 'captcha:slider-auto-run') return Promise.resolve(undefined);
+      runs += 1;
+      return runs === 1 ? firstRun : Promise.resolve({ state: 'success' });
+    });
+    let updateSettings!: (settings: unknown) => void;
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }),
+        subscribe: (subscriber) => { updateSettings = subscriber; return () => undefined; },
+      },
+    });
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(250);
+    await Promise.resolve();
+    expect(runs).toBe(1);
+
+    const interruption = new WheelEvent('wheel', { bubbles: true, deltaY: 120 });
+    Object.defineProperty(interruption, 'isTrusted', { configurable: true, value: true });
+    window.dispatchEvent(interruption);
+    releaseFirst({ state: 'uncertain' });
+    await firstRun;
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(1200);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(runs).toBe(2);
+    expect(statusText()).toContain('滑块已自动完成');
+    pageFocused = false;
+  });
+  it('does not let a disabled slider run restore stale status after it finishes', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => true);
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.body.innerHTML = '<button class="geetest_btn_click">Click to verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ x: 40, y: 30, left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    let release!: (result: { state: 'success' }) => void;
+    const pending = new Promise<{ state: 'success' }>((resolve) => { release = resolve; });
+    const sendMessage = vi.fn((message: { type: string }) => message.type === 'captcha:slider-auto-run' ? pending : Promise.resolve(undefined));
+    let updateSettings!: (settings: unknown) => void;
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }),
+        subscribe: (subscriber) => { updateSettings = subscriber; return () => undefined; },
+      },
+    });
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    await vi.advanceTimersByTimeAsync(250);
+    await Promise.resolve();
+    expect(sendMessage.mock.calls.filter(([message]) => message.type === 'captcha:slider-auto-run')).toHaveLength(1);
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [] });
+    release({ state: 'success' });
+    await pending;
+    await Promise.resolve();
+    expect(statusText()).not.toContain('滑块已自动完成');
+  });
+  it('does not mark a challenge refreshed during an older run as already attempted', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => true);
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.body.innerHTML = '<button class="geetest_btn_click">Click to verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    let left = 40;
+    activator.getBoundingClientRect = () => ({ x: left, y: 30, left, top: 30, right: left + 260, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    let finishFirst!: (result: { state: 'uncertain' }) => void;
+    const first = new Promise<{ state: 'uncertain' }>((resolve) => { finishFirst = resolve; });
+    let runs = 0;
+    const sendMessage = vi.fn((message: { type: string }) => {
+      if (message.type !== 'captcha:slider-auto-run') return Promise.resolve(undefined);
+      runs += 1;
+      return runs === 1 ? first : Promise.resolve({ state: 'success' });
+    });
+    let updateSettings!: (settings: unknown) => void;
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }),
+        subscribe: (subscriber) => { updateSettings = subscriber; return () => undefined; },
+      },
+    });
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    await vi.advanceTimersByTimeAsync(250);
+    expect(runs).toBe(1);
+    left = 70;
+    activator.classList.add('refreshed');
+    finishFirst({ state: 'uncertain' });
+    await first;
+    for (let flush = 0; flush < 5; flush += 1) await Promise.resolve();
+    for (let attempt = 0; attempt < 4 && runs === 1; attempt += 1) await vi.advanceTimersByTimeAsync(250);
+    expect(runs).toBe(2);
+  });
+  it('can restart after disable and re-enable without an older run clearing the new one', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => true);
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.body.innerHTML = '<button class="geetest_btn_click">Click to verify</button>';
+    const activator = document.querySelector<HTMLElement>('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ x: 40, y: 30, left: 40, top: 30, right: 300, bottom: 80, width: 260, height: 50, toJSON: () => ({}) });
+    let finishFirst!: (result: { state: 'success' }) => void;
+    let finishSecond!: (result: { state: 'success' }) => void;
+    const first = new Promise<{ state: 'success' }>((resolve) => { finishFirst = resolve; });
+    const second = new Promise<{ state: 'success' }>((resolve) => { finishSecond = resolve; });
+    let runs = 0;
+    const sendMessage = vi.fn((message: { type: string }) => {
+      if (message.type !== 'captcha:slider-auto-run') return Promise.resolve(undefined);
+      runs += 1;
+      return runs === 1 ? first : second;
+    });
+    let updateSettings!: (settings: unknown) => void;
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({
+      sendMessage,
+      onMessage: { addListener: listener },
+      settings: {
+        read: async () => ({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] }),
+        subscribe: (subscriber) => { updateSettings = subscriber; return () => undefined; },
+      },
+    });
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    await vi.advanceTimersByTimeAsync(250);
+    expect(runs).toBe(1);
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [] });
+    updateSettings({ ...DEFAULT_SETTINGS, sliderEnabledHosts: [location.hostname] });
+    await vi.advanceTimersByTimeAsync(250);
+    expect(runs).toBe(2);
+    finishFirst({ state: 'success' });
+    await first;
+    for (let flush = 0; flush < 4; flush += 1) await Promise.resolve();
+    expect(statusText()).toContain('正在接管滑块');
+    finishSecond({ state: 'success' });
+    await second;
+    for (let flush = 0; flush < 4; flush += 1) await Promise.resolve();
+    expect(statusText()).toContain('滑块已自动完成');
   });
   it('reconciles automatic state when a dynamically registered new document starts', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value);

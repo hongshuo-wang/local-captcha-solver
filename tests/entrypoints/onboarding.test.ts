@@ -20,38 +20,60 @@ function harness() {
     runtime: { sendMessage, getURL: (path) => `chrome-extension://test/${path}` },
     i18n: { getUILanguage: () => 'zh-CN' },
   };
-  return { extension, values, request, remove, sendMessage };
+  return { extension, values, request, remove, sendMessage, contains };
 }
 
 describe('onboarding entrypoint', () => {
-  it('requires an explicit access choice and closes when setup is complete', async () => {
+  it('walks the five-page welcome flow with separate static and slider paths', async () => {
     const app = harness();
     const closeGuide = vi.fn();
     const root = document.createElement('div');
     document.body.append(root);
 
     await startOnboarding(root, app.extension, closeGuide);
-    expect(root.textContent).toContain('先用一分钟完成本地识别设置');
-    expect(root.textContent).toContain('选择网站访问范围');
-    expect(root.querySelector('[data-onboarding-mode="selected"]')?.getAttribute('aria-checked')).toBe('false');
-    expect(root.querySelector('[data-onboarding-mode="all"]')?.getAttribute('aria-checked')).toBe('false');
-    expect((root.querySelector('[data-next]') as HTMLButtonElement).disabled).toBe(true);
+    expect(root.querySelector('[data-page="overview"] h1')?.textContent).toBe('先用一分钟完成本地识别设置');
+    expect(root.querySelectorAll('.capability-card')).toHaveLength(2);
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="static-settings"]')).not.toBeNull());
+    expect((root.querySelector('[data-primary]') as HTMLButtonElement).disabled).toBe(true);
 
     (root.querySelector('[data-onboarding-mode="selected"]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(app.remove).toHaveBeenCalledWith({ origins: ['http://*/*', 'https://*/*'] }));
-    await vi.waitFor(() => expect(root.querySelector('[data-onboarding-mode="selected"]')?.getAttribute('aria-checked')).toBe('true'));
-
-    (root.querySelector('[data-next]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(root.textContent).toContain('设置识别行为'));
-    (root.querySelector('[data-next]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(root.textContent).toContain('配置完成，可以开始使用'));
+    await vi.waitFor(() => expect((root.querySelector('[data-primary]') as HTMLButtonElement).disabled).toBe(false));
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="static-demo"]')).not.toBeNull());
     (root.querySelector('[data-run-demo]') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(root.textContent).toContain('识别结果：20+22'));
-    expect(app.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'captcha:recognize', modes: ['arithmetic'] }));
-    (root.querySelector('[data-finish-guide]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-demo-status]')?.textContent).toContain('识别结果：20+22'));
 
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="slider-settings"]')).not.toBeNull());
+    expect(root.querySelector('[data-slider-choice="all"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelector('[data-slider-choice="selected"]')?.getAttribute('aria-pressed')).toBe('false');
+    (root.querySelector('[data-skip-slider]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="slider-demo"]')).not.toBeNull());
+    expect(root.textContent).toContain('滑块暂未开启');
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(closeGuide).toHaveBeenCalledOnce());
     expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ accessMode: 'selected', onboardingComplete: true });
     root.remove();
+  });
+
+  it('opens the upgrade flow without replaying static setup and records the guide version', async () => {
+    const app = harness();
+    const closeGuide = vi.fn();
+    const root = document.createElement('div');
+    document.body.append(root);
+    window.history.pushState({}, '', '/onboarding.html?flow=upgrade&version=1.2.0');
+
+    await startOnboarding(root, app.extension, closeGuide);
+    expect(root.querySelector('[data-page="upgrade"] h1')?.textContent).toBe('现在可以处理拼图滑块了');
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="slider-settings"]')).not.toBeNull());
+    (root.querySelector('[data-skip-slider]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="slider-demo"]')).not.toBeNull());
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(closeGuide).toHaveBeenCalledOnce());
+    expect(app.values.get(SETTINGS_STORAGE_KEY)).toMatchObject({ lastSeenUpgradeGuide: '1.2.0', onboardingComplete: false });
+    root.remove();
+    window.history.pushState({}, '', '/onboarding.html');
   });
 });

@@ -22,6 +22,9 @@ export interface PopupViewElements extends PopupView {
   sliderStateMode: HTMLElement;
   sliderStateTitle: HTMLElement;
   sliderStatus: HTMLElement;
+  sliderTab: HTMLButtonElement;
+  sliderTabStatus: HTMLElement;
+  showTab(tab: 'static' | 'slider'): void;
   renderModelStatus(snapshot: ModelStatusSnapshot): void;
 }
 
@@ -44,52 +47,40 @@ function activityText(log: ModelLog | undefined, locale: UiLocale, t: Translator
 export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): PopupViewElements {
   const t = createTranslator(locale);
   root.innerHTML = `
-    <header class="popup-header">
-      <img class="brand-mark" src="/icons/icon-48.png" alt="" width="40" height="40" />
-      <div class="brand-copy"><h1>Captcha Helper</h1><p>${t('productSubtitle')}</p></div>
-      <button type="button" class="settings-command" data-open-settings>${t('navSettings')}</button>
-    </header>
-    <section class="model-strip" aria-label="Model status">
-      <span class="model-indicator" data-model-indicator aria-hidden="true"></span>
-      <p data-model-summary>${t('modelLoading')}</p>
-      <button type="button" class="text-command" data-model-retry hidden>${t('retryModel')}</button>
-    </section>
-    <section class="recognition-panel">
-      <button type="button" class="recognize-command" data-recognize-page>${t('recognizePage')}</button>
-      <p>${t('recognizePageBody')}</p>
-    </section>
-    <section class="access-panel" data-access-panel hidden>
-      <div><p class="section-kicker">${t('currentSite')}</p><h2 data-access-title>${t('accessChoice')}</h2><p data-access-copy></p></div>
-      <button type="button" class="primary-command" data-access-button>${t('grantAll')}</button>
-    </section>
-    <section class="site-panel" data-controls-panel aria-label="${t('currentSite')}">
-      <div class="site-heading">
-        <div><p class="section-kicker">${t('siteControl')}</p><h2 class="hostname" data-popup-hostname></h2></div>
-        <label class="switch" aria-label="${t('autoFill')}"><input id="site-enabled" type="checkbox" aria-describedby="site-status" /><span aria-hidden="true"></span></label>
+    <div class="popup-shell">
+      <header class="popup-header">
+        <img class="brand-mark" src="/icons/icon-48.png" alt="" width="40" height="40" />
+        <div class="brand-copy"><h1>Captcha Helper</h1><p>${t('productSubtitle')}</p></div>
+        <button type="button" class="settings-command" data-open-settings>${t('navSettings')}</button>
+      </header>
+      <div class="context-bar"><div><span>${t('currentSite')}</span><strong class="hostname" data-popup-hostname></strong></div><section class="model-strip" aria-label="Model status"><span class="model-indicator" data-model-indicator aria-hidden="true"></span><p data-model-summary>${t('modelLoading')}</p><button type="button" class="text-command" data-model-retry hidden>${t('retryModel')}</button></section></div>
+
+      <nav class="capability-tabs" role="tablist" aria-label="${locale === 'zh_CN' ? '验证码能力' : 'CAPTCHA capabilities'}">
+        <button id="popup-static-tab" type="button" role="tab" aria-selected="true" aria-controls="popup-static-panel" data-popup-tab="static"><span class="tab-symbol static-symbol" aria-hidden="true">Aa</span><span><strong>${t('welcomeStaticTitle')}</strong><small data-static-tab-status>${locale === 'zh_CN' ? '读取当前页状态' : 'Reading page status'}</small></span></button>
+        <button id="popup-slider-tab" type="button" role="tab" aria-selected="false" aria-controls="popup-slider-panel" tabindex="-1" data-popup-tab="slider"><span class="tab-symbol slider-symbol" aria-hidden="true"><i></i></span><span><strong>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</strong><small data-slider-tab-status>${locale === 'zh_CN' ? '读取接管状态' : 'Reading takeover status'}</small></span></button>
+      </nav>
+
+      <div class="capability-stage" data-active-tab="static">
+        <section id="popup-static-panel" class="capability-view static-panel" role="tabpanel" aria-labelledby="popup-static-tab" data-popup-panel="static">
+          <header class="capability-heading"><div><p class="section-kicker">${locale === 'zh_CN' ? '静态图片识别' : 'Static image recognition'}</p><h2>${t('recognizePage')}</h2><span>${locale === 'zh_CN' ? '识别当前页中最明确的一张验证码。' : 'Recognize the clearest CAPTCHA on this page.'}</span></div></header>
+          <button type="button" class="recognize-command" data-recognize-page><span>${t('recognizePage')}</span><i aria-hidden="true"></i></button>
+          <section class="access-panel" data-access-panel hidden><div><strong data-access-title>${t('accessChoice')}</strong><p data-access-copy></p></div><button type="button" class="primary-command" data-access-button>${t('grantAll')}</button></section>
+          <div class="site-controls" data-controls-panel aria-label="${t('currentSite')}">
+            <div class="control-row"><div><strong>${t('siteControl')}</strong><p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p></div><label class="switch" aria-label="${t('siteControl')}"><input id="site-enabled" type="checkbox" aria-describedby="site-status" /><span aria-hidden="true"></span></label></div>
+            <label class="mode-row" for="captcha-mode"><span><strong>${t('captchaType')}</strong><small>${locale === 'zh_CN' ? '不确定时保持自动判断' : 'Keep automatic when unsure'}</small></span><select id="captcha-mode" data-captcha-mode><option value="auto">${t('modeAuto')}</option><option value="digits">${t('modeDigits')}</option><option value="letters">${t('modeLetters')}</option><option value="alphanumeric">${t('modeAlphanumeric')}</option><option value="arithmetic">${t('modeArithmetic')}</option></select></label>
+          </div>
+        </section>
+
+        <section id="popup-slider-panel" class="capability-view slider-panel" role="tabpanel" aria-labelledby="popup-slider-tab" data-popup-panel="slider" data-slider-panel data-state="loading" hidden>
+          <header class="capability-heading slider-heading"><div><p class="section-kicker">${locale === 'zh_CN' ? '动态验证码 Beta' : 'Dynamic CAPTCHA Beta'}</p><h2>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</h2><span>${locale === 'zh_CN' ? '只在你允许的网站检测并拖动。' : 'Detect and drag only on sites you allow.'}</span></div><div class="slider-toggle"><span>${locale === 'zh_CN' ? '本站接管' : 'Site takeover'}</span><label class="switch" aria-label="${locale === 'zh_CN' ? '在此网站自动处理滑块' : 'Automatically handle sliders on this site'}"><input type="checkbox" data-slider-enabled aria-describedby="slider-status" /><span aria-hidden="true"></span></label></div></header>
+          <div class="slider-state" role="status" aria-live="polite"><span class="slider-state-indicator" aria-hidden="true"></span><div class="slider-state-copy"><div class="slider-state-heading"><strong data-slider-state-title>${locale === 'zh_CN' ? '正在读取接管状态' : 'Reading takeover status'}</strong><span class="slider-state-mode" data-slider-state-mode hidden></span></div><p id="slider-status" data-slider-status>${locale === 'zh_CN' ? '正在确认当前网站设置。' : 'Checking the current site setting.'}</p></div></div>
+          <button type="button" class="slider-command" data-run-slider>${locale === 'zh_CN' ? '立即检测当前滑块' : 'Check current slider now'}</button>
+          <p class="permission-note">${locale === 'zh_CN' ? '仅在处理时使用浏览器 debugger 权限。运行网站可在设置中调整。' : 'Browser debugger permission is used only while handling a slider. Manage sites in Settings.'}</p>
+        </section>
       </div>
-      <p id="site-status" class="status" role="status" aria-live="polite" data-popup-status></p>
-      <label class="mode-row" for="captcha-mode"><span>${t('captchaType')}</span><select id="captcha-mode" data-captcha-mode><option value="auto">${t('modeAuto')}</option><option value="digits">${t('modeDigits')}</option><option value="letters">${t('modeLetters')}</option><option value="alphanumeric">${t('modeAlphanumeric')}</option><option value="arithmetic">${t('modeArithmetic')}</option></select></label>
-    </section>
-    <section class="slider-panel" data-slider-panel data-state="loading">
-      <div class="site-heading">
-        <div><p class="section-kicker">${locale === 'zh_CN' ? '动态验证码 Beta' : 'Dynamic CAPTCHA Beta'}</p><h2>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</h2></div>
-        <div class="slider-toggle"><span>${locale === 'zh_CN' ? '本站接管' : 'Take over this site'}</span><label class="switch" aria-label="${locale === 'zh_CN' ? '在此网站自动处理滑块' : 'Automatically handle sliders on this site'}"><input type="checkbox" data-slider-enabled aria-describedby="slider-status" /><span aria-hidden="true"></span></label></div>
-      </div>
-      <div class="slider-state" role="status" aria-live="polite">
-        <span class="slider-state-indicator" aria-hidden="true"></span>
-        <div class="slider-state-copy">
-          <div class="slider-state-heading"><strong data-slider-state-title>${locale === 'zh_CN' ? '正在读取接管状态' : 'Reading takeover status'}</strong><span class="slider-state-mode" data-slider-state-mode hidden></span></div>
-          <p id="slider-status" data-slider-status>${locale === 'zh_CN' ? '正在确认当前网站设置。' : 'Checking the current site setting.'}</p>
-        </div>
-      </div>
-      <button type="button" class="slider-command" data-run-slider>${locale === 'zh_CN' ? '立即检测当前滑块' : 'Check current slider now'}</button>
-      <p class="permission-note">${locale === 'zh_CN' ? '滑块会发送浏览器级拖动。为避免误操作页面控件，不支持全局自动开启，必须逐站授权。' : 'Slider handling sends browser-level drag input. Global automatic mode is unavailable to prevent accidental page actions; enable each site explicitly.'}</p>
-    </section>
-    <section class="activity-panel">
-      <div class="section-heading"><p class="section-kicker">${t('recentStatus')}</p><time data-latest-time></time></div>
-      <p class="latest-activity" data-latest-activity>${t('noActivity')}</p>
-    </section>
-    <footer class="popup-footer"><p>${t('footerPrivacy')}</p></footer>`;
+
+      <footer class="popup-footer"><div><span>${t('recentStatus')}</span><time data-latest-time></time></div><p class="latest-activity" data-latest-activity>${t('noActivity')}</p></footer>
+    </div>`;
 
   const hostname = required<HTMLElement>(root, '[data-popup-hostname]');
   const checkbox = required<HTMLInputElement>(root, '#site-enabled');
@@ -113,6 +104,32 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const sliderStateMode = required<HTMLElement>(root, '[data-slider-state-mode]');
   const sliderStateTitle = required<HTMLElement>(root, '[data-slider-state-title]');
   const sliderStatus = required<HTMLElement>(root, '[data-slider-status]');
+  const staticTab = required<HTMLButtonElement>(root, '[data-popup-tab="static"]');
+  const sliderTab = required<HTMLButtonElement>(root, '[data-popup-tab="slider"]');
+  const staticTabStatus = required<HTMLElement>(root, '[data-static-tab-status]');
+  const sliderTabStatus = required<HTMLElement>(root, '[data-slider-tab-status]');
+  const stage = required<HTMLElement>(root, '.capability-stage');
+  const panels = root.querySelectorAll<HTMLElement>('[data-popup-panel]');
+  const tabs = [staticTab, sliderTab];
+  const showTab = (tab: 'static' | 'slider'): void => {
+    const current = stage.dataset.activeTab === 'slider' ? 'slider' : 'static';
+    stage.dataset.direction = current === tab ? 'initial' : tab === 'slider' ? 'forward' : 'back';
+    stage.dataset.activeTab = tab;
+    panels.forEach((panel) => { panel.hidden = panel.dataset.popupPanel !== tab; });
+    tabs.forEach((button) => {
+      const selected = button.dataset.popupTab === tab;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+  };
+  tabs.forEach((button) => button.addEventListener('click', () => showTab(button.dataset.popupTab === 'slider' ? 'slider' : 'static')));
+  tabs.forEach((button) => button.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const nextTab = button === staticTab ? sliderTab : staticTab;
+    showTab(nextTab === sliderTab ? 'slider' : 'static');
+    nextTab.focus();
+  }));
 
   return {
     checkbox,
@@ -127,6 +144,9 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
     sliderStateMode,
     sliderStateTitle,
     sliderStatus,
+    sliderTab,
+    sliderTabStatus,
+    showTab,
     render(state: PopupViewState): void {
       hostname.textContent = state.hostname;
       checkbox.checked = state.checked;
@@ -140,6 +160,10 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
       accessButton.textContent = state.accessMode === 'all' ? t('grantAll') : t('addSite');
       status.textContent = state.error ?? state.status;
       status.classList.toggle('error', state.error !== undefined);
+      staticTab.dataset.state = state.recognitionAvailable ? (state.accessGranted ? 'ready' : 'attention') : 'unavailable';
+      staticTabStatus.textContent = state.recognitionAvailable
+        ? (state.accessGranted ? (state.checked ? (locale === 'zh_CN' ? '已开启' : 'On') : (locale === 'zh_CN' ? '可立即识别' : 'Ready')) : (locale === 'zh_CN' ? '需要授权' : 'Access needed'))
+        : (locale === 'zh_CN' ? '当前页不可用' : 'Unavailable');
       accessButton.disabled = state.disabled && state.status.includes(locale === 'zh_CN' ? '请求' : 'Request');
     },
     renderModelStatus(snapshot: ModelStatusSnapshot): void {
@@ -275,10 +299,28 @@ export function startPopup(
     view.sliderButton.disabled = !sliderSupported || sliderBusy || running || !debuggerGranted;
   };
   const renderSliderState = (enabled: boolean, state: SliderDisplayState, trigger?: SliderActivity['trigger']): void => {
+    const previousState = sliderDisplayState;
     sliderEnabled = enabled;
     sliderDisplayState = state;
     view.sliderCheckbox.checked = enabled;
     view.sliderPanel.dataset.state = state;
+    view.sliderTab.dataset.state = state;
+    view.sliderTabStatus.textContent = state === 'loading'
+      ? (locale === 'zh_CN' ? '读取接管状态' : 'Reading takeover status')
+      : state === 'off'
+        ? (locale === 'zh_CN' ? '本站未开启' : 'Off')
+        : state === 'idle'
+          ? (locale === 'zh_CN' ? '已开启' : 'On')
+          : state === 'running'
+            ? (locale === 'zh_CN' ? '正在处理' : 'Working')
+            : state === 'success'
+              ? (locale === 'zh_CN' ? '最近已完成' : 'Completed')
+              : state === 'unavailable'
+                ? (locale === 'zh_CN' ? '当前页不可用' : 'Unavailable')
+                : state === 'permission-denied'
+                  ? (locale === 'zh_CN' ? '需要权限' : 'Permission needed')
+                  : (locale === 'zh_CN' ? '本次未处理' : 'Not handled');
+    if (state === 'running' || (state === 'success' && previousState === 'running')) view.showTab('slider');
     const automatic = trigger === 'automatic';
     const content = state === 'off' ? sliderText.off
       : state === 'idle' || state === 'loading' ? sliderText.idle

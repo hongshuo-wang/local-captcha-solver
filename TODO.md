@@ -4,7 +4,7 @@
 
 Train and evaluate a reproducible CAPTCHA model candidate that improves multicolor, crossing-line,
 English-letter, and `0/O` recognition without reducing selective precision or weakening arithmetic
-abstention. Do not replace the production model until every release gate passes.
+abstention. Do not replace the production model until every release gate passes. Puzzle-slider handling is a separate browser-interaction Beta and is intentionally excluded from this model candidate.
 
 ## Handoff state
 

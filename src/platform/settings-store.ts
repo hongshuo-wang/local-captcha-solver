@@ -8,6 +8,8 @@ export type RecognitionShortcut = typeof RECOGNITION_SHORTCUTS[number];
 export const ACCESS_MODES = ['all', 'selected'] as const;
 export type AccessMode = typeof ACCESS_MODES[number];
 
+export type SliderOnboardingChoice = AccessMode | undefined;
+
 export const INTERFACE_LOCALES = ['system', 'zh_CN', 'en'] as const;
 export type InterfaceLocale = typeof INTERFACE_LOCALES[number];
 
@@ -29,12 +31,15 @@ export function isRecognitionShortcut(value: unknown): value is RecognitionShort
 }
 
 export interface CaptchaSettings {
-  version: 5;
+  version: 7;
   accessMode: AccessMode;
   disabledHosts: string[];
   selectedSites: SelectedSiteRule[];
   siteRecognitionModes: SiteRecognitionModeOverride[];
   sliderEnabledHosts: string[];
+  sliderAccessMode: AccessMode;
+  sliderOnboardingChoice?: SliderOnboardingChoice;
+  lastSeenUpgradeGuide: string | null;
   copyOnNoField: boolean;
   autoFill: boolean;
   recognitionShortcut: RecognitionShortcut;
@@ -56,18 +61,24 @@ export interface SettingsStore {
   recognitionModeForPage(pageUrl: string): Promise<SiteRecognitionMode>;
   setSiteRecognitionMode(hostname: string, mode: SiteRecognitionMode): Promise<void>;
   isSliderEnabled(pageUrl: string): Promise<boolean>;
+  setSliderAccessMode(mode: AccessMode): Promise<void>;
   setSliderEnabled(hostname: string, enabled: boolean): Promise<void>;
+  setSliderOnboardingChoice(choice: SliderOnboardingChoice): Promise<void>;
+  setLastSeenUpgradeGuide(version: string | null): Promise<void>;
   setInterfaceLocale(locale: InterfaceLocale): Promise<void>;
   setOnboardingComplete(complete: boolean): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: CaptchaSettings = {
-  version: 5,
+  version: 7,
   accessMode: 'selected',
   disabledHosts: [],
   selectedSites: [],
   siteRecognitionModes: [],
   sliderEnabledHosts: [],
+  sliderAccessMode: 'selected',
+  sliderOnboardingChoice: undefined,
+  lastSeenUpgradeGuide: null,
   copyOnNoField: false,
   autoFill: true,
   recognitionShortcut: 'middle',
@@ -205,22 +216,25 @@ function parseSettings(value: unknown): CaptchaSettings {
     }
   }
   const candidate = value as Partial<Omit<CaptchaSettings, 'version'>> & { version?: unknown };
-  if ((candidate.version !== 3 && candidate.version !== 4 && candidate.version !== 5) || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
+  if ((candidate.version !== 3 && candidate.version !== 4 && candidate.version !== 5 && candidate.version !== 6 && candidate.version !== 7) || !Array.isArray(candidate.disabledHosts) || !Array.isArray(candidate.selectedSites)) {
     return freshSettings();
   }
 
   try {
     return {
-      version: 5,
+      version: 7,
       accessMode: isAccessMode(candidate.accessMode) ? candidate.accessMode : DEFAULT_SETTINGS.accessMode,
       disabledHosts: [...new Set(candidate.disabledHosts.map(normalizeHostname))].sort(),
       selectedSites: normalizeSelectedSites(candidate.selectedSites),
-      siteRecognitionModes: (candidate.version === 4 || candidate.version === 5) && Array.isArray(candidate.siteRecognitionModes)
+      siteRecognitionModes: (candidate.version === 4 || candidate.version === 5 || candidate.version === 6 || candidate.version === 7) && Array.isArray(candidate.siteRecognitionModes)
         ? normalizeSiteRecognitionModes(candidate.siteRecognitionModes)
         : [],
-      sliderEnabledHosts: candidate.version === 5 && Array.isArray(candidate.sliderEnabledHosts)
+      sliderEnabledHosts: (candidate.version === 5 || candidate.version === 6 || candidate.version === 7) && Array.isArray(candidate.sliderEnabledHosts)
         ? [...new Set(candidate.sliderEnabledHosts.map(normalizeHostname))].sort()
         : [],
+      sliderAccessMode: (candidate.version === 6 || candidate.version === 7) && isAccessMode(candidate.sliderAccessMode) ? candidate.sliderAccessMode : 'selected',
+      sliderOnboardingChoice: candidate.version === 7 && isAccessMode(candidate.sliderOnboardingChoice) ? candidate.sliderOnboardingChoice : undefined,
+      lastSeenUpgradeGuide: candidate.version === 7 && (candidate.lastSeenUpgradeGuide === null || typeof candidate.lastSeenUpgradeGuide === 'string') ? candidate.lastSeenUpgradeGuide : null,
       copyOnNoField: candidate.copyOnNoField === true,
       autoFill: candidate.autoFill !== false,
       recognitionShortcut: isRecognitionShortcut(candidate.recognitionShortcut) ? candidate.recognitionShortcut : 'middle',
@@ -236,12 +250,15 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
   const read = async (): Promise<CaptchaSettings> => parseSettings(await adapter.getLocal<unknown>(SETTINGS_STORAGE_KEY));
   const write = async (settings: CaptchaSettings): Promise<void> => {
     await adapter.setLocal<CaptchaSettings>(SETTINGS_STORAGE_KEY, {
-      version: 5,
+      version: 7,
       accessMode: settings.accessMode,
       disabledHosts: [...new Set(settings.disabledHosts)].sort(),
       selectedSites: normalizeSelectedSites(settings.selectedSites),
       siteRecognitionModes: normalizeSiteRecognitionModes(settings.siteRecognitionModes),
       sliderEnabledHosts: [...new Set(settings.sliderEnabledHosts.map(normalizeHostname))].sort(),
+      sliderAccessMode: settings.sliderAccessMode,
+      ...(settings.sliderOnboardingChoice === undefined ? {} : { sliderOnboardingChoice: settings.sliderOnboardingChoice }),
+      lastSeenUpgradeGuide: settings.lastSeenUpgradeGuide,
       copyOnNoField: settings.copyOnNoField,
       autoFill: settings.autoFill,
       recognitionShortcut: settings.recognitionShortcut,
@@ -347,7 +364,15 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
       });
     },
     async isSliderEnabled(pageUrl: string): Promise<boolean> {
-      return (await read()).sliderEnabledHosts.includes(hostnameForPage(pageUrl));
+      const settings = await read();
+      return settings.sliderAccessMode === 'all' || settings.sliderEnabledHosts.includes(hostnameForPage(pageUrl));
+    },
+    async setSliderAccessMode(mode: AccessMode): Promise<void> {
+      if (!isAccessMode(mode)) throw new Error('Slider access mode must be supported');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.sliderAccessMode !== mode) await write({ ...settings, sliderAccessMode: mode });
+      });
     },
     async setSliderEnabled(hostname: string, enabled: boolean): Promise<void> {
       const normalized = normalizeHostname(hostname);
@@ -360,6 +385,20 @@ export function createSettingsStore(adapter: BrowserAdapter): SettingsStore {
         if (JSON.stringify(sliderEnabledHosts) !== JSON.stringify(settings.sliderEnabledHosts)) {
           await write({ ...settings, sliderEnabledHosts });
         }
+      });
+    },
+    async setSliderOnboardingChoice(choice: SliderOnboardingChoice): Promise<void> {
+      if (choice !== undefined && !isAccessMode(choice)) throw new Error('sliderOnboardingChoice must be supported');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.sliderOnboardingChoice !== choice) await write({ ...settings, sliderOnboardingChoice: choice });
+      });
+    },
+    async setLastSeenUpgradeGuide(version: string | null): Promise<void> {
+      if (version !== null && (typeof version !== 'string' || version.trim() === '')) throw new Error('lastSeenUpgradeGuide must be a non-empty version or null');
+      await mutate(async () => {
+        const settings = await read();
+        if (settings.lastSeenUpgradeGuide !== version) await write({ ...settings, lastSeenUpgradeGuide: version });
       });
     },
     async setInterfaceLocale(locale: InterfaceLocale): Promise<void> {

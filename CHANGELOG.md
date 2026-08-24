@@ -6,12 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+暂无未发布变更。
+
+## [1.2.0] - 2026-08-23
+
 ### 中文
 
 #### 新增
 
 - 支持按精确主机名设置自动、纯数字、纯英文、英数混合或算术验证码类型，并在设置页集中恢复自动判断。
 - 新增授权的 `UDJN` 冻结回归样本，以及多色交叉线和 `0/O` 同图对比的下一候选模型数据配方。
+- 新增独立的拼图滑块 Beta，使用 GeeTest 演示页进行验证，支持所有 HTTP/HTTPS 网站或精确网站名单两种运行范围。
+- 新增独立 Tab 欢迎页和 `1.2.0` 升级说明页；老用户只会看到一次滑块引导，新用户按静态验证码与滑块验证码分步设置。
+
+#### 变更
+
+- 设置页、欢迎页、弹窗、隐私政策、README 和贡献文档补充滑块能力、运行范围和 `debugger` 权限说明。
 
 ### English
 
@@ -19,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Added exact-host CAPTCHA type overrides for automatic, digits, letters, alphanumeric, or arithmetic decoding, with centralized reset controls in Settings.
 - Added the authorized `UDJN` frozen regression and a next-candidate data recipe for multicolor crossing lines and paired `0/O` samples.
+- Added a separate puzzle-slider Beta validated with the GeeTest demo, with all-site and exact-site scope options.
+- Added standalone welcome and `1.2.0` upgrade tabs; existing users see the slider guide once, while new users configure static CAPTCHAs and sliders in separate steps.
+
+#### Changed
+
+- Updated Settings, onboarding, popup, privacy, README, and contributor documentation with slider scope and `debugger` permission guidance.
 
 ## [1.1.0] - 2026-08-02
 
@@ -124,6 +140,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Frozen 201-image benchmark at 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy.
 - Documented data provenance, licenses, split-group isolation, Paddle/ONNX parity, and offline Chrome/Edge verification.
 
-[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hongshuo-wang/local-captcha-solver/releases/tag/v1.0.0
