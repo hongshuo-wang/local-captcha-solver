@@ -87,8 +87,8 @@ export function createRuntimeContent(runtime: Runtime) {
   let sliderAutomaticEnabled = false;
   let lastSliderAttempt: string | undefined;
   let sliderRunGeneration: number | undefined;
-  let sliderAutoBlockedAfterSuccessAt = 0;
-  let lastSliderRearmAt = 0;
+  let completedSliderChallenge: string | undefined;
+  let completedSliderChallengeGone = false;
   let automationPointerPressArmedUntil = 0;
   let lastUserInputAt = 0;
   let sliderUserActivityTimer: ReturnType<typeof setTimeout> | undefined;
@@ -298,8 +298,8 @@ export function createRuntimeContent(runtime: Runtime) {
       sliderRunGeneration = undefined;
       sliderRetryAfterUserActivity = false;
       sliderInterruptedByUser = false;
-      sliderAutoBlockedAfterSuccessAt = 0;
-      lastSliderRearmAt = 0;
+      completedSliderChallenge = undefined;
+      completedSliderChallengeGone = false;
       automationPointerPressArmedUntil = 0;
       if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
       sliderUserActivityTimer = undefined;
@@ -338,10 +338,13 @@ export function createRuntimeContent(runtime: Runtime) {
       return;
     }
     if (sliderAutomaticEnabled && isSliderControl) {
-      lastSliderRearmAt = at;
-      if (sliderAutoBlockedAfterSuccessAt > 0) lastSliderAttempt = undefined;
+      if (completedSliderChallenge !== undefined) {
+        completedSliderChallenge = undefined;
+        completedSliderChallengeGone = false;
+        lastSliderAttempt = undefined;
+      }
     }
-    if (sliderAutomaticEnabled && sliderAutoBlockedAfterSuccessAt === 0 && sliderRunGeneration !== undefined) {
+    if (sliderAutomaticEnabled && completedSliderChallenge === undefined && sliderRunGeneration !== undefined) {
       sliderInterruptedByUser = true;
       showSliderStatus({ state: 'user-active' });
       if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
@@ -425,6 +428,9 @@ export function createRuntimeContent(runtime: Runtime) {
         return { ...discovery, recentUserInput: Date.now() - lastUserInputAt < SLIDER_USER_INPUT_COOLDOWN_MS, pageVisible: document.visibilityState === 'visible', pageFocused: document.hasFocus() };
       });
     }
+    if (type === 'captcha:slider-presence') {
+      return discoverSliderChallenge(document).then((discovery) => ({ present: discovery.state === 'ready' || discovery.state === 'activatable' }));
+    }
     if (type === 'captcha:slider-outcome') {
       const revision = (message as { revision?: unknown }).revision;
       return typeof revision === 'string'
@@ -450,10 +456,6 @@ export function createRuntimeContent(runtime: Runtime) {
     sliderTimer = undefined;
     if (!sliderAutomaticEnabled || sliderRunGeneration !== undefined || document.visibilityState !== 'visible' || !document.hasFocus()) return;
     const generation = sliderGeneration;
-    if (sliderAutoBlockedAfterSuccessAt > 0) {
-      if (lastSliderRearmAt <= sliderAutoBlockedAfterSuccessAt) return;
-      sliderAutoBlockedAfterSuccessAt = 0;
-    }
     const userCooldown = SLIDER_USER_INPUT_COOLDOWN_MS - (Date.now() - lastUserInputAt);
     if (userCooldown > 0) {
       sliderTimer = setTimeout(() => { void scanSlider(); }, userCooldown);
@@ -468,6 +470,16 @@ export function createRuntimeContent(runtime: Runtime) {
       return;
     }
     const key = sliderDiscoveryKey(discovery);
+    if (completedSliderChallenge !== undefined) {
+      if (key === undefined) {
+        completedSliderChallengeGone = true;
+        return;
+      }
+      if (key === completedSliderChallenge && !completedSliderChallengeGone) return;
+      completedSliderChallenge = undefined;
+      completedSliderChallengeGone = false;
+      lastSliderAttempt = undefined;
+    }
     if (key === undefined || key === lastSliderAttempt) return;
     lastSliderAttempt = key;
     sliderRetryAfterUserActivity = false;
@@ -482,7 +494,10 @@ export function createRuntimeContent(runtime: Runtime) {
         // The user-active panel owns feedback until its cooldown clears it.
       } else if (sliderResult.state === 'user-active' && Date.now() - lastUserInputAt >= SLIDER_USER_INPUT_COOLDOWN_MS) clearSliderUserActivityStatus();
       else showSliderStatus(sliderResult);
-      if (sliderResult.state === 'success') sliderAutoBlockedAfterSuccessAt = Date.now();
+      if (sliderResult.state === 'success') {
+        completedSliderChallenge = key;
+        completedSliderChallengeGone = false;
+      }
     } catch {
       if (generation === sliderGeneration && sliderAutomaticEnabled) showSliderStatus({ state: 'failed' });
     } finally {

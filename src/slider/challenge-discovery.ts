@@ -11,6 +11,7 @@ export interface SliderChallengeSnapshot {
   challenge: SliderRect;
   image: SliderRect;
   backgroundDataUrl?: string;
+  referenceBackgroundDataUrl?: string;
   piece?: SliderRect;
   pieceMask?: SliderPieceMask;
   track: SliderRect;
@@ -211,7 +212,12 @@ function imageFor(root: Element, trackRect: SliderRect): { element: Element; rec
     .filter((entry): entry is { element: Element; rect: SliderRect } => entry.rect !== undefined &&
       entry.rect.width >= 160 && entry.rect.height >= 80 && entry.rect.y + entry.rect.height <= trackRect.y + 8 && entry.rect.width >= trackRect.width * .65)
     .sort((left, right) => {
-      const sourcePriority = (element: Element) => element.hasAttribute('data-slider-image') ? 3 : element instanceof HTMLCanvasElement || element instanceof HTMLImageElement ? 2 : 1;
+      const sourcePriority = (element: Element) => {
+        if (element.hasAttribute('data-slider-image')) return 4;
+        if (element.classList.contains('geetest_canvas_bg')) return 3;
+        if (element.classList.contains('geetest_canvas_fullbg') || PIECE_SEMANTIC_PATTERN.test(semanticValue(element))) return 1;
+        return element instanceof HTMLCanvasElement || element instanceof HTMLImageElement ? 2 : 1;
+      };
       return sourcePriority(right.element) - sourcePriority(left.element) || right.rect.width * right.rect.height - left.rect.width * left.rect.height;
     })[0];
 }
@@ -271,6 +277,17 @@ async function backgroundDataUrlFor(element: Element): Promise<string | undefine
       reader.readAsDataURL(blob);
     });
   } catch { return undefined; }
+}
+
+function matchingReferenceBackground(root: Element, image: { element: Element; rect: SliderRect }): Element | undefined {
+  const candidate = root.querySelector('.geetest_canvas_fullbg');
+  if (candidate === null || candidate === image.element) return undefined;
+  const rect = candidate.getBoundingClientRect();
+  const style = getComputedStyle(candidate);
+  if (rect.width < 1 || rect.height < 1 || style.display === 'none') return undefined;
+  const sameGeometry = Math.abs(rect.left - image.rect.x) <= 2 && Math.abs(rect.top - image.rect.y) <= 2 &&
+    Math.abs(rect.width - image.rect.width) <= 2 && Math.abs(rect.height - image.rect.height) <= 2;
+  return sameGeometry ? candidate : undefined;
 }
 
 async function maskForPiece(piece: { element: Element; rect: SliderRect }, imageRect: SliderRect): Promise<SliderPieceMask | undefined> {
@@ -358,6 +375,8 @@ async function snapshotForHandle(handle: Element): Promise<SliderChallengeSnapsh
   if (track.rect.width <= handleRect.width || Math.abs(track.rect.y + track.rect.height / 2 - (handleRect.y + handleRect.height / 2)) > Math.max(track.rect.height, handleRect.height)) return undefined;
   const provider = providerFor(root);
   const backgroundDataUrl = await backgroundDataUrlFor(image.element);
+  const referenceElement = matchingReferenceBackground(root, image);
+  const referenceBackgroundDataUrl = referenceElement === undefined ? undefined : await backgroundDataUrlFor(referenceElement);
   let pieceLayer: PieceLayerCandidate | undefined;
   let pieceMask: SliderPieceMask | undefined;
   for (const candidate of pieceCandidates(root, image.rect)) {
@@ -375,7 +394,7 @@ async function snapshotForHandle(handle: Element): Promise<SliderChallengeSnapsh
     width: pieceMask.width,
     height: pieceMask.height,
   };
-  const backgroundFingerprint = fingerprintText(backgroundDataUrl ?? imageRevision(image.element));
+  const backgroundFingerprint = fingerprintText(`${backgroundDataUrl ?? imageRevision(image.element)}|${referenceBackgroundDataUrl ?? ''}`);
   const pieceFingerprint = pieceMask === undefined
     ? piece === undefined ? '' : `${Math.round(piece.width)}:${Math.round(piece.height)}`
     : `${pieceMask.alphaWidth}:${pieceMask.alphaHeight}:${fingerprintNumbers(pieceMask.alpha)}:${fingerprintNumbers(pieceMask.luminance)}`;
@@ -386,6 +405,7 @@ async function snapshotForHandle(handle: Element): Promise<SliderChallengeSnapsh
     challenge,
     image: image.rect,
     ...(backgroundDataUrl === undefined ? {} : { backgroundDataUrl }),
+    ...(referenceBackgroundDataUrl === undefined ? {} : { referenceBackgroundDataUrl }),
     ...(piece === undefined ? {} : { piece }),
     ...(pieceMask === undefined ? {} : { pieceMask }),
     track: track.rect,

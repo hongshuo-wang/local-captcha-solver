@@ -216,4 +216,40 @@ describe('slider gap locator', () => {
 
     expect(locateSliderGap({ image, expectedSize: width, pieceMask: { offsetY: 30, width, height, alpha, luminance } })).toBeUndefined();
   });
+
+  it('uses a complete reference image when the altered gap has weak edges and flat texture', () => {
+    const width = 52;
+    const height = 50;
+    const targetX = 48;
+    const targetY = 36;
+    const reference = imageWithGap('square', 180, 20, 24);
+    const image = { ...reference, data: new Uint8ClampedArray(reference.data) };
+    const alpha = new Array<number>(width * height).fill(0);
+    const luminance = new Array<number>(width * height).fill(110);
+    for (let y = 3; y < height - 3; y += 1) for (let x = 3; x < width - 3; x += 1) {
+      alpha[y * width + x] = 255;
+      const index = ((targetY + y) * image.width + targetX + x) * 4;
+      image.data[index] = 55;
+      image.data[index + 1] = 55;
+      image.data[index + 2] = 55;
+    }
+
+    const result = locateSliderGap({ image, referenceImage: reference, expectedSize: width, pieceMask: { offsetY: targetY, width, height, alpha, luminance } });
+
+    expect(result).toMatchObject({ x: targetX, y: targetY, confidence: expect.any(Number) });
+    expect(result!.confidence).toBeGreaterThan(.58);
+  });
+
+  it('abstains when two supplied backgrounds differ across the whole puzzle', () => {
+    const image = imageWithGap('square', 154, 30, 48);
+    const reference = imageWithGap('square', 88, 30, 48);
+    for (let index = 0; index < reference.data.length; index += 4) {
+      reference.data[index] = Math.min(255, reference.data[index]! + 70);
+      reference.data[index + 1] = Math.min(255, reference.data[index + 1]! + 70);
+      reference.data[index + 2] = Math.min(255, reference.data[index + 2]! + 70);
+    }
+    const alpha = new Array<number>(48 * 48).fill(255);
+
+    expect(locateSliderGap({ image, referenceImage: reference, expectedSize: 48, pieceMask: { offsetY: 30, width: 48, height: 48, alpha } })).toBeUndefined();
+  });
 });

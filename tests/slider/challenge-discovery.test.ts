@@ -127,6 +127,44 @@ describe('slider challenge outcome', () => {
     });
   });
 
+  it('selects the GeeTest gap background when full, gap, and slice canvases overlap', async () => {
+    document.body.innerHTML = '<div class="geetest_panel"><canvas class="geetest_canvas_fullbg"></canvas><canvas class="geetest_canvas_bg"></canvas><canvas class="geetest_canvas_slice"></canvas><div class="geetest_slider"><button class="geetest_slider_button"></button></div></div>';
+    const root = document.querySelector('.geetest_panel')!;
+    const fullBackground = document.querySelector<HTMLCanvasElement>('.geetest_canvas_fullbg')!;
+    const gapBackground = document.querySelector<HTMLCanvasElement>('.geetest_canvas_bg')!;
+    const slice = document.querySelector<HTMLCanvasElement>('.geetest_canvas_slice')!;
+    const track = document.querySelector('.geetest_slider')!;
+    const handle = document.querySelector('.geetest_slider_button')!;
+    for (const canvas of [fullBackground, gapBackground, slice]) {
+      canvas.width = 260;
+      canvas.height = 110;
+    }
+    Object.defineProperty(fullBackground, 'toDataURL', { value: () => 'data:image/png;base64,FULL' });
+    Object.defineProperty(gapBackground, 'toDataURL', { value: () => 'data:image/png;base64,GAP' });
+    Object.defineProperty(slice, 'getContext', { value: () => ({ getImageData: () => ({ width: 260, height: 110, data: new Uint8ClampedArray(260 * 110 * 4) }) }) });
+    const rects = new Map<Element, { x: number; y: number; width: number; height: number }>([
+      [root, { x: 30, y: 20, width: 260, height: 160 }],
+      [fullBackground, { x: 30, y: 20, width: 260, height: 110 }],
+      [gapBackground, { x: 30, y: 20, width: 260, height: 110 }],
+      [slice, { x: 30, y: 20, width: 260, height: 110 }],
+      [track, { x: 30, y: 140, width: 260, height: 40 }],
+      [handle, { x: 30, y: 138, width: 44, height: 44 }],
+    ]);
+    for (const element of rects.keys()) element.getBoundingClientRect = () => {
+      const rect = rects.get(element)!;
+      return { ...rect, left: rect.x, top: rect.y, right: rect.x + rect.width, bottom: rect.y + rect.height, toJSON: () => ({}) };
+    };
+
+    await expect(discoverSliderChallenge()).resolves.toMatchObject({
+      state: 'ready',
+      challenge: {
+        provider: 'geetest',
+        backgroundDataUrl: 'data:image/png;base64,GAP',
+        referenceBackgroundDataUrl: 'data:image/png;base64,FULL',
+      },
+    });
+  });
+
   it('discovers an SDK structure whose handle and track use different vocabulary', async () => {
     document.body.innerHTML = '<div class="yidun_panel"><div class="yidun_bgimg"><img class="yidun_bg-img"></div><div class="yidun_jigsaw"></div><div class="yidun_control"><div class="yidun_slide_indicator"></div><div class="yidun_slider"><span class="yidun_slider__icon"></span></div></div></div>';
     const root = document.querySelector('.yidun_panel')!;

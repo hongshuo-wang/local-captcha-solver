@@ -237,4 +237,27 @@ describe('popup view', () => {
     expect(root.querySelector('[data-slider-tab-status]')?.textContent).toBe('最近已完成');
     root.remove();
   });
+
+  it('opens the slider workspace when the current page contains a slider challenge', async () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    const sendMessage = vi.fn(async (message: { type: string }) => {
+      if (message.type === 'captcha:get-model-status') return { status: 'ready', progress: 100, message: 'ready', logs: [] } satisfies ModelStatusSnapshot;
+      if (message.type === 'captcha:get-site-state') return { enabled: true };
+      if (message.type === 'captcha:get-slider-state') return { supported: true, enabled: true, debuggerGranted: true, hostname: 'portal.example.test' };
+      return { enabled: true };
+    });
+    const tabSendMessage = vi.fn(async (_tabId: number, message: { type: string }) => message.type === 'captcha:slider-presence' ? { present: true } : undefined);
+    const adapter: PopupControllerAdapter = {
+      tabs: { query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]), sendMessage: tabSendMessage },
+      runtime: { sendMessage },
+      permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
+    };
+
+    startPopup(root, adapter, 'zh_CN');
+
+    await vi.waitFor(() => expect(root.querySelector('[data-popup-tab="slider"]')?.getAttribute('aria-selected')).toBe('true'));
+    expect(tabSendMessage).toHaveBeenCalledWith(7, { type: 'captcha:slider-presence' });
+    root.remove();
+  });
 });

@@ -282,6 +282,7 @@ export function startPopup(
   let sliderBusy = false;
   let sliderDisplayState: SliderDisplayState = 'loading';
   let sliderReadGeneration = 0;
+  let sliderPresenceChecked = false;
   const sliderActivity = (value: unknown): SliderActivity | undefined => {
     if (typeof value !== 'object' || value === null) return undefined;
     const candidate = value as { state?: unknown; trigger?: unknown; at?: unknown; confidence?: unknown; reason?: unknown };
@@ -369,6 +370,13 @@ export function startPopup(
     if (!debuggerGranted) renderSliderState(false, 'permission-denied');
     else if (activity !== undefined) renderSliderState(enabled, displayForActivity(activity), activity.trigger);
     else renderSliderState(enabled, enabled ? 'idle' : 'off');
+    if (!sliderPresenceChecked) {
+      sliderPresenceChecked = true;
+      const tabs = await adapter.tabs.query({ active: true, currentWindow: true });
+      const tabId = typeof tabs[0]?.id === 'number' ? tabs[0].id : undefined;
+      const presence = tabId === undefined ? undefined : await adapter.tabs.sendMessage?.(tabId, { type: 'captcha:slider-presence' }).catch(() => undefined);
+      if (typeof presence === 'object' && presence !== null && (presence as { present?: unknown }).present === true) view.showTab('slider');
+    }
   };
   const ensureSliderPageAccess = async (): Promise<boolean> => {
     const tabs = await adapter.tabs.query({ active: true, currentWindow: true });

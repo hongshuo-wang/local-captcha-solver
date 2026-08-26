@@ -6,6 +6,7 @@ export interface PixelImage {
 
 export interface GapLocatorInput {
   image: PixelImage;
+  referenceImage?: PixelImage;
   expectedSize: number;
   minimumX?: number;
   pieceMask?: {
@@ -34,6 +35,9 @@ const MINIMUM_SHAPE_COMPLEXITY = .035;
 const MINIMUM_SHAPE_EDGE_EVIDENCE = .58;
 const MINIMUM_SHAPE_EDGE_SEPARATION = .25;
 const SHAPE_CONFIDENCE_CAP = .68;
+const MINIMUM_REFERENCE_DIFFERENCE = 18;
+const MINIMUM_REFERENCE_COVERAGE = .35;
+const MINIMUM_REFERENCE_SEPARATION = .3;
 
 function luminance(image: PixelImage): Float32Array {
   const output = new Float32Array(image.width * image.height);
@@ -192,6 +196,45 @@ function textureCorrelation(backgroundLuminance: Float32Array, imageWidth: numbe
   return denominator < 1 ? undefined : covariance / denominator;
 }
 
+function locateReferenceDifference(image: PixelImage, reference: PixelImage, mask: NonNullable<GapLocatorInput['pieceMask']>, minimumX: number): GapLocation | undefined {
+  if (reference.width !== image.width || reference.height !== image.height || reference.data.length !== image.data.length || mask.alpha.length !== mask.width * mask.height) return undefined;
+  const opaqueSamples: Array<{ x: number; y: number }> = [];
+  for (let y = 0; y < mask.height; y += 1) for (let x = 0; x < mask.width; x += 1) {
+    if (mask.alpha[y * mask.width + x]! > 220) opaqueSamples.push({ x, y });
+  }
+  if (opaqueSamples.length < 24) return undefined;
+  const yRadius = Math.max(4, Math.round(mask.height * .12));
+  const minimumY = Math.max(0, Math.round(mask.offsetY) - yRadius);
+  const maximumY = Math.min(image.height - mask.height, Math.round(mask.offsetY) + yRadius);
+  const candidates: Array<{ x: number; y: number; difference: number; coverage: number; score: number }> = [];
+  for (let y = minimumY; y <= maximumY; y += 1) for (let x = minimumX; x + mask.width <= image.width; x += 1) {
+    let difference = 0;
+    let changed = 0;
+    for (const sample of opaqueSamples) {
+      const index = ((y + sample.y) * image.width + x + sample.x) * 4;
+      const pixelDifference = (Math.abs(image.data[index]! - reference.data[index]!) +
+        Math.abs(image.data[index + 1]! - reference.data[index + 1]!) +
+        Math.abs(image.data[index + 2]! - reference.data[index + 2]!)) / 3;
+      difference += pixelDifference;
+      if (pixelDifference >= 25) changed += 1;
+    }
+    const averageDifference = difference / opaqueSamples.length;
+    const coverage = changed / opaqueSamples.length;
+    candidates.push({ x, y, difference: averageDifference, coverage, score: averageDifference + coverage * 40 });
+  }
+  candidates.sort((left, right) => right.score - left.score);
+  const best = candidates[0];
+  if (best === undefined || best.difference < MINIMUM_REFERENCE_DIFFERENCE || best.coverage < MINIMUM_REFERENCE_COVERAGE) return undefined;
+  const competitor = candidates.find((candidate) => Math.hypot(candidate.x - best.x, candidate.y - best.y) >= Math.max(mask.width, mask.height) * .75);
+  const competitorScore = Math.max(0, competitor?.score ?? 0);
+  const separation = (best.score - competitorScore) / Math.max(best.score, 1);
+  if (separation < MINIMUM_REFERENCE_SEPARATION) return undefined;
+  const differenceEvidence = Math.min(1, Math.max(0, (best.difference - MINIMUM_REFERENCE_DIFFERENCE) / 35));
+  const coverageEvidence = Math.min(1, Math.max(0, (best.coverage - MINIMUM_REFERENCE_COVERAGE) / .55));
+  const confidence = Math.min(.96, separation * .45 + differenceEvidence * .3 + coverageEvidence * .25);
+  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score };
+}
+
 function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient: Float32Array, mask: NonNullable<GapLocatorInput['pieceMask']>, minimumX: number): GapLocation | undefined {
   if (mask.width < 20 || mask.height < 20 || mask.alpha.length !== mask.width * mask.height) return undefined;
   const edges = maskEdges(mask);
@@ -312,6 +355,10 @@ export function locateSliderGap(input: GapLocatorInput): GapLocation | undefined
   const { image } = input;
   if (image.width < 120 || image.height < 60 || image.data.length !== image.width * image.height * 4) return undefined;
   const minimumX = Math.max(Math.round(image.width * .18), Math.round(input.minimumX ?? 0));
+  if (input.referenceImage !== undefined && input.pieceMask !== undefined) {
+    const compared = locateReferenceDifference(image, input.referenceImage, input.pieceMask, minimumX);
+    if (compared !== undefined) return compared;
+  }
   const gray = luminance(image);
   const gradient = gradientMap(gray, image.width, image.height);
   if (input.pieceMask !== undefined) return locateMaskedGap(image, gray, gradient, input.pieceMask, minimumX);

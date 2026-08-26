@@ -35,7 +35,7 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; cleanImage?: PixelImage; visibleImage?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number; outcomes?: readonly ('success' | 'failure' | 'pending' | 'absent' | 'uncertain')[] } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; cleanImage?: PixelImage; referenceImage?: PixelImage; visibleImage?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number; outcomes?: readonly ('success' | 'failure' | 'pending' | 'absent' | 'uncertain')[] } = {}) {
   let discoveries = 0;
   let inputEvents = 0;
   let outcomeChecks = 0;
@@ -54,6 +54,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
         challenge: {
           ...challenge,
           ...(options.cleanImage === undefined ? {} : { backgroundDataUrl: 'data:image/png;base64,CLEAN' }),
+          ...(options.referenceImage === undefined ? {} : { referenceBackgroundDataUrl: 'data:image/png;base64,REFERENCE' }),
           revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision,
           ...(activationWidth === undefined ? {} : { image: { ...challenge.image, width: activationWidth }, track: { ...challenge.track, width: activationWidth } }),
           ...(options.feedbackPieceOffsets === undefined ? {} : { piece: { x: feedbackPieceOffset ?? 0, y: 34, width: 38, height: 38 } }),
@@ -78,7 +79,11 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
     permissions: { contains: vi.fn(async () => options.granted ?? true) },
     tabs: { sendMessage },
     debugger: { attach, detach, sendCommand },
-    decodeImage: vi.fn(async (dataUrl) => dataUrl === 'data:image/png;base64,AA==' ? options.image ?? options.visibleImage ?? screenshot() : options.cleanImage ?? options.image ?? screenshot()),
+    decodeImage: vi.fn(async (dataUrl) => dataUrl === 'data:image/png;base64,AA=='
+      ? options.image ?? options.visibleImage ?? screenshot()
+      : dataUrl === 'data:image/png;base64,REFERENCE'
+        ? options.referenceImage ?? screenshot()
+        : options.cleanImage ?? options.image ?? screenshot()),
     delay,
     random: () => .5,
   });

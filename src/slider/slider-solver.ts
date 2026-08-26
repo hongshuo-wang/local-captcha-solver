@@ -86,6 +86,7 @@ function scaledPieceMask(challenge: SliderChallengeSnapshot, scaleX: number, sca
 
 interface SliderImageView {
   image: PixelImage;
+  referenceImage?: PixelImage;
   scaleX: number;
   scaleY: number;
 }
@@ -95,8 +96,9 @@ function locateInView(challenge: SliderChallengeSnapshot, view: SliderImageView)
   const pieceMask = scaledPieceMask(challenge, view.scaleX, view.scaleY);
   const location = locateSliderGap({
     image: view.image,
+    ...(view.referenceImage === undefined ? {} : { referenceImage: view.referenceImage }),
     expectedSize: expectedSize * (view.scaleX + view.scaleY) / 2,
-    minimumX: view.image.width * .2,
+    minimumX: view.image.width * (view.referenceImage === undefined ? .2 : .18),
     ...(pieceMask === undefined ? {} : { pieceMask }),
   });
   return { view, expectedSize, pieceMask, location };
@@ -248,8 +250,10 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const visibleView = crop(pixels, before.image, before.viewport);
         if (visibleView === undefined) return result('unsupported', { reason: 'image-outside-viewport' });
         const cleanBackground = before.backgroundDataUrl === undefined ? undefined : await adapter.decodeImage(before.backgroundDataUrl).catch(() => undefined);
+        const referenceBackground = before.referenceBackgroundDataUrl === undefined ? undefined : await adapter.decodeImage(before.referenceBackgroundDataUrl).catch(() => undefined);
         const cleanView = cleanBackground === undefined ? undefined : {
           image: cleanBackground,
+          ...(referenceBackground === undefined ? {} : { referenceImage: referenceBackground }),
           scaleX: cleanBackground.width / before.image.width,
           scaleY: cleanBackground.height / before.image.height,
         };
