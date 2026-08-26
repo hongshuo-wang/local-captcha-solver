@@ -25,6 +25,7 @@ export interface GapLocation {
   height: number;
   confidence: number;
   score: number;
+  method: 'reference-difference' | 'texture' | 'shape' | 'geometry' | 'edge-perimeter';
 }
 
 const MINIMUM_TEXTURE_CORRELATION = .52;
@@ -232,7 +233,7 @@ function locateReferenceDifference(image: PixelImage, reference: PixelImage, mas
   const differenceEvidence = Math.min(1, Math.max(0, (best.difference - MINIMUM_REFERENCE_DIFFERENCE) / 35));
   const coverageEvidence = Math.min(1, Math.max(0, (best.coverage - MINIMUM_REFERENCE_COVERAGE) / .55));
   const confidence = Math.min(.96, separation * .45 + differenceEvidence * .3 + coverageEvidence * .25);
-  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score };
+  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score, method: 'reference-difference' };
 }
 
 function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient: Float32Array, mask: NonNullable<GapLocatorInput['pieceMask']>, minimumX: number): GapLocation | undefined {
@@ -329,7 +330,7 @@ function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient
       const shapeSeparation = (shapeBest.edgeEvidence - (shapeCompetitor?.edgeEvidence ?? 0)) / Math.max(shapeBest.edgeEvidence, .01);
       const shapeConfidence = shapeSeparation * .6 + shapeBest.edgeEvidence * .4;
       if (shapeBest.edgeEvidence >= MINIMUM_SHAPE_EDGE_EVIDENCE && shapeSeparation >= MINIMUM_SHAPE_EDGE_SEPARATION && shapeConfidence >= MINIMUM_TEXTURE_CORRELATION) {
-        return { x: shapeBest.x, y: shapeBest.y, width: mask.width, height: mask.height, confidence: Math.min(SHAPE_CONFIDENCE_CAP, shapeConfidence), score: shapeBest.score };
+        return { x: shapeBest.x, y: shapeBest.y, width: mask.width, height: mask.height, confidence: Math.min(SHAPE_CONFIDENCE_CAP, shapeConfidence), score: shapeBest.score, method: 'shape' };
       }
     }
     const geometryCandidates = [...candidates].sort((left, right) => {
@@ -345,10 +346,10 @@ function locateMaskedGap(image: PixelImage, luminanceMap: Float32Array, gradient
     const geometrySeparation = (geometryScore - geometryCompetitorScore) / Math.max(geometryScore, 1);
     const geometryConfidence = geometrySeparation * .6 + geometryScore * .4;
     if (geometryBest.edgeEvidence < MINIMUM_GEOMETRY_EVIDENCE || geometryBest.regionEvidence < MINIMUM_GEOMETRY_EVIDENCE || geometrySeparation < MINIMUM_GEOMETRY_SEPARATION || geometryConfidence < MINIMUM_TEXTURE_CORRELATION) return undefined;
-    return { x: geometryBest.x, y: geometryBest.y, width: mask.width, height: mask.height, confidence: Math.min(GEOMETRY_CONFIDENCE_CAP, geometryConfidence), score: geometryBest.score };
+    return { x: geometryBest.x, y: geometryBest.y, width: mask.width, height: mask.height, confidence: Math.min(GEOMETRY_CONFIDENCE_CAP, geometryConfidence), score: geometryBest.score, method: 'geometry' };
   }
   if (confidence === 0) return undefined;
-  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score };
+  return { x: best.x, y: best.y, width: mask.width, height: mask.height, confidence, score: best.score, method: 'texture' };
 }
 
 export function locateSliderGap(input: GapLocatorInput): GapLocation | undefined {
@@ -380,5 +381,5 @@ export function locateSliderGap(input: GapLocatorInput): GapLocation | undefined
   const separation = (best.score - competitorScore) / Math.max(best.score, 1);
   const absolute = Math.min(1, Math.max(0, (best.score - 8) / 30));
   const confidence = Math.min(1, Math.max(0, separation * .7 + absolute * .3));
-  return { x: best.x, y: best.y, width: size, height: size, confidence, score: best.score };
+  return { x: best.x, y: best.y, width: size, height: size, confidence, score: best.score, method: 'edge-perimeter' };
 }

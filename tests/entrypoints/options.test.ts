@@ -131,6 +131,15 @@ describe('options entrypoint', () => {
             trigger: 'automatic',
             sliderState: 'failed',
             provider: 'geetest-v4',
+            attemptId: 'a31f950c-4',
+            challengeId: 'a31f950c',
+            phase: 'outcome',
+            imageSource: 'paired-background',
+            localizationMethod: 'reference-difference',
+            localizationScore: 72.5,
+            confidenceThreshold: .68,
+            alternativeImageSource: 'viewport',
+            alternativeConfidence: .61,
             confidence: .72,
             durationMs: 812,
             gapX: 184.25,
@@ -150,6 +159,9 @@ describe('options entrypoint', () => {
             requestedEndX: 196.75,
             endX: 196.75,
             releaseX: 196.75,
+            plannedDragX: 176.75,
+            finalDragX: 176.75,
+            outcomeSequence: 'pending>failure',
           }],
         }
       : { reconciled: true });
@@ -160,12 +172,19 @@ describe('options entrypoint', () => {
     await startOptions(root, app.extension);
 
     expect(root.textContent).toContain('provider=geetest-v4');
+    expect(root.textContent).toContain('attempt=a31f950c-4');
+    expect(root.textContent).toContain('phase=outcome');
+    expect(root.textContent).toContain('imageSource=paired-background');
+    expect(root.textContent).toContain('method=reference-difference');
+    expect(root.textContent).toContain('threshold=0.68');
     expect(root.textContent).toContain('result=failed');
     expect(root.textContent).toContain('gapX=184.25');
     expect(root.textContent).toContain('pieceErrorX=0.25');
     expect(root.textContent).toContain('correctionX=1');
     expect(root.textContent).toContain('requestedEndX=196.75');
     expect(root.textContent).toContain('releaseX=196.75');
+    expect(root.textContent).toContain('plannedDragX=176.75');
+    expect(root.textContent).toContain('observations=pending>failure');
     root.remove();
     location.hash = '';
   });

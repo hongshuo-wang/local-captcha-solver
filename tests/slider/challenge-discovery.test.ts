@@ -127,7 +127,7 @@ describe('slider challenge outcome', () => {
     });
   });
 
-  it('selects the GeeTest gap background when full, gap, and slice canvases overlap', async () => {
+  it('selects the GeeTest gap background and its hidden full-background canvas', async () => {
     document.body.innerHTML = '<div class="geetest_panel"><canvas class="geetest_canvas_fullbg"></canvas><canvas class="geetest_canvas_bg"></canvas><canvas class="geetest_canvas_slice"></canvas><div class="geetest_slider"><button class="geetest_slider_button"></button></div></div>';
     const root = document.querySelector('.geetest_panel')!;
     const fullBackground = document.querySelector<HTMLCanvasElement>('.geetest_canvas_fullbg')!;
@@ -142,9 +142,10 @@ describe('slider challenge outcome', () => {
     Object.defineProperty(fullBackground, 'toDataURL', { value: () => 'data:image/png;base64,FULL' });
     Object.defineProperty(gapBackground, 'toDataURL', { value: () => 'data:image/png;base64,GAP' });
     Object.defineProperty(slice, 'getContext', { value: () => ({ getImageData: () => ({ width: 260, height: 110, data: new Uint8ClampedArray(260 * 110 * 4) }) }) });
+    fullBackground.style.display = 'none';
     const rects = new Map<Element, { x: number; y: number; width: number; height: number }>([
       [root, { x: 30, y: 20, width: 260, height: 160 }],
-      [fullBackground, { x: 30, y: 20, width: 260, height: 110 }],
+      [fullBackground, { x: 0, y: 0, width: 0, height: 0 }],
       [gapBackground, { x: 30, y: 20, width: 260, height: 110 }],
       [slice, { x: 30, y: 20, width: 260, height: 110 }],
       [track, { x: 30, y: 140, width: 260, height: 40 }],
@@ -253,6 +254,21 @@ describe('slider challenge outcome', () => {
     button.getBoundingClientRect = () => ({ x: 20, y: 10, left: 20, top: 10, right: 170, bottom: 50, width: 150, height: 40, toJSON: () => ({}) });
 
     await expect(discoverSliderChallenge()).resolves.toEqual({ state: 'not-found' });
+  });
+
+  it('waits for a collapsed slider control to leave its loading state', async () => {
+    document.body.innerHTML = '<div class="geetest_captcha geetest_wait"><div class="geetest_holder"><div class="geetest_btn_click">Click to verify</div></div></div>';
+    const root = document.querySelector('.geetest_captcha')!;
+    const activator = document.querySelector('.geetest_btn_click')!;
+    activator.getBoundingClientRect = () => ({ x: 40, y: 60, left: 40, top: 60, right: 300, bottom: 110, width: 260, height: 50, toJSON: () => ({}) });
+
+    await expect(discoverSliderChallenge()).resolves.toEqual({ state: 'not-found' });
+
+    root.classList.replace('geetest_wait', 'geetest_nextReady');
+    await expect(discoverSliderChallenge()).resolves.toEqual({
+      state: 'activatable',
+      activator: { provider: 'geetest-v4', rect: { x: 40, y: 60, width: 260, height: 50 } },
+    });
   });
 
   it('does not borrow page-level slider text for an unrelated dropdown handle', async () => {

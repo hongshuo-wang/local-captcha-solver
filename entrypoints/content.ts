@@ -86,9 +86,9 @@ export function createRuntimeContent(runtime: Runtime) {
   let uiLocale = resolveUiLocale('system', runtime.uiLanguage ?? 'zh-CN');
   let sliderAutomaticEnabled = false;
   let lastSliderAttempt: string | undefined;
+  let observedSliderCandidate: string | undefined;
   let sliderRunGeneration: number | undefined;
-  let completedSliderChallenge: string | undefined;
-  let completedSliderChallengeGone = false;
+  let settledSliderChallenge: { keys: readonly string[]; state: 'success' | 'rejected'; observedAbsent: boolean } | undefined;
   let automationPointerPressArmedUntil = 0;
   let lastUserInputAt = 0;
   let sliderUserActivityTimer: ReturnType<typeof setTimeout> | undefined;
@@ -295,11 +295,11 @@ export function createRuntimeContent(runtime: Runtime) {
       if (sliderTimer !== undefined) clearTimeout(sliderTimer);
       sliderTimer = undefined;
       lastSliderAttempt = undefined;
+      observedSliderCandidate = undefined;
       sliderRunGeneration = undefined;
       sliderRetryAfterUserActivity = false;
       sliderInterruptedByUser = false;
-      completedSliderChallenge = undefined;
-      completedSliderChallengeGone = false;
+      settledSliderChallenge = undefined;
       automationPointerPressArmedUntil = 0;
       if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
       sliderUserActivityTimer = undefined;
@@ -338,13 +338,12 @@ export function createRuntimeContent(runtime: Runtime) {
       return;
     }
     if (sliderAutomaticEnabled && isSliderControl) {
-      if (completedSliderChallenge !== undefined) {
-        completedSliderChallenge = undefined;
-        completedSliderChallengeGone = false;
+      if (settledSliderChallenge?.state === 'success') {
+        settledSliderChallenge = undefined;
         lastSliderAttempt = undefined;
       }
     }
-    if (sliderAutomaticEnabled && completedSliderChallenge === undefined && sliderRunGeneration !== undefined) {
+    if (sliderAutomaticEnabled && isSliderControl && settledSliderChallenge === undefined && sliderRunGeneration !== undefined) {
       sliderInterruptedByUser = true;
       showSliderStatus({ state: 'user-active' });
       if (sliderUserActivityTimer !== undefined) clearTimeout(sliderUserActivityTimer);
@@ -470,17 +469,27 @@ export function createRuntimeContent(runtime: Runtime) {
       return;
     }
     const key = sliderDiscoveryKey(discovery);
-    if (completedSliderChallenge !== undefined) {
+    if (settledSliderChallenge !== undefined) {
       if (key === undefined) {
-        completedSliderChallengeGone = true;
+        settledSliderChallenge.observedAbsent = true;
+        observedSliderCandidate = undefined;
         return;
       }
-      if (key === completedSliderChallenge && !completedSliderChallengeGone) return;
-      completedSliderChallenge = undefined;
-      completedSliderChallengeGone = false;
+      if (settledSliderChallenge.keys.includes(key) && !settledSliderChallenge.observedAbsent) return;
+      settledSliderChallenge = undefined;
       lastSliderAttempt = undefined;
     }
-    if (key === undefined || key === lastSliderAttempt) return;
+    if (key === undefined) {
+      observedSliderCandidate = undefined;
+      lastSliderAttempt = undefined;
+      return;
+    }
+    if (key !== observedSliderCandidate) {
+      observedSliderCandidate = key;
+      scheduleSliderScan();
+      return;
+    }
+    if (key === lastSliderAttempt) return;
     lastSliderAttempt = key;
     sliderRetryAfterUserActivity = false;
     sliderRunGeneration = generation;
@@ -495,8 +504,11 @@ export function createRuntimeContent(runtime: Runtime) {
       } else if (sliderResult.state === 'user-active' && Date.now() - lastUserInputAt >= SLIDER_USER_INPUT_COOLDOWN_MS) clearSliderUserActivityStatus();
       else showSliderStatus(sliderResult);
       if (sliderResult.state === 'success') {
-        completedSliderChallenge = key;
-        completedSliderChallengeGone = false;
+        const challengeKey = typeof sliderResult.challengeRevision === 'string' ? `ready|${sliderResult.challengeRevision}` : key;
+        settledSliderChallenge = { keys: challengeKey === key ? [key] : [key, challengeKey], state: 'success', observedAbsent: false };
+      } else if (sliderResult.state === 'failed' && sliderResult.reason === 'challenge-rejected') {
+        const challengeKey = typeof sliderResult.challengeRevision === 'string' ? `ready|${sliderResult.challengeRevision}` : key;
+        settledSliderChallenge = { keys: challengeKey === key ? [key] : [key, challengeKey], state: 'rejected', observedAbsent: false };
       }
     } catch {
       if (generation === sliderGeneration && sliderAutomaticEnabled) showSliderStatus({ state: 'failed' });

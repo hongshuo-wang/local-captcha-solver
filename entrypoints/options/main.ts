@@ -71,8 +71,17 @@ function diagnosticDetails(log: ModelLog): string {
   const fields: Array<[string, string | undefined]> = [
     ['provider', log.provider],
     ['trigger', log.trigger],
+    ['attempt', log.attemptId],
+    ['challenge', log.challengeId],
+    ['phase', log.phase],
     ['result', log.sliderState],
+    ['imageSource', log.imageSource],
+    ['method', log.localizationMethod],
     ['confidence', diagnosticNumber(log.confidence)],
+    ['threshold', diagnosticNumber(log.confidenceThreshold)],
+    ['score', diagnosticNumber(log.localizationScore)],
+    ['alternativeSource', log.alternativeImageSource],
+    ['alternativeConfidence', diagnosticNumber(log.alternativeConfidence)],
     ['gapX', diagnosticNumber(log.gapX)],
     ['gapY', diagnosticNumber(log.gapY)],
     ['pieceOffsetX', diagnosticNumber(log.pieceOffsetX)],
@@ -91,6 +100,10 @@ function diagnosticDetails(log: ModelLog): string {
     ['requestedEndX', diagnosticNumber(log.requestedEndX)],
     ['endX', diagnosticNumber(log.endX)],
     ['releaseX', diagnosticNumber(log.releaseX)],
+    ['plannedDragX', diagnosticNumber(log.plannedDragX)],
+    ['finalDragX', diagnosticNumber(log.finalDragX)],
+    ['observations', log.outcomeSequence],
+    ['reason', log.reason],
   ];
   return [...common, ...fields.map(([name, value]) => value === undefined ? undefined : `${name}=${value}`)]
     .filter((value): value is string => value !== undefined && value !== '')

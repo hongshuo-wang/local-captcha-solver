@@ -103,7 +103,7 @@ const NON_HANDLE_LAYER_PATTERN = /(^|[-_\s])(indicator|progress|fill|track|rail)
 const TRACK_SEMANTIC_PATTERN = /(^|[-_\s])(track|rail|control|bar|slider|slide|drag)([-_\s]|$)/i;
 const PIECE_SEMANTIC_PATTERN = /(^|[-_\s])(piece|jigsaw|slice)([-_\s]|$)/i;
 const ACTIVATION_ACTION_PATTERN = /(verify|verification|slide|drag|swipe|radar|验证|校验|滑动|拖动)/i;
-const INACTIVE_CONTROL_PATTERN = /(success|passed|complete|error|fail|disabled|成功|完成|失败|禁用)/i;
+const INACTIVE_CONTROL_PATTERN = /(^|[-_\s])(success|passed|complete|error|fail|disabled|loading|waiting|wait|verifying|freeze)([-_\s]|$)|成功|完成|失败|禁用/i;
 
 function rectFor(element: Element): SliderRect | undefined {
   const rect = element.getBoundingClientRect();
@@ -282,6 +282,11 @@ async function backgroundDataUrlFor(element: Element): Promise<string | undefine
 function matchingReferenceBackground(root: Element, image: { element: Element; rect: SliderRect }): Element | undefined {
   const candidate = root.querySelector('.geetest_canvas_fullbg');
   if (candidate === null || candidate === image.element) return undefined;
+  if (candidate instanceof HTMLCanvasElement && image.element instanceof HTMLCanvasElement) {
+    return candidate.width === image.element.width && candidate.height === image.element.height && candidate.width > 0 && candidate.height > 0
+      ? candidate
+      : undefined;
+  }
   const rect = candidate.getBoundingClientRect();
   const style = getComputedStyle(candidate);
   if (rect.width < 1 || rect.height < 1 || style.display === 'none') return undefined;
@@ -419,8 +424,14 @@ function activatorFor(element: Element): SliderActivatorSnapshot | undefined {
   if (rect === undefined || rect.width < 120 || rect.height < 30 || rect.height > 100) return undefined;
   const semanticSignal = `${element.id} ${element.className}`;
   const contentSignal = `${element.getAttribute('aria-label') ?? ''} ${element.getAttribute('title') ?? ''} ${element.textContent ?? ''}`;
+  let stateSignal = '';
+  let stateElement: Element | null = element;
+  for (let depth = 0; depth < 5 && stateElement !== null; depth += 1, stateElement = stateElement.parentElement) {
+    stateSignal += ` ${stateElement.id} ${stateElement.className} ${stateElement.getAttribute('aria-disabled') ?? ''} ${stateElement.getAttribute('aria-busy') ?? ''}`;
+  }
+  if (INACTIVE_CONTROL_PATTERN.test(stateSignal)) return undefined;
   if (!element.hasAttribute('data-slider-activator') && !ACTIVATION_ACTION_PATTERN.test(contentSignal) &&
-    (!ACTIVATION_ACTION_PATTERN.test(semanticSignal) || INACTIVE_CONTROL_PATTERN.test(semanticSignal))) return undefined;
+    !ACTIVATION_ACTION_PATTERN.test(semanticSignal)) return undefined;
   return { provider: providerFor(element), rect };
 }
 

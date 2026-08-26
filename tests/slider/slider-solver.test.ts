@@ -3,6 +3,26 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSliderSolver } from '../../src/slider/slider-solver';
 import type { PixelImage } from '../../src/slider/gap-locator';
 
+function weakMaskedScreenshot(): { image: PixelImage; pieceMask: { offsetX: number; offsetY: number; width: number; height: number; alphaWidth: number; alphaHeight: number; alpha: number[]; luminance: number[] } } {
+  const image = screenshot();
+  const width = 48;
+  const height = 48;
+  const targetX = 154;
+  const targetY = 30;
+  const alpha = new Array<number>(width * height).fill(0);
+  const luminance = new Array<number>(width * height).fill(110);
+  const opaque = (x: number, y: number) => x >= 2 && x < width - 2 && y >= 2 && y < height - 2 && !(x >= 17 && x < 31 && y < 11);
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) alpha[y * width + x] = opaque(x, y) ? 255 : 0;
+  for (let y = 1; y < height - 1; y += 1) for (let x = 1; x < width - 1; x += 1) {
+    if (!opaque(x, y) || (opaque(x - 1, y) && opaque(x + 1, y) && opaque(x, y - 1) && opaque(x, y + 1))) continue;
+    const target = ((targetY + y) * image.width + targetX + x) * 4;
+    image.data[target] = 8;
+    image.data[target + 1] = 8;
+    image.data[target + 2] = 8;
+  }
+  return { image, pieceMask: { offsetX: 0, offsetY: targetY, width, height, alphaWidth: width, alphaHeight: height, alpha, luminance } };
+}
+
 function screenshot(): PixelImage {
   const width = 260;
   const height = 170;
@@ -35,7 +55,7 @@ const challenge = {
   viewport: { width: 260, height: 170, devicePixelRatio: 1 },
 };
 
-function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; cleanImage?: PixelImage; referenceImage?: PixelImage; visibleImage?: PixelImage; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number; outcomes?: readonly ('success' | 'failure' | 'pending' | 'absent' | 'uncertain')[] } = {}) {
+function harness(options: { granted?: boolean; enabled?: boolean; recentUserInput?: boolean; changed?: boolean; activatable?: boolean; activationWidths?: readonly number[]; image?: PixelImage; cleanImage?: PixelImage; referenceImage?: PixelImage; visibleImage?: PixelImage; pieceMask?: ReturnType<typeof weakMaskedScreenshot>['pieceMask']; feedbackPieceOffsets?: readonly number[]; userActiveAfterInputEvents?: number; outcomes?: readonly ('success' | 'failure' | 'pending' | 'absent' | 'uncertain')[] } = {}) {
   let discoveries = 0;
   let inputEvents = 0;
   let outcomeChecks = 0;
@@ -55,6 +75,7 @@ function harness(options: { granted?: boolean; enabled?: boolean; recentUserInpu
           ...challenge,
           ...(options.cleanImage === undefined ? {} : { backgroundDataUrl: 'data:image/png;base64,CLEAN' }),
           ...(options.referenceImage === undefined ? {} : { referenceBackgroundDataUrl: 'data:image/png;base64,REFERENCE' }),
+          ...(options.pieceMask === undefined ? {} : { pieceMask: options.pieceMask }),
           revision: options.changed && discoveries > 1 ? 'challenge-2' : challenge.revision,
           ...(activationWidth === undefined ? {} : { image: { ...challenge.image, width: activationWidth }, track: { ...challenge.track, width: activationWidth } }),
           ...(options.feedbackPieceOffsets === undefined ? {} : { piece: { x: feedbackPieceOffset ?? 0, y: 34, width: 38, height: 38 } }),
@@ -97,6 +118,7 @@ describe('slider solver', () => {
     expect(result).toMatchObject({
       state: 'success',
       confidence: expect.any(Number),
+      challengeRevision: 'challenge-1',
       diagnostic: {
         provider: 'geetest-v4',
         gapX: expect.any(Number),
@@ -123,9 +145,19 @@ describe('slider solver', () => {
 
   it('treats a stably removed challenge as successful without provider-specific markup', async () => {
     const app = harness({ outcomes: ['absent', 'absent'] });
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success' });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({ state: 'success', challengeRevision: 'challenge-1' });
     const checks = app.delay.mock.calls.filter(([duration]) => duration === 250 || duration === 500 || duration === 750);
     expect(checks).toEqual([[250], [500]]);
+  });
+
+  it('returns the rejected challenge identity and outcome observations', async () => {
+    const app = harness({ outcomes: ['pending', 'failure'] });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic')).resolves.toMatchObject({
+      state: 'failed',
+      reason: 'challenge-rejected',
+      challengeRevision: 'challenge-1',
+      diagnostic: { outcomeSequence: 'pending>failure' },
+    });
   });
 
   it('does not inspect or drag an automatic challenge on a site that is not enabled', async () => {
@@ -136,7 +168,7 @@ describe('slider solver', () => {
 
   it('stops before screenshot and debugger input when the user is active', async () => {
     const app = harness({ recentUserInput: true });
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toEqual({ state: 'user-active' });
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'manual')).resolves.toMatchObject({ state: 'user-active', diagnostic: { attemptId: 'slider-1' } });
     expect(app.attach).not.toHaveBeenCalled();
   });
 
@@ -154,9 +186,10 @@ describe('slider solver', () => {
 
   it('rejects a stale automatic request before attaching the debugger', async () => {
     const app = harness();
-    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic', 'older-challenge')).resolves.toEqual({
+    await expect(app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic', 'older-challenge')).resolves.toMatchObject({
       state: 'uncertain',
       reason: 'challenge-changed',
+      diagnostic: { attemptId: 'slider-1' },
     });
     expect(app.attach).not.toHaveBeenCalled();
   });
@@ -211,6 +244,25 @@ describe('slider solver', () => {
     expect(app.detach).toHaveBeenCalledOnce();
   });
 
+  it('abstains from dragging when masked localization only has weak evidence', async () => {
+    const fixture = weakMaskedScreenshot();
+    const app = harness(fixture);
+
+    const result = await app.solver.solve({ id: 7, url: 'https://demo.example.test/' }, 'automatic');
+    expect(result).toMatchObject({
+      state: 'low-confidence',
+      confidence: expect.any(Number),
+      diagnostic: {
+        imageSource: 'viewport',
+        localizationMethod: 'shape',
+        confidenceThreshold: .69,
+      },
+    });
+    expect(result.confidence).toBeGreaterThan(.58);
+    expect(result.confidence).toBeLessThan(.69);
+    expect(app.sendCommand.mock.calls.some((call) => call[1] === 'Input.dispatchMouseEvent')).toBe(false);
+  });
+
   it('uses the visible gap when clean-background texture is inconclusive', async () => {
     const app = harness({ image: screenshot(), cleanImage: blankScreenshot() });
 
@@ -243,6 +295,9 @@ describe('slider solver', () => {
         correctionX: 1,
         endX: 185,
         releaseX: 186,
+        plannedDragX: 166,
+        finalDragX: 167,
+        outcomeSequence: 'success',
       },
     });
     const heldMoves = app.sendCommand.mock.calls.filter((call) => call[1] === 'Input.dispatchMouseEvent' && (call[2] as { type?: string; buttons?: number })?.type === 'mouseMoved' && (call[2] as { buttons?: number })?.buttons === 1);

@@ -1,4 +1,4 @@
-import { SLIDER_RESULT_STATES, type SliderProvider, type SliderResultState, type SliderRunDiagnostic } from '../slider/types';
+import { SLIDER_RESULT_STATES, type SliderDiagnosticPhase, type SliderImageSource, type SliderLocalizationMethod, type SliderProvider, type SliderResultState, type SliderRunDiagnostic } from '../slider/types';
 
 export type ModelStatus = 'loading' | 'ready' | 'error';
 export type DiagnosticTrigger = 'automatic' | 'manual' | 'explicit' | 'context';
@@ -116,12 +116,17 @@ function sanitizeContext(context: DiagnosticContext = {}): DiagnosticContext {
   const trigger = context.trigger === 'automatic' || context.trigger === 'manual' || context.trigger === 'explicit' || context.trigger === 'context' ? context.trigger : undefined;
   const match = context.match === 'unique' || context.match === 'ambiguous' || context.match === 'none' ? context.match : undefined;
   const provider: SliderProvider | undefined = context.provider === 'geetest' || context.provider === 'geetest-v4' || context.provider === 'generic' ? context.provider : undefined;
+  const imageSource: SliderImageSource | undefined = context.imageSource === 'paired-background' || context.imageSource === 'background' || context.imageSource === 'viewport' ? context.imageSource : undefined;
+  const localizationMethod: SliderLocalizationMethod | undefined = context.localizationMethod === 'reference-difference' || context.localizationMethod === 'texture' || context.localizationMethod === 'shape' || context.localizationMethod === 'geometry' || context.localizationMethod === 'edge-perimeter' ? context.localizationMethod : undefined;
+  const phase: SliderDiagnosticPhase | undefined = context.phase === 'discovery' || context.phase === 'activation' || context.phase === 'localization' || context.phase === 'execution' || context.phase === 'outcome' ? context.phase : undefined;
   const sliderState = context.sliderState !== undefined && SLIDER_RESULT_STATES.includes(context.sliderState) ? context.sliderState : undefined;
   const coordinate = (value: unknown) => finiteNumber(value, -10_000, 10_000);
   const dimension = (value: unknown) => finiteNumber(value, 0, 10_000);
   const scale = (value: unknown) => finiteNumber(value, 0.01, 100);
   const site = cleanSite(context.site);
   const candidateId = cleanText(context.candidateId, 80);
+  const attemptId = cleanText(context.attemptId, 40);
+  const challengeId = cleanText(context.challengeId, 40);
   const width = dimension(context.width);
   const height = dimension(context.height);
   const source = cleanSource(context.source);
@@ -131,6 +136,7 @@ function sanitizeContext(context: DiagnosticContext = {}): DiagnosticContext {
   const confidence = finiteNumber(context.confidence, 0, 1);
   const reason = cleanText(context.reason, 120);
   const error = cleanText(context.error);
+  const outcomeSequence = cleanText(context.outcomeSequence, 120);
   return {
     ...(site === undefined ? {} : { site }),
     ...(trigger === undefined ? {} : { trigger }),
@@ -144,6 +150,15 @@ function sanitizeContext(context: DiagnosticContext = {}): DiagnosticContext {
     ...(confidence === undefined ? {} : { confidence }),
     ...(match === undefined ? {} : { match }),
     ...(provider === undefined ? {} : { provider }),
+    ...(attemptId === undefined ? {} : { attemptId }),
+    ...(challengeId === undefined ? {} : { challengeId }),
+    ...(phase === undefined ? {} : { phase }),
+    ...(imageSource === undefined ? {} : { imageSource }),
+    ...(localizationMethod === undefined ? {} : { localizationMethod }),
+    ...(finiteNumber(context.localizationScore, -1_000_000, 1_000_000) === undefined ? {} : { localizationScore: finiteNumber(context.localizationScore, -1_000_000, 1_000_000) }),
+    ...(finiteNumber(context.confidenceThreshold, 0, 1) === undefined ? {} : { confidenceThreshold: finiteNumber(context.confidenceThreshold, 0, 1) }),
+    ...(context.alternativeImageSource !== 'paired-background' && context.alternativeImageSource !== 'background' && context.alternativeImageSource !== 'viewport' ? {} : { alternativeImageSource: context.alternativeImageSource }),
+    ...(finiteNumber(context.alternativeConfidence, 0, 1) === undefined ? {} : { alternativeConfidence: finiteNumber(context.alternativeConfidence, 0, 1) }),
     ...(sliderState === undefined ? {} : { sliderState }),
     ...(coordinate(context.gapX) === undefined ? {} : { gapX: coordinate(context.gapX) }),
     ...(coordinate(context.gapY) === undefined ? {} : { gapY: coordinate(context.gapY) }),
@@ -163,6 +178,9 @@ function sanitizeContext(context: DiagnosticContext = {}): DiagnosticContext {
     ...(coordinate(context.requestedEndX) === undefined ? {} : { requestedEndX: coordinate(context.requestedEndX) }),
     ...(coordinate(context.endX) === undefined ? {} : { endX: coordinate(context.endX) }),
     ...(coordinate(context.releaseX) === undefined ? {} : { releaseX: coordinate(context.releaseX) }),
+    ...(coordinate(context.plannedDragX) === undefined ? {} : { plannedDragX: coordinate(context.plannedDragX) }),
+    ...(coordinate(context.finalDragX) === undefined ? {} : { finalDragX: coordinate(context.finalDragX) }),
+    ...(outcomeSequence === undefined ? {} : { outcomeSequence }),
     ...(reason === undefined ? {} : { reason }),
     ...(error === undefined ? {} : { error }),
   };

@@ -1,6 +1,6 @@
 import { sliderDiscoveryKey, type SliderChallengeSnapshot } from './challenge-discovery';
 import { locateSliderGap, type PixelImage } from './gap-locator';
-import type { SliderProvider, SliderResultState, SliderRunDiagnostic, SliderRunResult, SliderSolver } from './types';
+import type { SliderImageSource, SliderProvider, SliderResultState, SliderRunDiagnostic, SliderRunResult, SliderSolver } from './types';
 
 type ContentDiscovery =
   | { state: 'ready'; challenge: SliderChallengeSnapshot; recentUserInput: boolean; pageVisible: boolean; pageFocused: boolean }
@@ -28,6 +28,15 @@ export interface SliderSolverAdapter {
 }
 
 const MINIMUM_CONFIDENCE = .58;
+const DEFAULT_MASKED_CONFIDENCE = .68;
+
+function confidenceThreshold(method: NonNullable<ReturnType<typeof locateSliderGap>>['method']): number {
+  if (method === 'edge-perimeter') return MINIMUM_CONFIDENCE;
+  if (method === 'reference-difference') return .62;
+  if (method === 'geometry') return .7;
+  if (method === 'shape') return .69;
+  return DEFAULT_MASKED_CONFIDENCE;
+}
 
 function isDiscovery(value: unknown): value is ContentDiscovery {
   if (typeof value !== 'object' || value === null || typeof (value as { state?: unknown }).state !== 'string') return false;
@@ -85,6 +94,7 @@ function scaledPieceMask(challenge: SliderChallengeSnapshot, scaleX: number, sca
 }
 
 interface SliderImageView {
+  source: SliderImageSource;
   image: PixelImage;
   referenceImage?: PixelImage;
   scaleX: number;
@@ -180,6 +190,16 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
   const random = adapter.random ?? Math.random;
   const target = (tabId: number) => ({ tabId });
   const runGenerations = new Map<number, number>();
+  let attemptSequence = 0;
+
+  const diagnosticId = (value: string): string => {
+    let hash = 2_166_136_261;
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16_777_619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+  };
 
   return {
     cancel(tabId): void {
@@ -200,13 +220,14 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       if (cancelled()) return result('permission-denied', { reason: 'run-cancelled' });
       if (!await adapter.permissions.contains({ permissions: ['debugger'] })) return result('permission-denied', { reason: 'debugger-not-granted' });
       if (cancelled()) return result('permission-denied', { reason: 'run-cancelled' });
+      diagnostic = { attemptId: `slider-${(++attemptSequence).toString(36)}`, phase: 'discovery' };
       const initialDiscovery = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
       if (cancelled()) return result('permission-denied', { reason: 'run-cancelled' });
       if (!isDiscovery(initialDiscovery)) return result('failed', { reason: 'content-unavailable' });
       if (expectedRevision !== undefined && sliderDiscoveryKey(initialDiscovery) !== expectedRevision) return result('uncertain', { reason: 'challenge-changed' });
       let discoveryValue: ContentDiscovery = initialDiscovery;
       if (discoveryValue.state === 'activatable') {
-        diagnostic = { provider: discoveryValue.activator.provider };
+        diagnostic = { ...diagnostic, provider: discoveryValue.activator.provider, phase: 'activation' };
         if (!discoveryValue.pageVisible || (trigger === 'automatic' && !discoveryValue.pageFocused)) return result('page-inactive');
         if (discoveryValue.recentUserInput) return result('user-active');
         discoveryValue = await activateChallenge(adapter, tab.id, discoveryValue, delay);
@@ -217,10 +238,14 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
       if (trigger === 'automatic' && !discoveryValue.pageFocused) return result('page-inactive');
       if (discoveryValue.recentUserInput) return result('user-active');
       const before = discoveryValue.challenge;
+      const challengeId = diagnosticId(before.revision);
       const initialPieceOffsetX = pieceOffsetX(before);
       const pieceOffsetY = before.pieceMask?.offsetY ?? (before.piece === undefined ? undefined : before.piece.y - before.image.y);
       diagnostic = {
         provider: before.provider,
+        attemptId: diagnostic.attemptId,
+        challengeId,
+        phase: 'localization',
         trackWidth: before.track.width,
         handleWidth: before.handle.width,
         ...(initialPieceOffsetX === undefined ? {} : { pieceOffsetX: initialPieceOffsetX }),
@@ -247,11 +272,13 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const pixels = await adapter.decodeImage(`data:image/png;base64,${screenshotData}`).catch(() => undefined);
         if (cancelled()) return result('permission-denied', { reason: 'run-cancelled' });
         if (pixels === undefined) return result('failed', { reason: 'screenshot-invalid' });
-        const visibleView = crop(pixels, before.image, before.viewport);
-        if (visibleView === undefined) return result('unsupported', { reason: 'image-outside-viewport' });
+        const visibleCrop = crop(pixels, before.image, before.viewport);
+        if (visibleCrop === undefined) return result('unsupported', { reason: 'image-outside-viewport' });
+        const visibleView: SliderImageView = { source: 'viewport', ...visibleCrop };
         const cleanBackground = before.backgroundDataUrl === undefined ? undefined : await adapter.decodeImage(before.backgroundDataUrl).catch(() => undefined);
         const referenceBackground = before.referenceBackgroundDataUrl === undefined ? undefined : await adapter.decodeImage(before.referenceBackgroundDataUrl).catch(() => undefined);
         const cleanView = cleanBackground === undefined ? undefined : {
+          source: referenceBackground === undefined ? 'background' as const : 'paired-background' as const,
           image: cleanBackground,
           ...(referenceBackground === undefined ? {} : { referenceImage: referenceBackground }),
           scaleX: cleanBackground.width / before.image.width,
@@ -259,8 +286,11 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         };
         const attempts = (cleanView === undefined ? [visibleView] : [cleanView, visibleView]).map((view) => locateInView(before, view));
         const rankedAttempts = [...attempts].sort((left, right) => (right.location?.confidence ?? 0) - (left.location?.confidence ?? 0));
-        const selected = rankedAttempts[0]!;
-        const accepted = selected.location !== undefined && selected.location.confidence >= MINIMUM_CONFIDENCE ? selected : undefined;
+        const acceptedAttempts = rankedAttempts.filter((attempt) => attempt.location !== undefined && attempt.location.confidence >= confidenceThreshold(attempt.location.method));
+        const selected = acceptedAttempts[0] ?? rankedAttempts[0]!;
+        const alternative = rankedAttempts.find((attempt) => attempt !== selected);
+        const selectedThreshold = selected.location === undefined ? DEFAULT_MASKED_CONFIDENCE : confidenceThreshold(selected.location.method);
+        const accepted = acceptedAttempts.length === 0 ? undefined : selected;
         const { view: cropped, expectedSize, pieceMask, location } = selected;
         diagnostic = {
           ...diagnostic,
@@ -268,8 +298,20 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
           imageHeight: cropped.image.height,
           scaleX: cropped.scaleX,
           scaleY: cropped.scaleY,
+          imageSource: cropped.source,
+          confidenceThreshold: selectedThreshold,
+          ...(alternative === undefined ? {} : {
+            alternativeImageSource: alternative.view.source,
+            alternativeConfidence: alternative.location?.confidence ?? 0,
+          }),
         };
-        if (location !== undefined) diagnostic = { ...diagnostic, gapX: location.x, gapY: location.y };
+        if (location !== undefined) diagnostic = {
+          ...diagnostic,
+          gapX: location.x,
+          gapY: location.y,
+          localizationMethod: location.method,
+          localizationScore: location.score,
+        };
         if (accepted === undefined || location === undefined) return result('low-confidence', { confidence: location?.confidence ?? 0 });
         confidence = location.confidence;
         const verifyValue = await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-discover' }).catch(() => undefined);
@@ -285,7 +327,7 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         const minimumEndX = before.track.x + before.handle.width / 2;
         const maximumEndX = before.track.x + before.track.width - before.handle.width / 2;
         const endX = Math.max(minimumEndX, Math.min(maximumEndX, requestedEndX));
-        diagnostic = { ...diagnostic, desiredPieceOffsetX, startX: start.x, requestedEndX, endX };
+        diagnostic = { ...diagnostic, phase: 'execution', desiredPieceOffsetX, startX: start.x, requestedEndX, endX, plannedDragX: endX - start.x };
         const points = dragPoints(start, endX, random);
         lastPointer = start;
         releasePointer = async () => {
@@ -356,7 +398,7 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         await delay(55 + Math.round(random() * 45));
         await adapter.debugger.sendCommand(target(tab.id), 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1 });
         pointerPressed = false;
-        diagnostic = { ...diagnostic, releaseX: end.x };
+        diagnostic = { ...diagnostic, releaseX: end.x, finalDragX: end.x - start.x };
       } catch {
         await releasePointer();
         return result('failed', { confidence, reason: attached ? 'input-failed' : 'debugger-unavailable' });
@@ -365,15 +407,19 @@ export function createSliderSolver(adapter: SliderSolverAdapter): SliderSolver {
         if (attached) await adapter.debugger.detach(target(tab.id)).catch(() => undefined);
       }
       let absentObservations = 0;
+      const outcomeObservations: string[] = [];
+      diagnostic = { ...diagnostic, phase: 'outcome' };
       for (const wait of [250, 500, 750]) {
         await delay(wait);
         if (cancelled()) return result('permission-denied', { confidence, reason: 'run-cancelled' });
         if (await siteDisabled()) return result('permission-denied', { confidence, reason: 'site-not-enabled' });
         const current = outcome(await adapter.tabs.sendMessage(tab.id, { type: 'captcha:slider-outcome', revision: before.revision }).catch(() => undefined));
-        if (current === 'success') return result('success', { confidence });
-        if (current === 'failure') return result('failed', { confidence, reason: 'challenge-rejected' });
+        outcomeObservations.push(current);
+        diagnostic = { ...diagnostic, outcomeSequence: outcomeObservations.join('>') };
+        if (current === 'success') return result('success', { confidence, challengeRevision: before.revision });
+        if (current === 'failure') return result('failed', { confidence, reason: 'challenge-rejected', challengeRevision: before.revision });
         if (current === 'absent') {
-          if (++absentObservations >= 2) return result('success', { confidence });
+          if (++absentObservations >= 2) return result('success', { confidence, challengeRevision: before.revision });
         } else {
           absentObservations = 0;
         }

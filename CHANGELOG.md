@@ -8,6 +8,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 暂无未发布变更。
 
+## [1.3.1] - 2026-08-26
+
+### 中文
+
+#### 修复
+
+- 修复奇安信登录页的拼图定位：隐藏的完整背景画布仍包含有效像素，现在按画布实际像素尺寸与缺口背景配对并做差分定位，避免回退到高 DPI 页面截图时的倍率偏差与低置信度。
+- 改进 GeeTest v3/v4 挑战生命周期跟踪，同一页面重置、验证失败刷新或登录失效后出现的新挑战可以继续自动处理，并且不会重复拖动已完成或已拒绝的挑战。
+- 按定位方法分别校验置信度，仅在证据充足时拖动，减少边缘或形状弱证据造成的错误落点。
+- 仅将当前滑块控件内的操作视为用户接管，验证成功后点击页面其他位置不再触发暂停提示。
+- 统一 Chromium 的异步扩展消息回传方式，内容脚本、后台和离屏识别现在同时兼容 Promise 与 `sendResponse` 消息通道。
+
+#### 变更
+
+- 当前页面检测到拼图滑块时，打开扩展面板会自动切换到滑块功能页。
+- 滑块诊断新增尝试与挑战标识、执行阶段、图像来源、定位方法与门槛、候选结果、计划与实际位移以及验证状态序列。
+
+### English
+
+#### Fixed
+
+- Fixed puzzle localization on the Qianxin sign-in page. The hidden full-background canvas still contains valid pixels, so it is now paired with the gap background by intrinsic canvas dimensions and used for difference localization, avoiding high-DPI screenshot scaling errors and low confidence.
+- Improved GeeTest v3/v4 challenge lifecycle tracking so reset, rejected, refreshed, and reappearing challenges on the same page can continue automatically without re-dragging a settled challenge.
+- Applied confidence thresholds per localization method and dragged only when the selected evidence is sufficient, reducing incorrect destinations from weak edge or shape evidence.
+- Limited user-takeover detection to interaction inside the active slider control, so unrelated page clicks after successful verification no longer show a pause notice.
+- Unified asynchronous Chromium extension responses across content, background, and offscreen contexts with support for both Promise and `sendResponse` messaging channels.
+
+#### Changed
+
+- The extension popup now opens the slider view automatically when the current page contains a detected puzzle slider.
+- Slider diagnostics now include attempt and challenge identifiers, execution phase, image source, localization method and threshold, alternative candidates, planned and final displacement, and the observed verification sequence.
+
 ## [1.3.0] - 2026-08-26
 
 ### 中文
@@ -166,7 +198,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Frozen 201-image benchmark at 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy.
 - Documented data provenance, licenses, split-group isolation, Paddle/ONNX parity, and offline Chrome/Edge verification.
 
-[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.0.0...v1.1.0

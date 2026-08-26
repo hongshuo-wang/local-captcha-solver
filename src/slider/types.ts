@@ -14,8 +14,21 @@ export type SliderResultState = typeof SLIDER_RESULT_STATES[number];
 
 export type SliderProvider = 'geetest' | 'geetest-v4' | 'generic';
 
+export type SliderImageSource = 'paired-background' | 'background' | 'viewport';
+export type SliderLocalizationMethod = 'reference-difference' | 'texture' | 'shape' | 'geometry' | 'edge-perimeter';
+export type SliderDiagnosticPhase = 'discovery' | 'activation' | 'localization' | 'execution' | 'outcome';
+
 export interface SliderRunDiagnostic {
   readonly provider?: SliderProvider;
+  readonly attemptId?: string;
+  readonly challengeId?: string;
+  readonly phase?: SliderDiagnosticPhase;
+  readonly imageSource?: SliderImageSource;
+  readonly localizationMethod?: SliderLocalizationMethod;
+  readonly localizationScore?: number;
+  readonly confidenceThreshold?: number;
+  readonly alternativeImageSource?: SliderImageSource;
+  readonly alternativeConfidence?: number;
   readonly gapX?: number;
   readonly gapY?: number;
   readonly pieceOffsetX?: number;
@@ -34,12 +47,16 @@ export interface SliderRunDiagnostic {
   readonly requestedEndX?: number;
   readonly endX?: number;
   readonly releaseX?: number;
+  readonly plannedDragX?: number;
+  readonly finalDragX?: number;
+  readonly outcomeSequence?: string;
 }
 
 export interface SliderRunResult {
   state: SliderResultState;
   confidence?: number;
   reason?: string;
+  challengeRevision?: string;
   diagnostic?: SliderRunDiagnostic;
 }
 
