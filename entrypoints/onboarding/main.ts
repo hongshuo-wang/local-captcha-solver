@@ -10,6 +10,7 @@ import {
   type CaptchaSettings,
 } from '../../src/platform/settings-store';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
+import { supportsPuzzleSliders } from '../../src/platform/extension-capabilities';
 
 const GEE_TEST_ORIGINS = ['http://2captcha.com/*', 'https://2captcha.com/*'] as const;
 const UPGRADE_GUIDE_VERSION = '1.2.0';
@@ -24,6 +25,7 @@ export interface OnboardingBrowser extends ExtensionBrowserStoragePermissions {
   runtime: {
     sendMessage(message: unknown): Promise<unknown>;
     getURL(path: string): string;
+    getManifest(): { permissions?: readonly string[] };
   };
   i18n?: { getUILanguage(): string };
 }
@@ -74,10 +76,13 @@ function progress(step: number, total: number, t: Translator): string {
   return t('setupProgress', { current: step, total });
 }
 
-function stepNavigation(step: number, total: number, t: Translator): string {
-  const labels = total === 5
-    ? [t('stepOverview'), t('stepStaticSettings'), t('stepStaticDemo'), t('stepSliderScope'), t('stepSliderDemo')]
-    : [t('stepUpgrade'), t('stepSliderScope'), t('stepSliderDemo')];
+function stepNavigation(step: number, flow: OnboardingFlow, sliderSupported: boolean, t: Translator): string {
+  const labels = flow === 'upgrade'
+    ? [t('stepUpgrade'), t('stepSliderScope'), t('stepSliderDemo')]
+    : sliderSupported
+      ? [t('stepOverview'), t('stepStaticSettings'), t('stepStaticDemo'), t('stepSliderScope'), t('stepSliderDemo')]
+      : [t('stepOverview'), t('stepStaticSettings'), t('stepStaticDemo')];
+  const total = labels.length;
   return `<nav class="journey-nav" aria-label="${t('setupProgress', { current: step, total })}"><ol class="setup-progress">${labels.map((label, index) => {
     const number = index + 1;
     const state = number === step ? 'current' : number < step ? 'complete' : 'upcoming';
@@ -101,26 +106,26 @@ function switchControl(id: string, checked: boolean, label: string, body: string
   return `<div class="preference-row"><div><label for="${id}">${label}</label><p>${body}</p></div><label class="switch"><input id="${id}" type="checkbox" ${checked ? 'checked' : ''} /><span aria-hidden="true"></span></label></div>`;
 }
 
-function overviewStep(t: Translator): string {
+function overviewStep(sliderSupported: boolean, t: Translator): string {
   return `<section class="wizard-step stage-overview" data-step="1" data-page="overview">
     <header class="step-copy centered"><p>${t('welcomeEyebrow')}</p><h1>${t('welcomeTitle')}</h1><span>${t('welcomeBody')}</span></header>
-    <div class="capability-workbench" aria-label="${t('welcomeFlowNote')}">
+    <div class="capability-workbench ${sliderSupported ? '' : 'single'}" aria-label="${t('welcomeFlowNote')}">
       <article class="capability-card static">
         <div class="workbench-heading"><span class="capability-index">01</span><div><h2>${t('welcomeStaticTitle')}</h2><p>${t('welcomeStaticBody')}</p></div></div>
         <div class="static-visual" aria-hidden="true"><div class="visual-captcha"><span>6K4P</span><i></i></div><div class="visual-arrow"></div><div class="visual-field"><span>6K4P</span><i></i></div></div>
       </article>
-      <article class="capability-card slider">
+      ${sliderSupported ? `<article class="capability-card slider">
         <div class="workbench-heading"><span class="capability-index">02</span><div><h2>${t('welcomeSliderTitle')}</h2><p>${t('welcomeSliderBody')}</p></div></div>
         <div class="slider-visual compact" aria-hidden="true"><div class="puzzle-scene"><span class="puzzle-gap"></span><span class="puzzle-piece"></span><i class="locator-line"></i></div><div class="slider-track"><span></span><i></i></div></div>
-      </article>
+      </article>` : ''}
     </div>
-    <p class="setup-note"><i aria-hidden="true"></i><strong>${t('localOnly')}</strong><span>${t('welcomeFlowNote')}</span></p>
+    <p class="setup-note"${sliderSupported ? '' : ' data-slider-unavailable'}><i aria-hidden="true"></i><strong>${sliderSupported ? t('localOnly') : t('firefoxSliderUnavailableTitle')}</strong><span>${sliderSupported ? t('welcomeFlowNote') : t('firefoxSliderUnavailableBody')}</span></p>
   </section>`;
 }
 
-function staticSettingsStep(settings: CaptchaSettings, choice: AccessMode | undefined, globalGranted: boolean, t: Translator): string {
+function staticSettingsStep(settings: CaptchaSettings, choice: AccessMode | undefined, globalGranted: boolean, total: number, t: Translator): string {
   return `<section class="wizard-step" data-step="2" data-page="static-settings">
-    <header class="step-copy"><p>${t('setupProgress', { current: 2, total: 5 })}</p><h1>${t('behaviorTitle')}</h1><span>${t('behaviorBody')}</span></header>
+    <header class="step-copy"><p>${t('setupProgress', { current: 2, total })}</p><h1>${t('behaviorTitle')}</h1><span>${t('behaviorBody')}</span></header>
     <div class="settings-stage-grid">
       <div class="stage-column"><div class="stage-label"><span>01</span>${t('accessChoice')}</div>${accessOptions(choice, globalGranted, t)}</div>
       <div class="stage-column"><div class="stage-label"><span>02</span>${t('recognitionHeading')}</div><div class="preference-list compact-preferences">
@@ -154,9 +159,9 @@ function drawDemo(canvas: HTMLCanvasElement): void {
   context.restore();
 }
 
-function staticDemoStep(t: Translator): string {
+function staticDemoStep(total: number, t: Translator): string {
   return `<section class="wizard-step" data-step="3" data-page="static-demo">
-    <header class="step-copy"><p>${t('setupProgress', { current: 3, total: 5 })}</p><h1>${t('tryTitle')}</h1><span>${t('tryBody')}</span></header>
+    <header class="step-copy"><p>${t('setupProgress', { current: 3, total })}</p><h1>${t('tryTitle')}</h1><span>${t('tryBody')}</span></header>
     <div class="demo-area">
       <div class="demo-window"><div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>captcha.local</span></div><div class="captcha-sample"><canvas width="240" height="80" data-demo-canvas aria-label="7 times 3"></canvas><span>${t('localBadge')}</span></div></div>
       <div class="demo-action"><span class="demo-step-number">03</span><strong>${t('localOnly')}</strong><p data-demo-status role="status">${t('demoIdle')}</p><button type="button" class="secondary-button" data-run-demo>${t('runDemo')}</button></div>
@@ -230,7 +235,8 @@ export async function startOnboarding(
 ): Promise<void> {
   const settingsStore = createSettingsStore(createExtensionBrowserAdapter(extension));
   const flow = flowFromLocation();
-  const total = flow === 'welcome' ? 5 : 3;
+  const sliderSupported = supportsPuzzleSliders(extension.runtime.getManifest());
+  const total = flow === 'welcome' ? (sliderSupported ? 5 : 3) : 3;
   const upgradeVersion = upgradeVersionFromLocation();
   const manualUpgrade = new URLSearchParams(window.location.search).get('manual') === '1';
   let settings = await settingsStore.read();
@@ -245,6 +251,11 @@ export async function startOnboarding(
     geeTestOpened: false,
     geeTestDone: false,
   };
+
+  if (flow === 'upgrade' && !sliderSupported) {
+    await closeGuide();
+    return;
+  }
 
   if (flow === 'upgrade') {
     if (!manualUpgrade && settings.lastSeenUpgradeGuide === upgradeVersion) {
@@ -267,7 +278,7 @@ export async function startOnboarding(
       await closeGuide();
       return;
     }
-    const sliderStep = flow === 'upgrade' ? state.step === 2 : state.step === 4;
+    const sliderStep = sliderSupported && (flow === 'upgrade' ? state.step === 2 : state.step === 4);
     if (sliderStep && !state.sliderSkipped && !state.sliderConfirmed) {
       if (state.sliderChoice === undefined) return;
       const debuggerGranted = await extension.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
@@ -294,12 +305,12 @@ export async function startOnboarding(
     t = createTranslator(locale);
     document.documentElement.lang = locale === 'zh_CN' ? 'zh-CN' : 'en';
     const globalGranted = await extension.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] }).catch(() => false);
-    const debuggerGranted = await extension.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
+    const debuggerGranted = sliderSupported && await extension.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
     const content = flow === 'upgrade'
       ? state.step === 1 ? upgradeStep(t) : state.step === 2 ? sliderSettingsStep(settings, state, debuggerGranted, total, t) : sliderDemoStep(state, total, t)
-      : state.step === 1 ? overviewStep(t)
-        : state.step === 2 ? staticSettingsStep(settings, state.accessChoice, globalGranted, t)
-          : state.step === 3 ? staticDemoStep(t)
+      : state.step === 1 ? overviewStep(sliderSupported, t)
+        : state.step === 2 ? staticSettingsStep(settings, state.accessChoice, globalGranted, total, t)
+          : state.step === 3 ? staticDemoStep(total, t)
             : state.step === 4 ? sliderSettingsStep(settings, state, debuggerGranted, total, t)
               : sliderDemoStep(state, total, t);
     const primaryDisabled = flow === 'welcome' && state.step === 2 && state.accessChoice === undefined;
@@ -308,7 +319,7 @@ export async function startOnboarding(
     const primaryLabel = state.step === total ? t('finishSetup') : sliderNeedsConfirmation ? t('confirmSlider') : t('continueSetup');
     root.innerHTML = `<div class="setup-page" data-flow="${flow}" data-direction="${direction}">
       <header class="setup-header"><a class="setup-brand" href="#" aria-label="Captcha Helper"><img src="/icons/icon-48.png" width="40" height="40" alt="" /><span><strong>Captcha Helper</strong><small>${t('productSubtitle')}</small></span></a><div class="header-actions"><span class="local-status"><i aria-hidden="true"></i>${t('localOnly')}</span><label class="language-picker"><span>${t('languageLabel')}</span><select data-language>${languageOptions(settings, t)}</select></label></div></header>
-      <div class="setup-layout">${stepNavigation(state.step, total, t)}<section class="wizard-panel" id="setup-content">${content}<footer class="wizard-actions"><button type="button" class="text-button" data-back ${state.step === 1 ? 'disabled' : ''}>${t('back')}</button><span>${progress(state.step, total, t)}</span><button type="button" class="primary-button" data-primary ${primaryDisabled || sliderChoiceMissing ? 'disabled' : ''}>${primaryLabel}</button></footer></section></div>
+      <div class="setup-layout">${stepNavigation(state.step, flow, sliderSupported, t)}<section class="wizard-panel" id="setup-content">${content}<footer class="wizard-actions"><button type="button" class="text-button" data-back ${state.step === 1 ? 'disabled' : ''}>${t('back')}</button><span>${progress(state.step, total, t)}</span><button type="button" class="primary-button" data-primary ${primaryDisabled || sliderChoiceMissing ? 'disabled' : ''}>${primaryLabel}</button></footer></section></div>
     </div>`;
     root.dataset.direction = direction;
 
@@ -379,6 +390,7 @@ if (root !== null && typeof browser !== 'undefined') {
     runtime: {
       sendMessage: (message) => sendRuntimeMessage(browser.runtime, message),
       getURL: (path) => (browser.runtime.getURL as (value: string) => string)(path),
+      getManifest: () => browser.runtime.getManifest(),
     },
     i18n: browser.i18n,
   });

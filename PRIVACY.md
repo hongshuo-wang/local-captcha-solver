@@ -1,6 +1,6 @@
 # Privacy Policy / 隐私政策
 
-Effective date: July 31, 2026
+Effective date: August 26, 2026
 
 This policy applies to the Captcha Helper browser extension published from this repository.
 
@@ -33,7 +33,7 @@ Captcha Helper may write a recognition result to the clipboard when the user exp
 
 Users choose whether to grant access to all HTTP/HTTPS websites or only selected sites. Site access is used to read a CAPTCHA image, run the page helper, and fill a matching input field after a user-authorized workflow. Permissions can be reviewed, disabled, or removed from the extension settings and browser settings.
 
-The slider Beta declares the browser debugger permission to send trusted drag input. The browser may ask the user to confirm this permission during installation or an upgrade. Slider runs can be started manually from the popup or page, or configured for automatic handling in Settings. Slider authorization is independent from OCR authorization and can cover all HTTP/HTTPS sites or an exact hostname list. The debugger connection is detached after every attempt.
+The Chrome and Edge builds declare the browser debugger permission for the slider Beta to send trusted drag input. The browser may ask the user to confirm this permission during installation or an upgrade. Slider runs can be started manually from the popup or page, or configured for automatic handling in Settings. Slider authorization is independent from OCR authorization and can cover all HTTP/HTTPS sites or an exact hostname list. The debugger connection is detached after every attempt.
 
 Captcha Helper never clicks a submit button and never submits a form automatically.
 
@@ -69,7 +69,7 @@ Captcha Helper 在用户设备本地处理验证码，不会把验证码图片�
 
 只有在用户明确点击“复制”或启用可选复制行为后，扩展才会把识别结果写入剪贴板；扩展不会读取剪贴板。
 
-用户可以分别为静态 OCR 和滑块选择授权所有 HTTP/HTTPS 网站，或只授权指定网站。网站权限仅用于读取验证码图片、运行网页辅助脚本，并在用户授权的流程中填写匹配输入框。扩展不会点击提交按钮，也不会自动提交表单。滑块 Beta 声明浏览器调试权限以发送可信拖动，浏览器可能在安装或升级时要求用户确认；滑块可以从弹窗或页面手动处理，也可以在设置中配置自动处理的网站范围。每次操作后都会立即断开调试连接。
+用户可以为静态 OCR 选择授权所有 HTTP/HTTPS 网站，或只授权指定网站。Chrome 和 Edge 用户还可以单独设置滑块网站范围。网站权限仅用于读取验证码图片、运行网页辅助脚本，并在用户授权的流程中填写匹配输入框。扩展不会点击提交按钮，也不会自动提交表单。Chrome 和 Edge 构建中的滑块 Beta 声明浏览器调试权限以发送可信拖动，浏览器可能在安装或升级时要求用户确认；滑块可以从弹窗或页面手动处理，也可以在设置中配置自动处理的网站范围。每次操作后都会立即断开调试连接。
 
 设置、权限状态和诊断记录通过浏览器扩展存储接口保存在本地。用户可以在设置页面清除诊断记录，也可以通过卸载扩展或清除扩展存储删除全部本地数据。
 

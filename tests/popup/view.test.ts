@@ -110,6 +110,29 @@ describe('popup view', () => {
     root.remove();
   });
 
+  it('shows only static recognition when the browser has no slider capability', async () => {
+    const root = document.createElement('main');
+    document.body.append(root);
+    const sendMessage = vi.fn(async (message: { type: string }) => message.type === 'captcha:get-model-status'
+      ? { status: 'ready', progress: 100, message: 'ready', logs: [] } satisfies ModelStatusSnapshot
+      : { enabled: true });
+    const adapter: PopupControllerAdapter = {
+      tabs: { query: vi.fn(async () => [{ id: 7, url: 'https://portal.example.test/login' }]), sendMessage: vi.fn(async () => ({ state: 'no_candidate' })) },
+      runtime: { sendMessage },
+      permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
+    };
+
+    startPopup(root, adapter, 'zh_CN', undefined, undefined, undefined, false);
+
+    expect((root.querySelector('[data-popup-tab="slider"]') as HTMLButtonElement).hidden).toBe(true);
+    expect(root.querySelector('.capability-tabs')?.getAttribute('data-slider-supported')).toBe('false');
+    expect(root.querySelector('[data-slider-unavailable]')?.textContent).toContain('Firefox 暂不支持拼图滑块验证码');
+    expect(root.querySelector('[data-slider-unavailable]')?.textContent).toContain('推荐使用 Chrome 或 Edge 体验完整插件功能');
+    await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledWith({ type: 'captcha:get-model-status' }));
+    expect(sendMessage).not.toHaveBeenCalledWith({ type: 'captcha:get-slider-state' });
+    root.remove();
+  });
+
   it('loads and persists the current site CAPTCHA type', async () => {
     const root = document.createElement('main');
     document.body.append(root);

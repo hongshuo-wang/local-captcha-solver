@@ -3,6 +3,10 @@ export interface RuntimeMessagePort {
   readonly lastError?: { readonly message?: string } | null;
 }
 
+function usesPromiseMessaging(runtime: RuntimeMessagePort): boolean {
+  return (globalThis as typeof globalThis & { browser?: { runtime?: unknown } }).browser?.runtime === runtime;
+}
+
 function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   return typeof value === 'object' && value !== null && typeof (value as { then?: unknown }).then === 'function';
 }
@@ -27,7 +31,9 @@ export function sendRuntimeMessage<T>(runtime: RuntimeMessagePort, message: unkn
 
     let returned: unknown;
     try {
-      returned = runtime.sendMessage(message, callback);
+      returned = usesPromiseMessaging(runtime)
+        ? runtime.sendMessage(message)
+        : runtime.sendMessage(message, callback);
     } catch (error) {
       finish(() => reject(error));
       return;

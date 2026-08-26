@@ -6,6 +6,7 @@ import { originsForPage } from '../../src/platform/permissions';
 import { createExtensionBrowserAdapter } from '../../src/background/extension-browser';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
 import { SLIDER_RESULT_STATES, type SliderActivity, type SliderResultState, type SliderSiteState } from '../../src/slider/types';
+import { supportsPuzzleSliders } from '../../src/platform/extension-capabilities';
 
 type SliderDisplayState = 'loading' | 'off' | 'idle' | 'running' | 'unavailable' | SliderResultState;
 
@@ -44,7 +45,7 @@ function activityText(log: ModelLog | undefined, locale: UiLocale, t: Translator
   return log.outcome === 'started' ? 'Recognition started' : 'Recognition completed';
 }
 
-export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): PopupViewElements {
+export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN', sliderSupported = true): PopupViewElements {
   const t = createTranslator(locale);
   root.innerHTML = `
     <div class="popup-shell">
@@ -59,6 +60,7 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
         <button id="popup-static-tab" type="button" role="tab" aria-selected="true" aria-controls="popup-static-panel" data-popup-tab="static"><span class="tab-symbol static-symbol" aria-hidden="true">Aa</span><span><strong>${t('welcomeStaticTitle')}</strong><small data-static-tab-status>${locale === 'zh_CN' ? '读取当前页状态' : 'Reading page status'}</small></span></button>
         <button id="popup-slider-tab" type="button" role="tab" aria-selected="false" aria-controls="popup-slider-panel" tabindex="-1" data-popup-tab="slider"><span class="tab-symbol slider-symbol" aria-hidden="true"><i></i></span><span><strong>${locale === 'zh_CN' ? '拼图滑块' : 'Puzzle slider'}</strong><small data-slider-tab-status>${locale === 'zh_CN' ? '读取接管状态' : 'Reading takeover status'}</small></span></button>
       </nav>
+      ${sliderSupported ? '' : `<aside class="slider-availability-note" data-slider-unavailable><strong>${t('firefoxSliderUnavailableTitle')}</strong><span>${t('firefoxSliderUnavailableBody')}</span></aside>`}
 
       <div class="capability-stage" data-active-tab="static">
         <section id="popup-static-panel" class="capability-view static-panel" role="tabpanel" aria-labelledby="popup-static-tab" data-popup-panel="static">
@@ -109,9 +111,14 @@ export function createPopupView(root: HTMLElement, locale: UiLocale = 'zh_CN'): 
   const staticTabStatus = required<HTMLElement>(root, '[data-static-tab-status]');
   const sliderTabStatus = required<HTMLElement>(root, '[data-slider-tab-status]');
   const stage = required<HTMLElement>(root, '.capability-stage');
+  const capabilityTabs = required<HTMLElement>(root, '.capability-tabs');
   const panels = root.querySelectorAll<HTMLElement>('[data-popup-panel]');
-  const tabs = [staticTab, sliderTab];
+  const tabs = sliderSupported ? [staticTab, sliderTab] : [staticTab];
+  capabilityTabs.dataset.sliderSupported = String(sliderSupported);
+  sliderTab.hidden = !sliderSupported;
+  sliderPanel.hidden = true;
   const showTab = (tab: 'static' | 'slider'): void => {
+    if (tab === 'slider' && !sliderSupported) return;
     const current = stage.dataset.activeTab === 'slider' ? 'slider' : 'static';
     stage.dataset.direction = current === tab ? 'initial' : tab === 'slider' ? 'forward' : 'back';
     stage.dataset.activeTab = tab;
@@ -214,8 +221,9 @@ export function startPopup(
     read(): Promise<SiteRecognitionMode>;
     write(mode: SiteRecognitionMode): Promise<void>;
   },
+  sliderCapability = true,
 ): void {
-  const view = createPopupView(root, locale);
+  const view = createPopupView(root, locale, sliderCapability);
   const t = createTranslator(locale);
   const controller = createPopupController(adapter, view, labels(locale));
   const modelController = createModelStatusController(adapter, view);
@@ -458,11 +466,13 @@ export function startPopup(
       void readSliderState().catch(() => undefined).finally(scheduleSliderRefresh);
     }, 500);
   };
-  void readSliderState().then(scheduleSliderRefresh).catch(() => {
-    sliderSupported = false;
-    renderSliderState(false, 'failed');
-    scheduleSliderRefresh();
-  });
+  if (sliderCapability) {
+    void readSliderState().then(scheduleSliderRefresh).catch(() => {
+      sliderSupported = false;
+      renderSliderState(false, 'failed');
+      scheduleSliderRefresh();
+    });
+  }
 }
 
 const root = document.querySelector<HTMLElement>('#app');
@@ -494,6 +504,6 @@ if (root !== null && typeof browser !== 'undefined') {
         if (typeof url !== 'string') throw new Error('unsupported page');
         await settingsStore.setSiteRecognitionMode(hostnameForPage(url), mode);
       },
-    });
+    }, supportsPuzzleSliders(browser.runtime.getManifest()));
   });
 }

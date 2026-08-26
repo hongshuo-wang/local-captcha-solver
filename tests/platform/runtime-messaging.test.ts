@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
 
@@ -9,6 +9,20 @@ describe('runtime messaging', () => {
     };
 
     await expect(sendRuntimeMessage(runtime, { type: 'ping' })).resolves.toEqual({ ok: true });
+  });
+
+  it('uses the Promise-only signature for Firefox browser runtimes', async () => {
+    const runtime = {
+      sendMessage: vi.fn(async (_message: unknown, callback?: (response: unknown) => void): Promise<unknown> => {
+        if (callback !== undefined) throw new TypeError('callbacks are not supported');
+        return { ok: true };
+      }),
+    };
+    vi.stubGlobal('browser', { runtime });
+
+    await expect(sendRuntimeMessage(runtime, { type: 'ping' })).resolves.toEqual({ ok: true });
+    expect(runtime.sendMessage).toHaveBeenCalledWith({ type: 'ping' });
+    vi.unstubAllGlobals();
   });
 
   it('resolves callback-only runtime.sendMessage responses', async () => {

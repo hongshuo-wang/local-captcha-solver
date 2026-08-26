@@ -1,20 +1,21 @@
 <div align="center">
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper logo">
   <h1>Captcha Helper</h1>
-  <p>Local, privacy-first recognition for common CAPTCHAs, including a puzzle-slider beta.</p>
+  <p>Local, privacy-first text CAPTCHA recognition for Chrome, Edge, and Firefox.</p>
   <p><a href="README.zh-CN.md">简体中文</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI status"></a>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/releases"><img src="https://img.shields.io/github/v/release/hongshuo-wang/local-captcha-solver?display_name=tag&sort=semver" alt="Latest release"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/hongshuo-wang/local-captcha-solver" alt="MIT license"></a>
     <a href="https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3"><img src="https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Manifest V3"></a>
+    <a href="https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/"><img src="https://img.shields.io/badge/Firefox-MV3-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox Manifest V3"></a>
     <a href="https://linux.do"><img src="https://img.shields.io/badge/linux.do-community-1f1f1f" alt="linux.do community"></a>
   </p>
 </div>
 
 ![Captcha Helper onboarding overview for static CAPTCHAs and puzzle sliders](docs/assets/screenshot-global-1280x800.png)
 
-Captcha Helper is an open-source Chromium extension that recognizes common static text CAPTCHAs entirely on the user's device and can optionally handle single-gap puzzle sliders. It can fill a reliable text result into one matching empty field, but it never clicks a submit button or submits a form.
+Captcha Helper is an open-source browser extension for Chrome, Edge, and Firefox that recognizes common static text CAPTCHAs entirely on the user's device. Chrome and Edge builds can also handle single-gap puzzle sliders. It can fill a reliable text result into one matching empty field, but it never clicks a submit button or submits a form.
 
 There is no account, advertising, telemetry, remote OCR service, or runtime model download. Users can authorize every HTTP/HTTPS site or maintain an exact list of allowed sites.
 
@@ -42,11 +43,11 @@ Install the extension directly from the official browser stores:
 
 ### GitHub Release
 
-Download the Chrome or Edge ZIP and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases). Verify the checksum, extract the ZIP, enable developer mode on the browser's extensions page, and load the extracted directory as an unpacked extension.
+Download the ZIP for your browser and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases), then verify its checksum. Chrome and Edge load the extracted directory from their developer-mode extension pages. Firefox loads `manifest.json` from the extracted Firefox directory through `about:debugging#/runtime/this-firefox`; a manually loaded Firefox extension remains installed until Firefox restarts.
 
 ### Build from source
 
-Requirements: Node.js 22 or later and npm.
+Requirements: Node.js 22 or later and npm. The Firefox build requires Firefox 142 or later.
 
 ```sh
 git clone https://github.com/hongshuo-wang/local-captcha-solver.git
@@ -55,7 +56,7 @@ npm ci
 npm run build
 ```
 
-Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `.output/chrome-mv3`. For Edge, run `npm run build:edge` and load `.output/edge-mv3` from `edge://extensions`.
+Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `.output/chrome-mv3`. For Edge, run `npm run build:edge` and load `.output/edge-mv3` from `edge://extensions`. For Firefox, run `npm run build:firefox`, open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select `.output/firefox-mv3/manifest.json`.
 
 ## Usage
 
@@ -65,6 +66,8 @@ Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**,
 4. Review the result when the extension cannot identify one safe, empty input field.
 
 ### Puzzle sliders
+
+Puzzle-slider controls are available in Chrome and Edge. Firefox provides the static CAPTCHA recognition workflow; use Chrome or Edge for the complete extension feature set.
 
 1. Open Settings -> Puzzle sliders.
 2. Choose `All sites` or `Selected sites only`. The selected-site mode is the safer default and lets you add exact hostnames.
@@ -90,11 +93,11 @@ CAPTCHA images, recognition results, settings, and sanitized diagnostics remain 
 | `activeTab` | Temporarily access the active page after an explicit user action. |
 | `clipboardWrite` | Copy a result through an explicit command or optional setting; the extension cannot read the clipboard. |
 | `contextMenus` | Add user-initiated recognition for page images. |
-| `debugger` | Send trusted mouse input only for a manually requested slider run or a slider site explicitly enabled by the user; the connection is detached after every attempt. |
-| `offscreen` | Run the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. |
+| `debugger` (Chrome/Edge) | Send trusted mouse input only for a manually requested slider run or a slider site explicitly enabled by the user; the connection is detached after every attempt. |
+| `offscreen` (Chrome/Edge) | Run the bundled ONNX/WebAssembly model in a Manifest V3 offscreen document. Firefox runs the same local model in its background extension page. |
 | `scripting` | Install the page helper after the user grants access. |
 | `storage` | Store settings, permission state, model state, and up to 20 sanitized diagnostic records locally. |
-| Optional HTTP/HTTPS hosts | Let the user grant all-site or exact-site access independently for OCR and puzzle-slider monitoring. |
+| Optional HTTP/HTTPS hosts | Let the user grant all-site or exact-site access for OCR, and independently for Chrome/Edge puzzle-slider monitoring. |
 
 ## Model
 

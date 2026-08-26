@@ -41,3 +41,9 @@ jobs:
 
       - name: Build Edge extension
         run: npm run build:edge
+
+      - name: Build Firefox extension
+        run: npm run build:firefox
+
+      - name: Verify Firefox package
+        run: npm run verify:firefox

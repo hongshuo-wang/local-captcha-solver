@@ -54,6 +54,7 @@ button { cursor: pointer; }
 .text-command:hover { color: var(--accent-hover); text-decoration: underline; }
 
 .capability-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 10px 10px 0; }
+.capability-tabs[data-slider-supported="false"] { grid-template-columns: minmax(0, 1fr); }
 .capability-tabs > button { min-width: 0; min-height: 68px; position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 9px; align-items: center; padding: 9px 10px; overflow: hidden; border: 1px solid transparent; border-radius: 8px; color: var(--muted); background: transparent; text-align: left; transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease, transform 200ms cubic-bezier(.22, 1, .36, 1); }
 .capability-tabs > button::after { content: ""; width: 5px; height: 5px; position: absolute; top: 10px; right: 10px; border-radius: 50%; background: #9aa49e; }
 .capability-tabs > button[data-state="ready"]::after,
@@ -77,6 +78,9 @@ button { cursor: pointer; }
 .slider-symbol { color: var(--amber); background: var(--amber-soft); }
 .slider-symbol i { width: 19px; height: 4px; position: relative; border-radius: 3px; background: currentColor; }
 .slider-symbol i::before { content: ""; width: 8px; height: 8px; position: absolute; top: -2px; left: 0; border-radius: 3px; background: currentColor; }
+.slider-availability-note { display: grid; gap: 2px; margin: 9px 14px 0; padding-left: 10px; border-left: 2px solid var(--amber); }
+.slider-availability-note strong { color: var(--ink); font-size: 11px; line-height: 16px; }
+.slider-availability-note span { color: var(--muted); font-size: 10px; line-height: 15px; }
 
 .capability-stage { min-height: 264px; margin: 0 10px; overflow: hidden; }
 .capability-view { min-height: 264px; padding: 20px 4px 4px; animation: tab-enter-forward 260ms cubic-bezier(.22, 1, .36, 1) both; }

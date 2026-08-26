@@ -69,6 +69,7 @@ select { height: 36px; padding: 0 32px 0 11px; border: 1px solid #cbd3ce; border
 .step-copy.centered h1, .step-copy.centered > span { margin-right: auto; margin-left: auto; }
 
 .capability-workbench { display: grid; grid-template-columns: 1.12fr .88fr; gap: 12px; margin-top: 20px; }
+.capability-workbench.single { grid-template-columns: minmax(0, 1fr); }
 .capability-card { min-width: 0; min-height: 198px; position: relative; overflow: hidden; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: #f7f8f4; }
 .capability-card.slider { background: #fbf7f0; }
 .workbench-heading { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }

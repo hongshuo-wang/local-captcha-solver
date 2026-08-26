@@ -1,20 +1,21 @@
 <div align="center">
   <img src="public/brand/captcha-helper.svg" width="112" height="112" alt="Captcha Helper 标志">
   <h1>Captcha Helper · 本地验证码助手</h1>
-  <p>在浏览器本地识别常见验证码，并可在设置中配置拼图滑块的运行网站。</p>
+  <p>在 Chrome、Edge 和 Firefox 本地识别常见静态文字验证码。</p>
   <p><a href="README.md">English</a></p>
   <p>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/hongshuo-wang/local-captcha-solver/ci.yml?branch=main&label=CI" alt="CI 状态"></a>
     <a href="https://github.com/hongshuo-wang/local-captcha-solver/releases"><img src="https://img.shields.io/github/v/release/hongshuo-wang/local-captcha-solver?display_name=tag&sort=semver" alt="最新版本"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/hongshuo-wang/local-captcha-solver" alt="MIT 许可证"></a>
     <a href="https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3"><img src="https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Manifest V3"></a>
+    <a href="https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/"><img src="https://img.shields.io/badge/Firefox-MV3-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox Manifest V3"></a>
     <a href="https://linux.do"><img src="https://img.shields.io/badge/linux.do-社区-1f1f1f" alt="linux.do 社区"></a>
   </p>
 </div>
 
 ![Captcha Helper 静态验证码与拼图滑块引导概览](docs/assets/screenshot-zh-CN-1280x800.png)
 
-Captcha Helper 是一款开源 Chromium 浏览器扩展，完全在用户设备上识别常见静态文字验证码，并可选择处理单缺口拼图滑块。它可以把可靠结果填入唯一匹配的空输入框，但不会点击提交按钮，也不会提交表单。
+Captcha Helper 是一款支持 Chrome、Edge 和 Firefox 的开源浏览器扩展，完全在用户设备上识别常见静态文字验证码。Chrome 和 Edge 构建还可以处理单缺口拼图滑块。它可以把可靠结果填入唯一匹配的空输入框，但不会点击提交按钮，也不会提交表单。
 
 项目不需要账号，不包含广告和遥测，不依赖远程 OCR 服务，也不会在运行时下载模型。用户可以授权所有 HTTP/HTTPS 网站，也可以只维护一个精确的网站允许列表。
 
@@ -42,11 +43,11 @@ Captcha Helper 是一款开源 Chromium 浏览器扩展，完全在用户设备�
 
 ### GitHub Release
 
-从 [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases) 下载 Chrome 或 Edge ZIP 以及 `SHA256SUMS.txt`。校验文件后解压 ZIP，打开浏览器扩展管理页、启用开发者模式，并加载解压后的目录。
+从 [GitHub Releases](https://github.com/hongshuo-wang/local-captcha-solver/releases) 下载对应浏览器的 ZIP 和 `SHA256SUMS.txt`，并校验文件。Chrome 和 Edge 在扩展管理页中以开发者模式加载解压目录。Firefox 在 `about:debugging#/runtime/this-firefox` 中选择解压目录内的 `manifest.json`；手动载入的 Firefox 扩展会保留到浏览器重启。
 
 ### 从源码构建
 
-需要 Node.js 22 或更高版本以及 npm。
+需要 Node.js 22 或更高版本以及 npm。Firefox 构建需要 Firefox 142 或更高版本。
 
 ```sh
 git clone https://github.com/hongshuo-wang/local-captcha-solver.git
@@ -55,7 +56,7 @@ npm ci
 npm run build
 ```
 
-打开 `chrome://extensions`，启用“开发者模式”，点击“加载已解压的扩展程序”，选择 `.output/chrome-mv3`。Edge 用户运行 `npm run build:edge` 后，在 `edge://extensions` 中加载 `.output/edge-mv3`。
+打开 `chrome://extensions`，启用“开发者模式”，点击“加载已解压的扩展程序”，选择 `.output/chrome-mv3`。Edge 用户运行 `npm run build:edge` 后，在 `edge://extensions` 中加载 `.output/edge-mv3`。Firefox 用户运行 `npm run build:firefox`，打开 `about:debugging#/runtime/this-firefox`，点击“临时载入附加组件”，然后选择 `.output/firefox-mv3/manifest.json`。
 
 ## 使用方法
 
@@ -65,6 +66,8 @@ npm run build
 4. 当扩展无法确定唯一且安全的空输入框时，由用户检查识别结果和目标输入框。
 
 ### 拼图滑块
+
+拼图滑块功能适用于 Chrome 和 Edge。Firefox 提供静态验证码识别流程；推荐使用 Chrome 或 Edge 体验完整插件功能。
 
 1. 打开“设置 -> 拼图滑块验证码”。
 2. 选择“所有网站”或“仅指定网站”。默认的指定网站模式更谨慎，可以逐个添加精确主机名。
@@ -90,11 +93,11 @@ npm run build
 | `activeTab` | 用户明确操作后临时访问当前页面。 |
 | `clipboardWrite` | 通过明确命令或可选设置复制结果；扩展不能读取剪贴板。 |
 | `contextMenus` | 为网页图片添加由用户主动触发的识别命令。 |
-| `debugger` | 在手动处理滑块，或设置中配置的自动处理网站上发送可信鼠标输入；每次尝试结束后都会断开连接。 |
-| `offscreen` | 在 Manifest V3 离屏文档中运行内置 ONNX/WebAssembly 模型。 |
+| `debugger`（Chrome/Edge） | 在手动处理滑块，或设置中配置的自动处理网站上发送可信鼠标输入；每次尝试结束后都会断开连接。 |
+| `offscreen`（Chrome/Edge） | 在 Manifest V3 离屏文档中运行内置 ONNX/WebAssembly 模型；Firefox 在扩展后台页运行同一本地模型。 |
 | `scripting` | 用户授权后安装页面辅助脚本。 |
 | `storage` | 在本地保存设置、权限状态、模型状态和最多 20 条经过清理的诊断记录。 |
-| 可选 HTTP/HTTPS 网站权限 | 可以分别为静态 OCR 和拼图滑块选择所有网站或精确网站授权。 |
+| 可选 HTTP/HTTPS 网站权限 | 可以为静态 OCR 选择所有网站或精确网站授权，并单独管理 Chrome/Edge 拼图滑块的网站范围。 |
 
 ## 模型
 

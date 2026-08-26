@@ -1,5 +1,5 @@
 import { createInferenceHost } from '../src/background/inference-host';
-import type { InferenceBrowser } from '../src/background/inference-host';
+import type { InferenceBrowser, InferenceHost } from '../src/background/inference-host';
 import { createImageFetcher } from '../src/background/image-fetch';
 import { createSettingsStore } from '../src/platform/settings-store';
 import { createExtensionBrowserAdapter } from '../src/background/extension-browser';
@@ -62,17 +62,33 @@ interface BackgroundBrowser {
   };
 }
 
+function createFirefoxInferenceHost(getExtensionUrl: (path: string) => string): InferenceHost {
+  const service = import('../src/ocr/inference-service')
+    .then(({ createOcrInferenceService }) => createOcrInferenceService(getExtensionUrl));
+  return {
+    async recognize(imageDataUrl, imageRevision, modes) {
+      return (await service).recognize(imageDataUrl, imageRevision, modes);
+    },
+    async warmup() {
+      await (await service).warmup?.();
+    },
+  };
+}
+
 export default defineBackground(() => {
   const runtime = browser.runtime as typeof browser.runtime & RuntimeWithContexts;
   const extension = browser as unknown as BackgroundBrowser;
-  const extensionBrowser: InferenceBrowser = {
-    runtime: {
-      getURL: runtime.getURL.bind(runtime),
-      sendMessage: (message) => sendRuntimeMessage(runtime, message),
-      getContexts: runtime.getContexts?.bind(runtime),
-    },
-    offscreen: (browser as unknown as BrowserWithOffscreen).offscreen,
-  };
+  const getExtensionUrl = runtime.getURL as (path: string) => string;
+  const host = import.meta.env.BROWSER === 'firefox'
+    ? createFirefoxInferenceHost(getExtensionUrl)
+    : createInferenceHost({
+        runtime: {
+          getURL: getExtensionUrl,
+          sendMessage: (message) => sendRuntimeMessage(runtime, message),
+          getContexts: runtime.getContexts?.bind(runtime),
+        },
+        offscreen: (browser as unknown as BrowserWithOffscreen).offscreen,
+      });
   const settingsAdapter = createExtensionBrowserAdapter(extension);
   const settings = createSettingsStore(settingsAdapter);
   const registration = createContentRegistration({
@@ -82,12 +98,11 @@ export default defineBackground(() => {
     tabs: { query: async (details) => extension.tabs.query(details), sendMessage: (tabId, message) => extension.tabs.sendMessage(tabId, message) },
   });
   const contextMenu = createContextMenu({ contextMenus: extension.contextMenus, tabs: extension.tabs, scripting: extension.scripting });
-  const host = createInferenceHost(extensionBrowser);
   const modelStatus = createModelStatusStore(Date.now, {
     async read() { return (await extension.storage.local.get(MODEL_LOGS_STORAGE_KEY))[MODEL_LOGS_STORAGE_KEY]; },
     async write(value) { await extension.storage.local.set({ [MODEL_LOGS_STORAGE_KEY]: value }); },
   });
-  const sliderSolver = createSliderSolver({
+  const sliderSolver = import.meta.env.BROWSER === 'firefox' ? undefined : createSliderSolver({
     settings,
     permissions: { contains: extension.permissions.contains.bind(extension.permissions) },
     tabs: {
@@ -103,7 +118,7 @@ export default defineBackground(() => {
     modelStatus,
     siteState: { isEnabled: settings.isEnabled, enablePage: registration.enablePage, disablePage: registration.disablePage, reconcile: registration.reconcile },
     settings,
-    sliderSolver,
+    ...(sliderSolver === undefined ? {} : { sliderSolver }),
     activeTab: async () => (await extension.tabs.query({ active: true, currentWindow: true }))[0],
     registration,
     contextMenu,

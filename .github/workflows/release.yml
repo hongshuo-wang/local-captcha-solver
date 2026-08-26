@@ -54,6 +54,12 @@ jobs:
       - name: Build Edge release ZIP
         run: npm run zip:edge
 
+      - name: Build Firefox release ZIP and review sources
+        run: npm run zip:firefox
+
+      - name: Verify Firefox package
+        run: npm run verify:firefox
+
       - name: Prepare bilingual release notes
         run: npm run release:prepare -- "$GITHUB_REF_NAME"
 
@@ -63,6 +69,8 @@ jobs:
           sha256sum \
             "local-captcha-solver-${{ steps.metadata.outputs.version }}-chrome.zip" \
             "local-captcha-solver-${{ steps.metadata.outputs.version }}-edge.zip" \
+            "local-captcha-solver-${{ steps.metadata.outputs.version }}-firefox.zip" \
+            "local-captcha-solver-${{ steps.metadata.outputs.version }}-sources.zip" \
             > SHA256SUMS.txt
 
       - name: Create or update GitHub Release
@@ -74,6 +82,8 @@ jobs:
           assets=(
             ".output/local-captcha-solver-${VERSION}-chrome.zip"
             ".output/local-captcha-solver-${VERSION}-edge.zip"
+            ".output/local-captcha-solver-${VERSION}-firefox.zip"
+            ".output/local-captcha-solver-${VERSION}-sources.zip"
             ".output/SHA256SUMS.txt"
           )
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then

@@ -29,13 +29,29 @@ function harness() {
       async set(next) { for (const [key, value] of Object.entries(next)) values.set(key, value); },
     } },
     permissions: { request, remove, contains },
-    runtime: { sendMessage, getManifest: () => ({ version: '1.0.0' }), getURL: (path) => `chrome-extension://test/${path}` },
+    runtime: { sendMessage, getManifest: () => ({ version: '1.0.0', permissions: ['debugger'] }), getURL: (path) => `chrome-extension://test/${path}` },
     i18n: { getUILanguage: () => 'zh-CN' },
   };
   return { extension, values, request, remove, contains, sendMessage };
 }
 
 describe('options entrypoint', () => {
+  it('keeps settings focused on static recognition when sliders are unavailable', async () => {
+    const app = harness();
+    app.extension.runtime.getManifest = () => ({ version: '1.0.0', permissions: [] });
+    location.hash = 'slider';
+    const root = document.createElement('div');
+    document.body.append(root);
+
+    await startOptions(root, app.extension);
+
+    expect(root.querySelector('[data-nav="slider"]')).toBeNull();
+    expect((root.querySelector('[data-view="static"]') as HTMLElement).hidden).toBe(false);
+    expect((root.querySelector('[data-view="slider"]') as HTMLElement).textContent).toBe('');
+    root.remove();
+    location.hash = '';
+  });
+
   it('renders the privacy-first selected-site default and can switch access modes', async () => {
     const app = harness();
     const root = document.createElement('div');

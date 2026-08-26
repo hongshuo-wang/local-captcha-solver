@@ -7,7 +7,7 @@ function harness() {
   const values = new Map<string, unknown>();
   const request = vi.fn(async () => true);
   const remove = vi.fn(async () => true);
-  const contains = vi.fn(async () => false);
+  const contains = vi.fn(async (_details: { origins?: string[]; permissions?: string[] }) => false);
   const sendMessage = vi.fn(async (message: { type?: string }) => message.type === 'captcha:recognize'
     ? [{ mode: 'arithmetic', text: '20+22', confidence: .97 }]
     : { reconciled: true });
@@ -17,13 +17,42 @@ function harness() {
       async set(next) { for (const [key, value] of Object.entries(next)) values.set(key, value); },
     } },
     permissions: { request, remove, contains },
-    runtime: { sendMessage, getURL: (path) => `chrome-extension://test/${path}` },
+    runtime: {
+      sendMessage,
+      getURL: (path) => `chrome-extension://test/${path}`,
+      getManifest: () => ({ permissions: ['debugger'] }),
+    },
     i18n: { getUILanguage: () => 'zh-CN' },
   };
   return { extension, values, request, remove, sendMessage, contains };
 }
 
 describe('onboarding entrypoint', () => {
+  it('uses the three-page static recognition flow when the browser has no slider capability', async () => {
+    const app = harness();
+    app.extension.runtime.getManifest = () => ({ permissions: [] });
+    const closeGuide = vi.fn();
+    const root = document.createElement('div');
+    document.body.append(root);
+
+    await startOnboarding(root, app.extension, closeGuide);
+    expect(root.querySelectorAll('.capability-card')).toHaveLength(1);
+    expect(root.querySelectorAll('.setup-progress li')).toHaveLength(3);
+    expect(root.querySelector('[data-slider-unavailable]')?.textContent).toContain('Firefox 暂不支持拼图滑块验证码');
+    expect(root.querySelector('[data-slider-unavailable]')?.textContent).toContain('推荐使用 Chrome 或 Edge 体验完整插件功能');
+    expect(app.contains.mock.calls.some(([details]) => details.permissions?.includes('debugger'))).toBe(false);
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="static-settings"]')).not.toBeNull());
+    (root.querySelector('[data-onboarding-mode="selected"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect((root.querySelector('[data-primary]') as HTMLButtonElement).disabled).toBe(false));
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(root.querySelector('[data-page="static-demo"]')).not.toBeNull());
+    (root.querySelector('[data-primary]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(closeGuide).toHaveBeenCalledOnce());
+    expect(root.querySelector('[data-page="slider-settings"]')).toBeNull();
+    root.remove();
+  });
+
   it('walks the five-page welcome flow with separate static and slider paths', async () => {
     const app = harness();
     const closeGuide = vi.fn();

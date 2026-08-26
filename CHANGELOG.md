@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 暂无未发布变更。
 
+## [1.3.0] - 2026-08-26
+
+### 中文
+
+#### 新增
+
+- 新增 Firefox Manifest V3 构建，支持本地静态文字验证码识别、自动填入、弹窗、右键菜单和设置管理。
+- 发布流程新增 Firefox 扩展包、可审核源码包、SHA-256 校验和清单验证。
+
+#### 变更
+
+- Firefox 在扩展后台页运行内置本地识别模型；Chrome 和 Edge 继续使用离屏文档。
+- Firefox 引导页和弹窗明确说明拼图滑块的浏览器支持范围，并推荐使用 Chrome 或 Edge 体验完整功能。
+
+### English
+
+#### Added
+
+- Added a Firefox Manifest V3 build with local static text recognition, automatic filling, popup and context-menu actions, and settings management.
+- Added Firefox extension and reviewable source packages, SHA-256 checksums, and manifest verification to the release workflow.
+
+#### Changed
+
+- Firefox runs the bundled local recognition model in its extension background page; Chrome and Edge continue to use an offscreen document.
+- Firefox onboarding and popup now explain browser support for puzzle sliders and recommend Chrome or Edge for the complete feature set.
+
 ## [1.2.0] - 2026-08-23
 
 ### 中文
@@ -140,7 +166,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Frozen 201-image benchmark at 98.01% whole-string/fill accuracy and 100% arithmetic-answer accuracy.
 - Documented data provenance, licenses, split-group isolation, Paddle/ONNX parity, and offline Chrome/Edge verification.
 
-[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hongshuo-wang/local-captcha-solver/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hongshuo-wang/local-captcha-solver/releases/tag/v1.0.0

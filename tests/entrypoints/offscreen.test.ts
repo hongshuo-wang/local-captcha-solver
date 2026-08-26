@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('offscreen OCR entrypoint', () => {
   it('uses the wasm-only ONNX Runtime entrypoint for the bundled runtime assets', async () => {
-    const source = await readFile(resolve('entrypoints/offscreen.ts'), 'utf8');
+    const source = await readFile(resolve('src/ocr/inference-service.ts'), 'utf8');
     expect(source).toContain("from 'onnxruntime-web/wasm'");
   });
 

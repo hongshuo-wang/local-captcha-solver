@@ -254,6 +254,12 @@ describe('background runtime router', () => {
     await expect(app.router.handle({ type: 'captcha:set-slider-enabled', enabled: true, hostname: 'portal.example.test' }, sender)).resolves.toMatchObject({ reason: 'invalid-request' });
   });
 
+  it('reports slider handling as unsupported when the browser has no solver', async () => {
+    const app = harness();
+    await expect(app.router.handle({ type: 'captcha:get-slider-state' }, {})).resolves.toEqual({ supported: false, enabled: false, debuggerGranted: false });
+    expect(app.contains).not.toHaveBeenCalledWith({ permissions: ['debugger'] });
+  });
+
   it('rejects manual slider execution until the active site has host permission', async () => {
     const app = harness({ pagePermission: false });
     const solve = vi.fn(async () => ({ state: 'success' as const }));

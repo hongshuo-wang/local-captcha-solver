@@ -220,7 +220,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
       if (message === null || typeof message !== 'object' || !('type' in message)) return undefined;
       const request = message as { type?: unknown; url?: unknown; imageDataUrl?: unknown; revision?: unknown; modes?: unknown; enabled?: unknown; hostname?: unknown; permissionAlreadyGranted?: unknown; copyOnNoField?: unknown; autoFill?: unknown; recognitionShortcut?: unknown; outcome?: unknown; diagnostic?: unknown; trigger?: unknown };
       if (request.type === 'captcha:get-slider-state') {
-        if (!canManageDiagnostics(sender)) return { supported: false, enabled: false, debuggerGranted: false };
+        if (!canManageDiagnostics(sender) || adapter.sliderSolver === undefined) return { supported: false, enabled: false, debuggerGranted: false };
         const tab = await adapter.activeTab();
         if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { supported: false, enabled: false, debuggerGranted: false };
         try {
@@ -231,7 +231,7 @@ export function createRuntimeRouter(adapter: RuntimeRouterAdapter): RuntimeRoute
         } catch { return { supported: false, enabled: false, debuggerGranted: false }; }
       }
       if (request.type === 'captcha:set-slider-enabled') {
-        if (!canManageDiagnostics(sender) || typeof request.enabled !== 'boolean' || typeof request.hostname !== 'string') return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' };
+        if (!canManageDiagnostics(sender) || adapter.sliderSolver === undefined || typeof request.enabled !== 'boolean' || typeof request.hostname !== 'string') return { supported: false, enabled: false, debuggerGranted: false, reason: 'invalid-request' };
         const tab = await adapter.activeTab();
         if (typeof tab?.id !== 'number' || typeof tab.url !== 'string') return { supported: false, enabled: false, debuggerGranted: false, reason: 'unsupported' };
         try {

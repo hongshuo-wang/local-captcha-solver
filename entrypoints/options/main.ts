@@ -13,6 +13,7 @@ import {
 } from '../../src/platform/settings-store';
 import { createTranslator, resolveUiLocale, type Translator, type UiLocale } from '../../src/platform/i18n';
 import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
+import { supportsPuzzleSliders } from '../../src/platform/extension-capabilities';
 
 type ViewName = 'static' | 'slider' | 'diagnostics' | 'about';
 const MODEL_STATUS_POLL_INTERVAL_MS = 250;
@@ -38,7 +39,7 @@ export interface OptionsBrowser extends ExtensionBrowserStoragePermissions {
   };
   runtime: {
     sendMessage(message: unknown): Promise<unknown>;
-    getManifest(): { version: string };
+    getManifest(): { version: string; permissions?: readonly string[] };
     getURL(path: string): string;
   };
   tabs?: { create(details: { url: string }): Promise<unknown> };
@@ -118,7 +119,7 @@ function languageOptions(settings: CaptchaSettings, t: Translator): string {
   return `<option value="system" ${settings.interfaceLocale === 'system' ? 'selected' : ''}>${t('languageSystem')}</option><option value="zh_CN" ${settings.interfaceLocale === 'zh_CN' ? 'selected' : ''}>${t('languageChinese')}</option><option value="en" ${settings.interfaceLocale === 'en' ? 'selected' : ''}>${t('languageEnglish')}</option>`;
 }
 
-function shell(settings: CaptchaSettings, t: Translator): string {
+function shell(settings: CaptchaSettings, sliderSupported: boolean, t: Translator): string {
   return `<div class="settings-shell">
     <aside class="settings-sidebar">
       <a class="brand" href="#static" data-nav="static" aria-label="Captcha Helper">
@@ -127,7 +128,7 @@ function shell(settings: CaptchaSettings, t: Translator): string {
       </a>
       <nav class="settings-nav" aria-label="Primary">
         <button type="button" data-nav="static"><span class="nav-mark static-mark" aria-hidden="true">Aa</span><span><strong>${t('navAccess')}</strong><small>${t('accessHeading')}</small></span></button>
-        <button type="button" data-nav="slider"><span class="nav-mark slider-mark" aria-hidden="true"><i></i></span><span><strong>${t('navBehavior')}</strong><small>${t('sliderScopeTitle')}</small></span></button>
+        ${sliderSupported ? `<button type="button" data-nav="slider"><span class="nav-mark slider-mark" aria-hidden="true"><i></i></span><span><strong>${t('navBehavior')}</strong><small>${t('sliderScopeTitle')}</small></span></button>` : ''}
         <button type="button" data-nav="diagnostics"><span class="nav-mark diagnostic-mark" aria-hidden="true"><i></i></span><span><strong>${t('navDiagnostics')}</strong><small>${t('recentStatus')}</small></span></button>
         <button type="button" data-nav="about"><span class="nav-mark about-mark" aria-hidden="true">i</span><span><strong>${t('navAbout')}</strong><small>Captcha Helper</small></span></button>
       </nav>
@@ -245,6 +246,7 @@ export async function startOptions(
   navigate: (url: string) => void = (url) => window.location.assign(url),
 ): Promise<void> {
   const settingsStore = createSettingsStore(createExtensionBrowserAdapter(extension));
+  const sliderSupported = supportsPuzzleSliders(extension.runtime.getManifest());
   let settings = await settingsStore.read();
   let locale: UiLocale = resolveUiLocale(settings.interfaceLocale, extension.i18n?.getUILanguage() ?? navigator.language);
   let t = createTranslator(locale);
@@ -261,7 +263,7 @@ export async function startOptions(
   const readGlobal = async (): Promise<boolean> => extension.permissions.contains({ origins: [...GLOBAL_HTTP_ORIGINS] });
   const currentView = (): ViewName => {
     const hash = location.hash.replace('#', '');
-    if (hash === 'behavior' || hash === 'slider') return 'slider';
+    if (sliderSupported && (hash === 'behavior' || hash === 'slider')) return 'slider';
     if (hash === 'diagnostics' || hash === 'about') return hash;
     return 'static';
   };
@@ -281,15 +283,15 @@ export async function startOptions(
     document.documentElement.lang = locale === 'zh_CN' ? 'zh-CN' : 'en';
     if (view === 'diagnostics') snapshot = await readModelStatus() ?? snapshot;
     const globalGranted = await readGlobal().catch(() => false);
-    const debuggerGranted = await extension.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
+    const debuggerGranted = sliderSupported && await extension.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
     const selectedAccess = await Promise.all(settings.selectedSites.map(async (rule): Promise<SelectedSiteAccess> => ({
       rule,
       granted: await extension.permissions.contains({ origins: [...originsForSelectedSite(rule)] }).catch(() => false),
     })));
     if (generation !== renderGeneration) return;
-    root.innerHTML = shell(settings, t);
+    root.innerHTML = shell(settings, sliderSupported, t);
     required<HTMLElement>(root, '[data-view="static"]').innerHTML = staticMarkup(settings, globalGranted, selectedAccess, t);
-    required<HTMLElement>(root, '[data-view="slider"]').innerHTML = sliderMarkup(settings, globalGranted, debuggerGranted, t);
+    required<HTMLElement>(root, '[data-view="slider"]').innerHTML = sliderSupported ? sliderMarkup(settings, globalGranted, debuggerGranted, t) : '';
     required<HTMLElement>(root, '[data-view="diagnostics"]').innerHTML = diagnosticsMarkup(snapshot, t);
     required<HTMLElement>(root, '[data-view="about"]').innerHTML = aboutMarkup(extension.runtime.getManifest().version, t);
     root.querySelectorAll<HTMLElement>('[data-view]').forEach((element) => { element.hidden = element.dataset.view !== view; });
@@ -323,7 +325,9 @@ export async function startOptions(
       void show(next);
     }));
     root.querySelectorAll<HTMLButtonElement>('[data-open-guide]').forEach((button) => button.addEventListener('click', () => {
-      const url = extension.runtime.getURL(`onboarding.html?flow=upgrade&version=${encodeURIComponent(extension.runtime.getManifest().version)}&manual=1`);
+      const url = extension.runtime.getURL(sliderSupported
+        ? `onboarding.html?flow=upgrade&version=${encodeURIComponent(extension.runtime.getManifest().version)}&manual=1`
+        : 'onboarding.html');
       if (extension.tabs) void extension.tabs.create({ url });
       else navigate(url);
     }));
