@@ -3,12 +3,42 @@ export interface RuntimeMessagePort {
   readonly lastError?: { readonly message?: string } | null;
 }
 
+export type RuntimeMessageHandler<Sender = unknown> = (message: unknown, sender: Sender) => unknown;
+export type RuntimeMessageListener<Sender = unknown> = (message: unknown, sender: Sender, sendResponse?: (response: unknown) => void) => unknown;
+
 function usesPromiseMessaging(runtime: RuntimeMessagePort): boolean {
   return (globalThis as typeof globalThis & { browser?: { runtime?: unknown } }).browser?.runtime === runtime;
 }
 
 function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   return typeof value === 'object' && value !== null && typeof (value as { then?: unknown }).then === 'function';
+}
+
+export function createRuntimeMessageListener<Sender = unknown>(
+  handler: RuntimeMessageHandler<Sender>,
+  reportError?: (error: unknown) => void,
+): RuntimeMessageListener<Sender> {
+  return (message, sender, sendResponse) => {
+    let response: unknown;
+    try {
+      response = handler(message, sender);
+    } catch (error) {
+      reportError?.(error);
+      return undefined;
+    }
+    if (response === undefined) return undefined;
+    if (!isPromiseLike(response)) {
+      if (sendResponse === undefined) return response;
+      sendResponse(response);
+      return undefined;
+    }
+    if (sendResponse === undefined) return Promise.resolve(response);
+    void Promise.resolve(response).then(sendResponse, (error: unknown) => {
+      reportError?.(error);
+      sendResponse(undefined);
+    });
+    return true;
+  };
 }
 
 /** Bridges Chromium's callback-only runtime API and Promise-based WebExtension APIs. */

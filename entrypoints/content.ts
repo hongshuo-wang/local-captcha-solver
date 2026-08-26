@@ -7,7 +7,7 @@ import { fillEmptyField, fillPlaceholderField, isEligibleField, replaceField, ty
 import { copyText } from '../src/content/clipboard';
 import { AUTOMATIC_CANDIDATE_THRESHOLD, scoreCaptchaCandidate } from '../src/core/candidate-scorer';
 import type { OcrResult, RecognitionMode, WorkflowResult } from '../src/core/types';
-import { sendRuntimeMessage } from '../src/platform/runtime-messaging';
+import { createRuntimeMessageListener, sendRuntimeMessage, type RuntimeMessageListener } from '../src/platform/runtime-messaging';
 import { isInterfaceLocale, isRecognitionShortcut, recognitionModeFromSettings, SETTINGS_STORAGE_KEY, type InterfaceLocale, type RecognitionShortcut } from '../src/platform/settings-store';
 import { resolveUiLocale, type UiLocale } from '../src/platform/i18n';
 import { discoverSliderChallenge, observeSliderOutcome, sliderDiscoveryKey, visibleSliderInteractionTarget } from '../src/slider/challenge-discovery';
@@ -15,7 +15,7 @@ import { SLIDER_RESULT_STATES, type SliderResultState, type SliderRunResult } fr
 
 type Runtime = {
   sendMessage(message: unknown): Promise<unknown>;
-  onMessage: { addListener(listener: (message: unknown) => unknown): void };
+  onMessage: { addListener(listener: RuntimeMessageListener): void };
   settings?: { read(): Promise<unknown>; subscribe(listener: (settings: unknown) => void): () => void };
   uiLanguage?: string;
 };
@@ -402,7 +402,7 @@ export function createRuntimeContent(runtime: Runtime) {
     workflow.cancelAll?.();
     clearWorkflowStatus();
   };
-  runtime.onMessage.addListener((message) => {
+  runtime.onMessage.addListener(createRuntimeMessageListener((message) => {
     if (!message || typeof message !== 'object') return undefined;
     const type = (message as { type?: string }).type;
     if (type === 'captcha:ping') return Promise.resolve({ ok: true });
@@ -449,7 +449,7 @@ export function createRuntimeContent(runtime: Runtime) {
     if (type === 'captcha:context-image') { const source = (message as { srcUrl?: unknown }).srcUrl; const matches = typeof source === 'string' ? Array.from(document.querySelectorAll('img')).filter((image) => isVisible(image) && (image.currentSrc === source || image.src === source)) : []; if (matches.length === 1) return displayed.run(matches[0]!, 'context'); lifecycleGeneration += 1; if (matches.length === 0) { const result = { state: 'no_candidate' as const }; showWorkflowStatus(result); return Promise.resolve(result); } const result = { state: 'ambiguous_image' as const, candidateIds: matches.map((image) => snapshotForImage(image)?.candidate.id).filter((id): id is string => id !== undefined) }; showWorkflowStatus(result); return Promise.resolve(result); }
     if (type === 'captcha:get-status') return Promise.resolve({ enabled: observer !== undefined });
     return undefined;
-  });
+  }));
   const initialGeneration = lifecycleGeneration;
   void Promise.resolve(runtime.sendMessage({ type: 'captcha:get-site-state' })).then((state) => { if (isSiteState(state) && state.enabled && lifecycleGeneration === initialGeneration) enable(); }).catch(() => undefined);
   const scanSlider = async (): Promise<void> => {

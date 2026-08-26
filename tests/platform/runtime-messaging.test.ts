@@ -1,8 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { sendRuntimeMessage } from '../../src/platform/runtime-messaging';
+import { createRuntimeMessageListener, sendRuntimeMessage } from '../../src/platform/runtime-messaging';
 
 describe('runtime messaging', () => {
+  it('bridges Promise responses through callback-only message listeners', async () => {
+    const sendResponse = vi.fn();
+    const listener = createRuntimeMessageListener(async (message) => ({ echo: message }));
+
+    expect(listener({ type: 'ping' }, {}, sendResponse)).toBe(true);
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ echo: { type: 'ping' } }));
+  });
+
+  it('preserves Promise responses when a listener runtime does not expose sendResponse', async () => {
+    const listener = createRuntimeMessageListener(async () => ({ ok: true }));
+    await expect(listener({ type: 'ping' }, {})).resolves.toEqual({ ok: true });
+  });
+
   it('preserves Promise-based runtime.sendMessage responses', async () => {
     const runtime = {
       sendMessage: async (_message: unknown): Promise<unknown> => ({ ok: true }),

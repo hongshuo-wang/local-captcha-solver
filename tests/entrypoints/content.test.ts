@@ -6,6 +6,17 @@ afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.resetModules(); v
 const statusHost = () => document.querySelector<HTMLElement>('[data-local-captcha-status]');
 const statusText = () => statusHost()?.shadowRoot?.textContent ?? '';
 describe('content runtime messages', () => {
+  it('responds to slider discovery through callback-only Chromium messaging', async () => {
+    vi.stubGlobal('defineContentScript', (value: unknown) => value);
+    const { createRuntimeContent } = await import('../../entrypoints/content');
+    createRuntimeContent({ sendMessage: vi.fn(), onMessage: { addListener: listener } });
+    const handle = listener.mock.calls[0]?.[0] as (message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => unknown;
+    const response = vi.fn();
+
+    expect(handle({ type: 'captcha:slider-discover' }, {}, response)).toBe(true);
+    await vi.waitFor(() => expect(response).toHaveBeenCalledWith({ state: 'not-found' }));
+  });
+
   it('does not initialize duplicate injected content runtimes in one frame', async () => {
     vi.stubGlobal('defineContentScript', (value: unknown) => value);
     const onMessage = { addListener: vi.fn() };

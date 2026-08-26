@@ -2,6 +2,7 @@ import { OcrEngineError } from '../src/ocr/ocr-engine';
 import { isInferenceRequest } from '../src/ocr/protocol';
 import type { InferenceErrorCode, InferenceResponse } from '../src/ocr/protocol';
 import { createOcrInferenceService } from '../src/ocr/inference-service';
+import { createRuntimeMessageListener } from '../src/platform/runtime-messaging';
 
 const getExtensionUrl = browser.runtime.getURL as (path: string) => string;
 
@@ -45,10 +46,7 @@ async function handleInferenceMessage(message: unknown): Promise<InferenceRespon
   }
 }
 
-browser.runtime.onMessage.addListener((message: unknown, _sender: unknown, sendResponse?: (response: InferenceResponse | undefined) => void) => {
+browser.runtime.onMessage.addListener(createRuntimeMessageListener((message: unknown) => {
   if (!isInferenceRequest(message)) return undefined;
-  const response = handleInferenceMessage(message);
-  if (sendResponse === undefined) return response;
-  void response.then(sendResponse);
-  return true;
-});
+  return handleInferenceMessage(message);
+}));

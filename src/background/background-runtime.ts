@@ -2,6 +2,7 @@ import { createRuntimeRouter, runWarmup, type RuntimeRouterAdapter, type Runtime
 import type { ContentRegistration } from './content-registration';
 import type { ContextMenu } from './context-menu';
 import type { ModelStatus } from './model-status';
+import { createRuntimeMessageListener, type RuntimeMessageListener } from '../platform/runtime-messaging';
 
 const BACKGROUND_MESSAGE_TYPES = new Set([
   'captcha:acquire-image',
@@ -32,7 +33,7 @@ export interface BackgroundRuntimeAdapter extends RuntimeRouterAdapter {
   contextMenu: ContextMenu;
   runtime: {
     onMessage: {
-      addListener(listener: (message: unknown, sender: RuntimeSender, sendResponse?: (response: unknown) => void) => Promise<unknown | undefined> | boolean | void): void;
+      addListener(listener: RuntimeMessageListener<RuntimeSender>): void;
     };
     onStartup: { addListener(listener: () => void): void };
     onInstalled: { addListener(listener: () => void): void };
@@ -74,16 +75,10 @@ export function createBackgroundRuntime(adapter: BackgroundRuntimeAdapter): Back
       if (!listenersRegistered) {
         listenersRegistered = true;
         adapter.modelStatus.subscribe((snapshot) => updateBadge(snapshot.status));
-        adapter.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        adapter.runtime.onMessage.addListener(createRuntimeMessageListener((message, sender) => {
           if (!isBackgroundMessage(message)) return undefined;
-          const response = router.handle(message, sender);
-          if (sendResponse === undefined) return response;
-          void response.then(sendResponse, (error: unknown) => {
-            reportError(error);
-            sendResponse(undefined);
-          });
-          return true;
-        });
+          return router.handle(message, sender);
+        }, reportError));
         adapter.runtime.onStartup.addListener(reconcile);
         adapter.runtime.onInstalled.addListener(reconcile);
         adapter.storage?.onChanged.addListener((changes, areaName) => { if (areaName === 'local' && Object.hasOwn(changes, 'captcha-settings')) reconcile(); });
