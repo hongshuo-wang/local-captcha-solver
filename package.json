@@ -53,29 +53,29 @@
     "benchmark:production": "tsx benchmark/run-captcha-ctc.ts"
   },
   "dependencies": {
-    "@noble/hashes": "2.2.0",
-    "onnxruntime-web": "1.27.0"
+    "@noble/hashes": "2.4.0",
+    "onnxruntime-web": "1.30.0"
   },
   "devDependencies": {
     "@fontsource/kalam": "5.3.0",
     "@fontsource/patrick-hand": "5.3.0",
     "@fontsource/special-elite": "5.3.0",
-    "@napi-rs/canvas": "1.0.2",
-    "@playwright/test": "1.62.0",
+    "@napi-rs/canvas": "1.0.9",
+    "@playwright/test": "1.63.0",
     "@types/adm-zip": "0.5.8",
-    "@vitest/coverage-v8": "4.1.10",
-    "adm-zip": "0.6.0",
-    "csv-parse": "7.0.1",
+    "@vitest/coverage-v8": "5.0.2",
+    "adm-zip": "0.6.1",
+    "csv-parse": "7.0.3",
     "dejavu-fonts-ttf": "2.37.3",
-    "happy-dom": "20.11.1",
-    "tsx": "4.23.1",
+    "happy-dom": "20.14.5",
+    "tsx": "4.23.15",
     "typescript": "7.0.2",
-    "vitest": "4.1.10",
-    "wxt": "0.21.2",
-    "yaml": "^2.9.0"
+    "vitest": "5.0.2",
+    "wxt": "0.21.4",
+    "yaml": "^2.9.1"
   },
   "overrides": {
-    "adm-zip": "0.6.0",
+    "adm-zip": "0.6.1",
     "esbuild": "0.28.1",
     "fx-runner": "1.5.0",
     "shell-quote": "1.10.0",
